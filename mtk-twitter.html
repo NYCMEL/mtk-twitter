@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melify — People Helping People</title>
+
+  <!-- Bootstrap 5 -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
+  />
+
+  <!-- Material Icons Round -->
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
+  />
+
+  <!-- Google Fonts: Nunito + Roboto -->
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Roboto:wght@300;400;500;700&display=swap"
+  />
+
+  <!--
+    mtk-twitter.scss must be compiled to CSS before use.
+    Reference the compiled output here:
+  -->
+  <link rel="stylesheet" href="mtk-twitter.css" />
+
+  <style>
+    /* Host page reset — not part of mtk-twitter component */
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #0f1117;
+    }
+  </style>
+</head>
+<body>
+
+  <!--
+    mtk-twitter custom element wrapper.
+    Both the tag name AND the class must be present.
+    wc-include can dynamically inject this element.
+  -->
+  <mtk-twitter class="mtk-twitter" role="application" aria-label="Melify Social Feed">
+    <!-- MTKTwitter renders its own DOM here — do not add children -->
+  </mtk-twitter>
+
+  <!-- Bootstrap 5 JS bundle -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmrgXS7tFxzPCF6zFfLrGp0EMOT"
+    crossorigin="anonymous"
+  ></script>
+
+  <!-- 1. Config (must load before the class) -->
+  <script src="mtk-twitter.config.js"></script>
+
+  <!-- 2. Component class (auto-initializes at bottom of file) -->
+  <script src="mtk-twitter.js"></script>
+
+  <!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  DEMO: External event wiring examples                        ║
+  ║  These show how to interact with mtk-twitter from outside.   ║
+  ╚══════════════════════════════════════════════════════════════╝
+  -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // ── Listen to all published events from the component ──
+      const { events } = MTK_TWITTER_CONFIG;
+
+      wc.subscribe(events.TWEET_POSTED, payload => {
+        console.log('[Host] New tweet detected:', payload.data.tweet.text);
+      });
+
+      wc.subscribe(events.TWEET_LIKED, payload => {
+        console.log('[Host] Tweet liked/unliked:', payload.data);
+      });
+
+      wc.subscribe(events.TWEET_RETWEETED, payload => {
+        console.log('[Host] Tweet retweeted:', payload.data);
+      });
+
+      wc.subscribe(events.LANGUAGE_CHANGED, payload => {
+        console.log('[Host] Language changed to:', payload.data.langLabel);
+        // Example: persist language preference to localStorage
+        try {
+          localStorage.setItem('mtk-twitter-lang', payload.data.lang);
+        } catch (e) { /* ignore */ }
+      });
+
+      wc.subscribe(events.TWEET_REPLIED, payload => {
+        console.log('[Host] Reply sent:', payload.data);
+      });
+
+      wc.subscribe(events.TWEET_TRANSLATED, payload => {
+        console.log('[Host] Tweet translated:', payload.data);
+      });
+
+      wc.subscribe(events.TWEET_BOOKMARKED, payload => {
+        console.log('[Host] Tweet bookmarked:', payload.data);
+      });
+
+      // ── Example: programmatically change language after 10s ──
+      // setTimeout(() => {
+      //   wc.publish(MTK_TWITTER_CONFIG.events.LANGUAGE_CHANGED, {
+      //     type: MTK_TWITTER_CONFIG.events.LANGUAGE_CHANGED,
+      //     data: { lang: 'hi' }
+      //   });
+      // }, 10000);
+
+    });
+  </script>
+
+</body>
+</html>
