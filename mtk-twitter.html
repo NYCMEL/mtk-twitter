@@ -2,8 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#080c12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Melify — People Helping People</title>
+  <meta name="description" content="Post in your language. Read in yours. Melify breaks language barriers worldwide." />
 
   <!-- Bootstrap 5 -->
   <link
@@ -14,50 +18,45 @@
   />
 
   <!-- Material Icons Round -->
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
-  />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" />
 
-  <!-- Google Fonts: Nunito + Roboto -->
-  <link
-    rel="preconnect"
-    href="https://fonts.googleapis.com"
-  />
-  <link
-    rel="preconnect"
-    href="https://fonts.gstatic.com"
-    crossorigin
-  />
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Roboto:wght@300;400;500;700&display=swap"
-  />
+  <!-- Google Fonts: DM Sans + Source Serif 4 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Source+Serif+4:wght@300;400;600&display=swap" />
 
   <!--
-    mtk-twitter.scss must be compiled to CSS before use.
+    mtk-twitter.scss must be compiled to CSS before deploying.
     Reference the compiled output here:
   -->
   <link rel="stylesheet" href="mtk-twitter.css" />
 
   <style>
-    /* Host page reset — not part of mtk-twitter component */
+    /* Host page only — not part of mtk-twitter component */
     html, body {
       margin: 0;
       padding: 0;
-      background: #0f1117;
+      background: #080c12;
+      /* Prevent pull-to-refresh on mobile */
+      overscroll-behavior-y: contain;
     }
   </style>
 </head>
 <body>
 
   <!--
-    mtk-twitter custom element wrapper.
-    Both the tag name AND the class must be present.
-    wc-include can dynamically inject this element.
+    mtk-twitter custom element.
+    The tag name AND the class .mtk-twitter are both required.
+    Safe to inject via <wc-include> — the class waits for DOM availability.
   -->
-  <mtk-twitter class="mtk-twitter" role="application" aria-label="Melify Social Feed">
-    <!-- MTKTwitter renders its own DOM here — do not add children -->
+  <mtk-twitter
+    class="mtk-twitter"
+    role="application"
+    aria-label="Melify Social Feed"
+  >
+    <!-- MTKTwitter renders its own DOM tree here -->
   </mtk-twitter>
 
   <!-- Bootstrap 5 JS bundle -->
@@ -70,60 +69,87 @@
   <!-- 1. Config (must load before the class) -->
   <script src="mtk-twitter.config.js"></script>
 
-  <!-- 2. Component class (auto-initializes at bottom of file) -->
+  <!-- 2. Component class (auto-initializes itself) -->
   <script src="mtk-twitter.js"></script>
 
   <!--
-  ╔══════════════════════════════════════════════════════════════╗
-  ║  DEMO: External event wiring examples                        ║
-  ║  These show how to interact with mtk-twitter from outside.   ║
-  ╚══════════════════════════════════════════════════════════════╝
+  ══════════════════════════════════════════════════════════
+   HOST PAGE — External event wiring examples
+   (These show how a parent app can listen to mtk-twitter)
+  ══════════════════════════════════════════════════════════
   -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-
-      // ── Listen to all published events from the component ──
       const { events } = MTK_TWITTER_CONFIG;
 
+      // ── Listen to all published events ─────────────────
+      wc.subscribe(events.USER_REGISTERED, payload => {
+        console.log('[Host] New user registered:', payload.data.user.username);
+      });
+
+      wc.subscribe(events.USER_LOGGED_IN, payload => {
+        console.log('[Host] User signed in:', payload.data.user.display_name);
+      });
+
+      wc.subscribe(events.USER_LOGGED_OUT, () => {
+        console.log('[Host] User signed out');
+      });
+
       wc.subscribe(events.TWEET_POSTED, payload => {
-        console.log('[Host] New tweet detected:', payload.data.tweet.text);
+        console.log('[Host] New post:', payload.data.tweet.text?.substring(0, 40));
       });
 
       wc.subscribe(events.TWEET_LIKED, payload => {
-        console.log('[Host] Tweet liked/unliked:', payload.data);
+        console.log('[Host] Post liked/unliked:', payload.data);
       });
 
       wc.subscribe(events.TWEET_RETWEETED, payload => {
-        console.log('[Host] Tweet retweeted:', payload.data);
-      });
-
-      wc.subscribe(events.LANGUAGE_CHANGED, payload => {
-        console.log('[Host] Language changed to:', payload.data.langLabel);
-        // Example: persist language preference to localStorage
-        try {
-          localStorage.setItem('mtk-twitter-lang', payload.data.lang);
-        } catch (e) { /* ignore */ }
+        console.log('[Host] Post reposted:', payload.data);
       });
 
       wc.subscribe(events.TWEET_REPLIED, payload => {
         console.log('[Host] Reply sent:', payload.data);
       });
 
-      wc.subscribe(events.TWEET_TRANSLATED, payload => {
-        console.log('[Host] Tweet translated:', payload.data);
-      });
-
       wc.subscribe(events.TWEET_BOOKMARKED, payload => {
-        console.log('[Host] Tweet bookmarked:', payload.data);
+        console.log('[Host] Post bookmarked:', payload.data);
       });
 
-      // ── Example: programmatically change language after 10s ──
-      // setTimeout(() => {
-      //   wc.publish(MTK_TWITTER_CONFIG.events.LANGUAGE_CHANGED, {
-      //     type: MTK_TWITTER_CONFIG.events.LANGUAGE_CHANGED,
-      //     data: { lang: 'hi' }
-      //   });
-      // }, 10000);
+      wc.subscribe(events.TWEET_TRANSLATED, payload => {
+        console.log('[Host] Post translated:', payload.data.from, '→', payload.data.to);
+      });
+
+      wc.subscribe(events.LANGUAGE_CHANGED, payload => {
+        console.log('[Host] Display language changed to:', payload.data.label);
+        // Persist to server analytics, etc.
+      });
+
+      wc.subscribe(events.FEED_REFRESHED, payload => {
+        console.log('[Host] Feed refreshed:', payload.data.count, 'posts in', payload.data.lang);
+      });
+
+      wc.subscribe(events.AUTH_ERROR, payload => {
+        console.warn('[Host] Auth error:', payload.data.action, payload.data.error);
+      });
+
+      // ── Example: push an external tweet into the feed ──
+      // Call this from anywhere in the host app to inject a post:
+      //
+      // wc.publish(MTK_TWITTER_CONFIG.events.TWEET_POSTED, {
+      //   type: MTK_TWITTER_CONFIG.events.TWEET_POSTED,
+      //   _external: true,
+      //   data: {
+      //     tweet: {
+      //       id: 'ext_001',
+      //       user: { name: 'External User', handle: 'extuser', avatar: '', verified: false },
+      //       text: 'Hello from an external source!',
+      //       original_lang: 'en',
+      //       timestamp: 'just now',
+      //       likes: 0, retweets: 0, replies: 0,
+      //       liked: false, retweeted: false, bookmarked: false,
+      //     }
+      //   }
+      // });
 
     });
   </script>
