@@ -36,10 +36,12 @@ Output! Create exactly these files:
 - mtk-twitter.scss
 - mtk-twitter.html
 - mtk-twitter.js
+- backend uses sqlite database and node
 
 Behavior:
 - MUST WAIT for element to be available inside DOM, since i will be using <wc-include> for dynamic inclusion
 - all published (wc.publish) messages should be logged using wc.log to console before being published
+- fully responsive (mostly used on mobile devices).
 
 I am creating an app identical to mtk-twitter with the following exceptions:
 > user can select a language of choice (say English)
