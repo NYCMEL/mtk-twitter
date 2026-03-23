@@ -1,0 +1,162 @@
+/**
+ * mtk-twitter.config.js
+ * Single source of truth for all mtk-twitter configuration & data.
+ * No hardcoded values anywhere else in the component.
+ */
+const MTK_TWITTER_CONFIG = {
+
+  app: {
+    name:             'Melify',
+    tagline:          'People Helping People — Worldwide',
+    version:          '2.0.0',
+    apiBase:          'http://localhost:3001/api',
+    wsBase:           'ws://localhost:3001',
+    defaultLanguage:  'en',
+    maxPostLength:    280,
+    avatarBaseUrl:    'https://i.pravatar.cc/80',
+    pollInterval:     8000,   // ms — fallback polling when WS unavailable
+  },
+
+  languages: [
+    { code: 'en', label: 'English',    flag: '🇺🇸', nativeName: 'English'    },
+    { code: 'hi', label: 'Hindi',      flag: '🇮🇳', nativeName: 'हिन्दी'       },
+    { code: 'es', label: 'Spanish',    flag: '🇪🇸', nativeName: 'Español'     },
+    { code: 'fr', label: 'French',     flag: '🇫🇷', nativeName: 'Français'    },
+    { code: 'de', label: 'German',     flag: '🇩🇪', nativeName: 'Deutsch'     },
+    { code: 'zh', label: 'Chinese',    flag: '🇨🇳', nativeName: '中文'         },
+    { code: 'ar', label: 'Arabic',     flag: '🇸🇦', nativeName: 'العربية'     },
+    { code: 'pt', label: 'Portuguese', flag: '🇧🇷', nativeName: 'Português'   },
+    { code: 'ja', label: 'Japanese',   flag: '🇯🇵', nativeName: '日本語'       },
+    { code: 'ru', label: 'Russian',    flag: '🇷🇺', nativeName: 'Русский'     },
+    { code: 'ko', label: 'Korean',     flag: '🇰🇷', nativeName: '한국어'       },
+    { code: 'it', label: 'Italian',    flag: '🇮🇹', nativeName: 'Italiano'    },
+  ],
+
+  // Client-side fallback translation dictionary (backend handles real translation)
+  translations: {
+    'नमस्ते! आज का मौसम बहुत अच्छा है।': {
+      en: 'Hello! The weather is very nice today.',
+      es: '¡Hola! El tiempo está muy bien hoy.',
+      fr: 'Bonjour! Le temps est très beau aujourd\'hui.',
+      de: 'Hallo! Das Wetter ist heute sehr schön.',
+      zh: '你好！今天天气很好。',
+      ar: 'مرحبا! الطقس جميل جدا اليوم.',
+      pt: 'Olá! O tempo está muito bom hoje.',
+      ja: 'こんにちは！今日の天気はとても良いです。',
+      ru: 'Привет! Сегодня очень хорошая погода.',
+      ko: '안녕하세요! 오늘 날씨가 매우 좋네요.',
+      it: 'Ciao! Il tempo è molto bello oggi.',
+    },
+    'La tecnología nos une a todos.': {
+      en: 'Technology unites us all.',
+      hi: 'प्रौद्योगिकी हम सभी को एकजुट करती है।',
+      fr: 'La technologie nous unit tous.',
+      de: 'Technologie verbindet uns alle.',
+      zh: '技术将我们所有人联合在一起。',
+      ar: 'التكنولوجيا تجمعنا جميعًا.',
+      pt: 'A tecnologia nos une a todos.',
+      ja: 'テクノロジーは私たちみんなをつなげます。',
+      ru: 'Технологии объединяют нас всех.',
+      ko: '기술은 우리 모두를 하나로 묶어줍니다.',
+      it: 'La tecnologia ci unisce tutti.',
+    },
+    'この技術は素晴らしいです！言語の壁がなくなりますね。': {
+      en: 'This technology is amazing! Language barriers will disappear.',
+      hi: 'यह तकनीक अद्भुत है! भाषा की बाधाएं गायब हो जाएंगी।',
+      es: '¡Esta tecnología es increíble! Las barreras del idioma desaparecerán.',
+      fr: 'Cette technologie est incroyable! Les barrières linguistiques vont disparaître.',
+      de: 'Diese Technologie ist erstaunlich! Sprachbarrieren werden verschwinden.',
+      zh: '这项技术太棒了！语言障碍将会消失。',
+      ar: 'هذه التكنولوجيا رائعة! ستختفي الحواجز اللغوية.',
+      pt: 'Esta tecnologia é incrível! As barreiras linguísticas vão desaparecer.',
+      ru: 'Эта технология удивительна! Языковые барьеры исчезнут.',
+      ko: '이 기술은 놀랍습니다! 언어 장벽이 사라질 것입니다.',
+      it: 'Questa tecnologia è incredibile! Le barriere linguistiche scompariranno.',
+    },
+    'مرحبا بالجميع! نحن نبني جسور التواصل بين الشعوب.': {
+      en: 'Hello everyone! We are building bridges of communication between peoples.',
+      hi: 'सभी को नमस्ते! हम लोगों के बीच संचार के पुल बना रहे हैं।',
+      es: '¡Hola a todos! Estamos construyendo puentes de comunicación.',
+      fr: 'Bonjour à tous! Nous construisons des ponts de communication.',
+      de: 'Hallo alle! Wir bauen Kommunikationsbrücken zwischen den Völkern.',
+      zh: '大家好！我们正在建立人民之间的沟通桥梁。',
+      pt: 'Olá a todos! Estamos construindo pontes de comunicação.',
+      ja: 'みなさんこんにちは！私たちは人々の間のコミュニケーションの橋を築いています。',
+      ru: 'Всем привет! Мы строим мосты общения между народами.',
+      ko: '모두 안녕하세요! 우리는 사람들 사이의 소통 다리를 만들고 있습니다.',
+      it: 'Ciao a tutti! Stiamo costruendo ponti di comunicazione tra i popoli.',
+    },
+  },
+
+  // Seed / demo tweets visible on the splash screen before login
+  seedTweets: [
+    {
+      id: 'seed_001',
+      user: { name: 'Priya Sharma',   handle: 'priyasharma',   avatar: 'https://i.pravatar.cc/80?img=47', verified: false },
+      text: 'नमस्ते! आज का मौसम बहुत अच्छा है।',
+      originalLang: 'hi', timestamp: '2m ago',
+      likes: 24, retweets: 5, replies: 3, liked: false, retweeted: false, bookmarked: false,
+    },
+    {
+      id: 'seed_002',
+      user: { name: 'Carlos Mendoza', handle: 'carlosmendoza', avatar: 'https://i.pravatar.cc/80?img=52', verified: true  },
+      text: 'La tecnología nos une a todos.',
+      originalLang: 'es', timestamp: '15m ago',
+      likes: 89, retweets: 31, replies: 12, liked: false, retweeted: false, bookmarked: false,
+    },
+    {
+      id: 'seed_003',
+      user: { name: 'Kenji Tanaka',   handle: 'kenjitanaka',   avatar: 'https://i.pravatar.cc/80?img=56', verified: true  },
+      text: 'この技術は素晴らしいです！言語の壁がなくなりますね。',
+      originalLang: 'ja', timestamp: '1h ago',
+      likes: 112, retweets: 44, replies: 19, liked: false, retweeted: false, bookmarked: false,
+    },
+    {
+      id: 'seed_004',
+      user: { name: 'Omar Hassan',    handle: 'omarhassan',    avatar: 'https://i.pravatar.cc/80?img=59', verified: false },
+      text: 'مرحبا بالجميع! نحن نبني جسور التواصل بين الشعوب.',
+      originalLang: 'ar', timestamp: '2h ago',
+      likes: 67, retweets: 22, replies: 9,  liked: false, retweeted: false, bookmarked: false,
+    },
+  ],
+
+  trendingTopics: [
+    { tag: '#MelifyTranslates',    posts: '12.4K' },
+    { tag: '#LanguageBarriers',    posts: '8.1K'  },
+    { tag: '#GlobalChat',          posts: '5.7K'  },
+    { tag: '#TechForGood',         posts: '44.2K' },
+    { tag: '#PeopleHelpingPeople', posts: '3.9K'  },
+  ],
+
+  navItems: [
+    { icon: 'home',          label: 'Home',          id: 'home',          active: true  },
+    { icon: 'explore',       label: 'Explore',       id: 'explore',       active: false },
+    { icon: 'notifications', label: 'Notifications', id: 'notifications', active: false },
+    { icon: 'mail',          label: 'Messages',      id: 'messages',      active: false },
+    { icon: 'bookmark',      label: 'Bookmarks',     id: 'bookmarks',     active: false },
+    { icon: 'person',        label: 'Profile',       id: 'profile',       active: false },
+  ],
+
+  // All wc.publish / wc.subscribe event names
+  events: {
+    TWEET_POSTED:     'mtk-twitter:tweet-posted',
+    TWEET_LIKED:      'mtk-twitter:tweet-liked',
+    TWEET_RETWEETED:  'mtk-twitter:tweet-retweeted',
+    TWEET_REPLIED:    'mtk-twitter:tweet-replied',
+    TWEET_BOOKMARKED: 'mtk-twitter:tweet-bookmarked',
+    TWEET_TRANSLATED: 'mtk-twitter:tweet-translated',
+    LANGUAGE_CHANGED: 'mtk-twitter:language-changed',
+    USER_REGISTERED:  'mtk-twitter:user-registered',
+    USER_LOGGED_IN:   'mtk-twitter:user-logged-in',
+    USER_LOGGED_OUT:  'mtk-twitter:user-logged-out',
+    FEED_REFRESHED:   'mtk-twitter:feed-refreshed',
+    AUTH_ERROR:       'mtk-twitter:auth-error',
+  },
+
+  validation: {
+    username:    { min: 3,  max: 30,  pattern: '^[a-zA-Z0-9_]+$' },
+    password:    { min: 8,  max: 128 },
+    displayName: { min: 2,  max: 50  },
+    bio:         { max: 160 },
+  },
+};
