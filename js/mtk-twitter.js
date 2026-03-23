@@ -38,14 +38,15 @@ class MTKTwitter {
 
     // App State
     this._state = {
-      screen:   'splash',    // splash | register | login | app
-      user:     null,        // { id, username, display_name, lang, avatar_url, token }
+      screen:   'splash',
+      user:     null,
       tweets:   [],
       userLang: 'en',
-      transCache: {},        // tweetId_lang → translated text
+      transCache: {},
       pollTimer: null,
       ws: null,
       activeNav: 'home',
+      theme: 'dark',        // 'dark' | 'light' — overwritten by _initTheme()
     };
 
     this._waitForElement(selector).then(el => {
@@ -73,6 +74,7 @@ class MTKTwitter {
 
   // ── Boot ────────────────────────────────────────────────────
   _boot() {
+    this._initTheme();
     // Restore session
     const saved = this._loadSession();
     if (saved) {
@@ -105,6 +107,7 @@ class MTKTwitter {
     this._bindRegister();
     this._bindLogin();
     this._bindApp();
+    this._updateThemeUI();
   }
 
   _renderApp() {
@@ -122,6 +125,7 @@ class MTKTwitter {
     this._bindLogin();
     this._bindApp();
     this._updateAppUser();
+    this._updateThemeUI();
   }
 
   // ── Screen manager ──────────────────────────────────────────
@@ -163,6 +167,14 @@ class MTKTwitter {
                 aria-label="Sign in to Melify">
           <span class="material-icons-round" aria-hidden="true">login</span>
           Sign in
+        </button>
+      </div>
+
+      <div class="mtk-twitter__splash-theme">
+        <span>Appearance:</span>
+        <button id="mtk-splash-theme" aria-label="Toggle light/dark mode">
+          <span class="material-icons-round" id="mtk-splash-theme-icon" aria-hidden="true">light_mode</span>
+          <span id="mtk-splash-theme-label">Light mode</span>
         </button>
       </div>
     </div>`;
@@ -359,6 +371,10 @@ class MTKTwitter {
           <span class="material-icons-round" aria-hidden="true">language</span>
           <span id="mtk-lang-flag">🇺🇸</span>
         </button>
+        <button class="mtk-twitter__theme-toggle" id="mtk-theme-toggle"
+                aria-label="Toggle light/dark mode" title="Toggle theme">
+          <span class="material-icons-round" id="mtk-theme-icon" aria-hidden="true">light_mode</span>
+        </button>
         <img class="mtk-twitter__topbar-avatar" id="mtk-avatar-btn"
              src="${user?.avatar_url || this._cfg.app.avatarBaseUrl + '?img=11'}"
              alt="Your profile" tabindex="0" role="button" aria-haspopup="menu" />
@@ -386,6 +402,11 @@ class MTKTwitter {
                   aria-label="Create new post">
             <span class="material-icons-round" aria-hidden="true">edit</span>
             Post
+          </button>
+          <button class="mtk-twitter__sidebar-theme" id="mtk-sidebar-theme"
+                  aria-label="Toggle light/dark mode">
+            <span class="material-icons-round" id="mtk-sidebar-theme-icon" aria-hidden="true">light_mode</span>
+            <span id="mtk-sidebar-theme-label">Light mode</span>
           </button>
           <div class="mtk-twitter__sidebar-user" tabindex="0" role="button"
                aria-label="Your profile" id="mtk-sidebar-user">
@@ -521,6 +542,10 @@ class MTKTwitter {
       <button class="mtk-twitter__profile-menu-item" id="mtk-menu-lang" role="menuitem">
         <span class="material-icons-round" aria-hidden="true">language</span> Change Language
       </button>
+      <button class="mtk-twitter__profile-menu-item" id="mtk-menu-theme" role="menuitem">
+        <span class="material-icons-round" id="mtk-menu-theme-icon" aria-hidden="true">light_mode</span>
+        <span id="mtk-menu-theme-label">Light mode</span>
+      </button>
       <button class="mtk-twitter__profile-menu-item mtk-twitter__profile-menu-item--danger"
               id="mtk-menu-logout" role="menuitem">
         <span class="material-icons-round" aria-hidden="true">logout</span> Sign Out
@@ -635,6 +660,7 @@ class MTKTwitter {
   _bindSplash() {
     this._on('#mtk-splash-register', 'click', () => this._showScreen('register'));
     this._on('#mtk-splash-login',    'click', () => this._showScreen('login'));
+    this._on('#mtk-splash-theme',    'click', () => this._toggleTheme());
   }
 
   _bindRegister() {
@@ -679,6 +705,11 @@ class MTKTwitter {
       list.addEventListener('click',   e => this._delegateTweetClick(e));
       list.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') this._delegateTweetClick(e); });
     }
+
+    // Theme toggles
+    this._on('#mtk-theme-toggle',  'click', () => this._toggleTheme());
+    this._on('#mtk-sidebar-theme', 'click', () => this._toggleTheme());
+    this._on('#mtk-menu-theme',    'click', () => { this._closeProfileMenu(); this._toggleTheme(); });
 
     // Language picker
     this._on('#mtk-lang-btn',   'click', () => this._openLangModal());
@@ -1270,6 +1301,71 @@ class MTKTwitter {
   // UI HELPERS
   // ════════════════════════════════════════════════════════════
 
+  // ════════════════════════════════════════════════════════════
+  // THEME
+  // ════════════════════════════════════════════════════════════
+
+  _initTheme() {
+    // Load persisted theme, fallback to system preference
+    const saved = localStorage.getItem('mtk-theme');
+    if (saved === 'light' || saved === 'dark') {
+      this._state.theme = saved;
+    } else {
+      // Read system preference
+      this._state.theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    this._applyTheme();
+  }
+
+  _toggleTheme() {
+    this._state.theme = this._state.theme === 'dark' ? 'light' : 'dark';
+    this._applyTheme();
+    try { localStorage.setItem('mtk-theme', this._state.theme); } catch (_) {}
+    this._toast(
+      this._state.theme === 'light' ? 'Light mode on' : 'Dark mode on',
+      this._state.theme === 'light' ? 'light_mode' : 'dark_mode'
+    );
+  }
+
+  _applyTheme() {
+    const isDark = this._state.theme === 'dark';
+    this._root.classList.toggle('mtk-twitter--dark',  isDark);
+    this._root.classList.toggle('mtk-twitter--light', !isDark);
+    this._updateThemeUI();
+  }
+
+  _updateThemeUI() {
+    const isDark = this._state.theme === 'dark';
+    const icon   = isDark ? 'light_mode' : 'dark_mode';
+    const label  = isDark ? 'Light mode' : 'Dark mode';
+
+    // All theme icon/label elements
+    [
+      ['#mtk-theme-icon',          null],
+      ['#mtk-sidebar-theme-icon',  null],
+      ['#mtk-splash-theme-icon',   null],
+      ['#mtk-menu-theme-icon',     null],
+    ].forEach(([sel]) => {
+      const el = this._root.querySelector(sel);
+      if (el) el.textContent = icon;
+    });
+
+    [
+      ['#mtk-sidebar-theme-label', label],
+      ['#mtk-splash-theme-label',  label],
+      ['#mtk-menu-theme-label',    label],
+    ].forEach(([sel, text]) => {
+      const el = this._root.querySelector(sel);
+      if (el) el.textContent = text;
+    });
+
+    // Update aria-labels
+    ['#mtk-theme-toggle','#mtk-sidebar-theme','#mtk-splash-theme','#mtk-menu-theme'].forEach(sel => {
+      const el = this._root.querySelector(sel);
+      if (el) el.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    });
+  }
+
   _updateAppUser() {
     const u = this._state.user;
     if (!u) return;
@@ -1411,17 +1507,35 @@ class MTKTwitter {
   // API
   // ════════════════════════════════════════════════════════════
 
-  async _api(method, path, body) {
+  async _api(method, apiPath, body) {
     const { apiBase } = this._cfg.app;
-    const headers = { 'Content-Type': 'application/json' };
-    if (this._state.user?.token) headers['Authorization'] = `Bearer ${this._state.user.token}`;
+    const headers     = { 'Content-Type': 'application/json' };
+    if (this._state.user?.token) {
+      headers['Authorization'] = 'Bearer ' + this._state.user.token;
+    }
 
     const opts = { method, headers };
     if (body) opts.body = JSON.stringify(body);
 
-    const res = await fetch(`${apiBase}${path}`, opts);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
+    let res;
+    try {
+      res = await fetch(apiBase + apiPath, opts);
+    } catch (networkErr) {
+      throw new Error('Cannot reach server — is it running at ' + apiBase + '?');
+    }
+
+    let data;
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      data = { error: text || ('HTTP ' + res.status) };
+    }
+
+    if (!res.ok) {
+      throw new Error(data.error || data.message || ('Server error HTTP ' + res.status));
+    }
     return data;
   }
 

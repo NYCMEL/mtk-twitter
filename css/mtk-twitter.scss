@@ -1,67 +1,201 @@
 // ================================================================
 // mtk-twitter.scss
 // ALL styles strictly scoped to .mtk-twitter
-// Mobile-first · Material Design · Dark Theme
+// Mobile-first · Material Design · Light + Dark Mode
 // Fonts: DM Sans (display) + Source Serif 4 (body)
+// Theme: .mtk-twitter--dark / .mtk-twitter--light
+// System prefers-color-scheme respected when no class set
 // ================================================================
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Source+Serif+4:wght@300;400;600&display=swap');
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
 
-// ── Tokens ──────────────────────────────────────────────────────
-$bg:              #080c12;
-$surface:         #0e1420;
-$surface-2:       #141c2a;
-$surface-3:       #1a2438;
-$border:          #1e2c40;
-$border-light:    #263348;
+// ── Static tokens (mode-independent) ────────────────────────────
+$primary-light:  #0ea5e9;
+$primary-dark:   #38bdf8;
+$primary-dim:    #0369a1;
 
-$primary:         #38bdf8;
-$primary-dim:     #0369a1;
-$primary-glow:    rgba(56, 189, 248, 0.15);
+$accent-light:   #6366f1;
+$accent-dark:    #818cf8;
 
-$accent:          #818cf8;
-$accent-dim:      rgba(129, 140, 248, 0.12);
+$like:           #f43f5e;
+$retweet:        #10b981;
+$bookmark:       #f59e0b;
+$success:        #10b981;
+$error:          #ef4444;
+$warning:        #f59e0b;
 
-$like:            #fb7185;
-$retweet:         #34d399;
-$bookmark:        #fbbf24;
+$radius-xs:      4px;
+$radius-sm:      8px;
+$radius-md:      14px;
+$radius-lg:      20px;
+$radius-xl:      28px;
+$radius-full:    9999px;
 
-$text-1:          #e2e8f0;
-$text-2:          #94a3b8;
-$text-3:          #475569;
-$text-muted:      #334155;
+$font-display:   'DM Sans', sans-serif;
+$font-body:      'Source Serif 4', serif;
+$font-ui:        'DM Sans', sans-serif;
 
-$success:         #34d399;
-$error:           #f87171;
-$warning:         #fbbf24;
+$ease-out:       cubic-bezier(0.22, 1, 0.36, 1);
+$ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+$t-fast:         0.14s;
+$t-med:          0.22s;
+$t-slow:         0.35s;
 
-$radius-xs:       4px;
-$radius-sm:       8px;
-$radius-md:       14px;
-$radius-lg:       20px;
-$radius-xl:       28px;
-$radius-full:     9999px;
+// ================================================================
+// DARK THEME VARIABLES (default)
+// ================================================================
+.mtk-twitter {
+  --bg:           #080c12;
+  --surface:      #0e1420;
+  --surface-2:    #141c2a;
+  --surface-3:    #1a2438;
+  --border:       #1e2c40;
+  --border-light: #263348;
 
-$font-display:    'DM Sans', sans-serif;
-$font-body:       'Source Serif 4', serif;
-$font-ui:         'DM Sans', sans-serif;
+  --primary:      #{$primary-dark};
+  --primary-dim:  #{$primary-dim};
+  --primary-glow: rgba(56,189,248,0.15);
 
-$ease-out:        cubic-bezier(0.22, 1, 0.36, 1);
-$ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
-$t-fast:          0.14s;
-$t-med:           0.22s;
-$t-slow:          0.35s;
+  --accent:       #{$accent-dark};
+  --accent-dim:   rgba(129,140,248,0.12);
 
+  --text-1:       #e2e8f0;
+  --text-2:       #94a3b8;
+  --text-3:       #475569;
+  --text-muted:   #334155;
+
+  --topbar-bg:    rgba(8,12,18,0.88);
+  --modal-bg:     rgba(8,12,18,0.80);
+  --skel:         #141c2a;
+  --scroll:       #1e2c40;
+
+  --theme-icon:   'light_mode';
+}
+
+// ================================================================
+// LIGHT THEME — explicit class
+// ================================================================
+.mtk-twitter--light {
+  --bg:           #f8fafc;
+  --surface:      #ffffff;
+  --surface-2:    #f1f5f9;
+  --surface-3:    #e8eef5;
+  --border:       #e2e8f0;
+  --border-light: #cbd5e1;
+
+  --primary:      #{$primary-light};
+  --primary-dim:  #{$primary-dim};
+  --primary-glow: rgba(14,165,233,0.12);
+
+  --accent:       #{$accent-light};
+  --accent-dim:   rgba(99,102,241,0.10);
+
+  --text-1:       #0f172a;
+  --text-2:       #475569;
+  --text-3:       #94a3b8;
+  --text-muted:   #cbd5e1;
+
+  --topbar-bg:    rgba(248,250,252,0.88);
+  --modal-bg:     rgba(15,23,42,0.50);
+  --skel:         #e8eef5;
+  --scroll:       #cbd5e1;
+
+  --theme-icon:   'dark_mode';
+}
+
+// ================================================================
+// DARK — explicit class (overrides system)
+// ================================================================
+.mtk-twitter--dark {
+  --bg:           #080c12;
+  --surface:      #0e1420;
+  --surface-2:    #141c2a;
+  --surface-3:    #1a2438;
+  --border:       #1e2c40;
+  --border-light: #263348;
+
+  --primary:      #{$primary-dark};
+  --primary-dim:  #{$primary-dim};
+  --primary-glow: rgba(56,189,248,0.15);
+
+  --accent:       #{$accent-dark};
+  --accent-dim:   rgba(129,140,248,0.12);
+
+  --text-1:       #e2e8f0;
+  --text-2:       #94a3b8;
+  --text-3:       #475569;
+  --text-muted:   #334155;
+
+  --topbar-bg:    rgba(8,12,18,0.88);
+  --modal-bg:     rgba(8,12,18,0.80);
+  --skel:         #141c2a;
+  --scroll:       #1e2c40;
+
+  --theme-icon:   'light_mode';
+}
+
+// ================================================================
+// SYSTEM PREFERENCE — light (only when no explicit class set)
+// ================================================================
+@media (prefers-color-scheme: light) {
+  .mtk-twitter:not(.mtk-twitter--dark):not(.mtk-twitter--light) {
+    --bg:           #f8fafc;
+    --surface:      #ffffff;
+    --surface-2:    #f1f5f9;
+    --surface-3:    #e8eef5;
+    --border:       #e2e8f0;
+    --border-light: #cbd5e1;
+
+    --primary:      #{$primary-light};
+    --primary-dim:  #{$primary-dim};
+    --primary-glow: rgba(14,165,233,0.12);
+
+    --accent:       #{$accent-light};
+    --accent-dim:   rgba(99,102,241,0.10);
+
+    --text-1:       #0f172a;
+    --text-2:       #475569;
+    --text-3:       #94a3b8;
+    --text-muted:   #cbd5e1;
+
+    --topbar-bg:    rgba(248,250,252,0.88);
+    --modal-bg:     rgba(15,23,42,0.50);
+    --skel:         #e8eef5;
+    --scroll:       #cbd5e1;
+
+    --theme-icon:   'dark_mode';
+  }
+}
+
+// ================================================================
+// COMPONENT — all colors via var()
 // ================================================================
 .mtk-twitter {
   display: block;
   font-family: $font-ui;
-  background: $bg;
-  color: $text-1;
+  background: var(--bg);
+  color: var(--text-1);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  // Theme transition on the root and all descendants
+  &,
+  & * {
+    transition:
+      background-color $t-med,
+      color $t-med,
+      border-color $t-med,
+      box-shadow $t-med;
+  }
+
+  // Exclude animation-bearing elements from blanket transition
+  & *[class*='__skeleton'],
+  & *[class*='__toast'],
+  & *[class*='__btn-spinner'] {
+    transition: none;
+  }
 
   *, *::before, *::after { box-sizing: border-box; }
 
@@ -72,20 +206,78 @@ $t-slow:          0.35s;
     clip: rect(0,0,0,0); white-space: nowrap; border: 0;
   }
 
-  // ── SCREEN MANAGER ───────────────────────────────────────────
-  // Screens: splash · register · login · app
+  // ── Screen manager ────────────────────────────────────────────
   &__screen {
     display: none;
     min-height: 100vh;
-
     &--active { display: flex; flex-direction: column; }
   }
 
+  // ── Theme toggle button (topbar / mobile) ─────────────────────
+  &__theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-2);
+    cursor: pointer;
+    flex-shrink: 0;
+
+    .material-icons-round { font-size: 1.1rem; }
+
+    &:hover {
+      background: var(--surface-3);
+      color: var(--primary);
+      border-color: var(--primary);
+      // rotation is a transform — exempt from blanket transition
+      transition:
+        background-color $t-fast,
+        color $t-fast,
+        border-color $t-fast,
+        transform $t-med $ease-spring;
+      transform: rotate(20deg);
+    }
+
+    &:active { transform: rotate(0deg) scale(0.92); }
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 50%; }
+  }
+
+  // ── Theme toggle (desktop sidebar) ────────────────────────────
+  &__sidebar-theme {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: $radius-full;
+    border: none;
+    background: none;
+    color: var(--text-2);
+    font-family: $font-ui;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+
+    .material-icons-round { font-size: 1.25rem; }
+
+    &:hover {
+      background: var(--surface-2);
+      color: var(--primary);
+    }
+
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; border-radius: $radius-full; }
+  }
+
   // ================================================================
-  // SPLASH SCREEN
+  // SPLASH
   // ================================================================
   &__splash {
-    background: $bg;
+    background: var(--bg);
     overflow: hidden;
     position: relative;
     align-items: center;
@@ -98,8 +290,8 @@ $t-slow:          0.35s;
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse 70% 50% at 15% 20%, rgba(56,189,248,0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 85% 80%, rgba(129,140,248,0.05) 0%, transparent 60%);
+        radial-gradient(ellipse 70% 50% at 15% 20%, var(--primary-glow) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 85% 80%, var(--accent-dim) 0%, transparent 60%);
       pointer-events: none;
     }
   }
@@ -114,14 +306,13 @@ $t-slow:          0.35s;
     .brand-icon {
       width: 72px;
       height: 72px;
-      background: linear-gradient(135deg, $primary-dim, $primary);
+      background: linear-gradient(135deg, var(--primary-dim), var(--primary));
       border-radius: $radius-xl;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 16px;
-      box-shadow: 0 0 32px rgba(56,189,248,0.25), 0 8px 24px rgba(0,0,0,0.4);
-
+      box-shadow: 0 0 32px var(--primary-glow), 0 8px 24px rgba(0,0,0,0.15);
       .material-icons-round { font-size: 2.2rem; color: #fff; }
     }
 
@@ -130,23 +321,13 @@ $t-slow:          0.35s;
       font-size: 2.6rem;
       font-weight: 800;
       letter-spacing: -1.5px;
-      color: $text-1;
       margin: 0 0 6px;
-      background: linear-gradient(135deg, $text-1 40%, $primary);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--primary);
     }
 
-    p {
-      font-size: 0.9rem;
-      color: $text-2;
-      margin: 0;
-      text-align: center;
-    }
+    p { font-size: 0.9rem; color: var(--text-2); margin: 0; text-align: center; }
   }
 
-  // Demo feed preview on splash
   &__splash-preview {
     width: 100%;
     max-width: 420px;
@@ -158,18 +339,13 @@ $t-slow:          0.35s;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: $text-3;
+      color: var(--text-3);
       margin-bottom: 10px;
       display: flex;
       align-items: center;
       gap: 6px;
 
-      &::before, &::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: $border;
-      }
+      &::before, &::after { content: ''; flex: 1; height: 1px; background: var(--border); }
     }
   }
 
@@ -182,22 +358,46 @@ $t-slow:          0.35s;
     animation: slide-up $t-slow 0.2s $ease-out both;
   }
 
+  // Theme toggle row on splash
+  &__splash-theme {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slide-up $t-slow 0.3s $ease-out both;
+
+    span { font-size: 0.78rem; color: var(--text-3); }
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: $radius-full;
+      color: var(--text-2);
+      font-family: $font-ui;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 14px 5px 10px;
+      cursor: pointer;
+      .material-icons-round { font-size: 0.95rem; }
+
+      &:hover { border-color: var(--primary); color: var(--primary); background: var(--surface-3); }
+      &:focus-visible { outline: 2px solid var(--primary); border-radius: $radius-full; }
+    }
+  }
+
   &__splash-tweet {
-    background: $surface;
-    border: 1px solid $border;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: $radius-md;
     padding: 12px 14px;
     margin-bottom: 8px;
     display: flex;
     gap: 10px;
 
-    img {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
+    img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 
     .st-body {
       flex: 1;
@@ -210,27 +410,20 @@ $t-slow:          0.35s;
         margin-bottom: 4px;
         flex-wrap: wrap;
 
-        .st-name { font-weight: 700; font-size: 0.82rem; }
-        .st-handle { font-size: 0.76rem; color: $text-3; }
-        .st-flag {
-          font-size: 0.75rem;
-          background: $accent-dim;
-          color: $accent;
-          padding: 1px 6px;
-          border-radius: $radius-full;
-          margin-left: auto;
-        }
+        .st-name   { font-weight: 700; font-size: 0.82rem; color: var(--text-1); }
+        .st-handle { font-size: 0.76rem; color: var(--text-3); }
+        .st-flag   { font-size: 0.75rem; background: var(--accent-dim); color: var(--accent); padding: 1px 6px; border-radius: $radius-full; margin-left: auto; }
       }
 
-      .st-text { font-size: 0.84rem; color: $text-2; line-height: 1.5; }
+      .st-text { font-size: 0.84rem; color: var(--text-2); line-height: 1.5; }
     }
   }
 
   // ================================================================
-  // AUTH SCREENS (Login + Register)
+  // AUTH
   // ================================================================
   &__auth {
-    background: $bg;
+    background: var(--bg);
     align-items: center;
     justify-content: flex-start;
     padding: 0;
@@ -240,11 +433,9 @@ $t-slow:          0.35s;
     &::before {
       content: '';
       position: absolute;
-      top: -20%;
-      left: -20%;
-      width: 80%;
-      height: 60%;
-      background: radial-gradient(ellipse, rgba(56,189,248,0.06) 0%, transparent 70%);
+      top: -20%; left: -20%;
+      width: 80%; height: 60%;
+      background: radial-gradient(ellipse, var(--primary-glow) 0%, transparent 70%);
       pointer-events: none;
     }
   }
@@ -259,7 +450,6 @@ $t-slow:          0.35s;
     flex-direction: column;
     justify-content: center;
     animation: slide-up $t-slow $ease-out both;
-
     @media (min-width: 480px) { padding: 48px 40px; }
   }
 
@@ -269,17 +459,16 @@ $t-slow:          0.35s;
     gap: 6px;
     background: none;
     border: none;
-    color: $text-2;
+    color: var(--text-2);
     font-size: 0.85rem;
     font-family: $font-ui;
     cursor: pointer;
     padding: 0;
     margin-bottom: 32px;
-    transition: color $t-fast;
 
     .material-icons-round { font-size: 1.1rem; }
-    &:hover { color: $primary; }
-    &:focus-visible { outline: 2px solid $primary; border-radius: $radius-xs; }
+    &:hover { color: var(--primary); }
+    &:focus-visible { outline: 2px solid var(--primary); border-radius: $radius-xs; }
   }
 
   &__auth-logo {
@@ -289,9 +478,8 @@ $t-slow:          0.35s;
     margin-bottom: 8px;
 
     .al-icon {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, $primary-dim, $primary);
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--primary-dim), var(--primary));
       border-radius: $radius-sm;
       display: flex;
       align-items: center;
@@ -299,32 +487,13 @@ $t-slow:          0.35s;
       .material-icons-round { font-size: 1.3rem; color: #fff; }
     }
 
-    span {
-      font-family: $font-display;
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      color: $text-1;
-    }
+    span { font-family: $font-display; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; color: var(--text-1); }
   }
 
-  &__auth-heading {
-    font-family: $font-display;
-    font-size: 1.7rem;
-    font-weight: 800;
-    letter-spacing: -0.8px;
-    color: $text-1;
-    margin: 0 0 6px;
-  }
+  &__auth-heading    { font-family: $font-display; font-size: 1.7rem; font-weight: 800; letter-spacing: -0.8px; color: var(--text-1); margin: 0 0 6px; }
+  &__auth-subheading { font-size: 0.88rem; color: var(--text-2); margin: 0 0 28px; line-height: 1.5; }
 
-  &__auth-subheading {
-    font-size: 0.88rem;
-    color: $text-2;
-    margin: 0 0 28px;
-    line-height: 1.5;
-  }
-
-  // ── Form Fields ─────────────────────────────────────────────
+  // ── Fields ───────────────────────────────────────────────────
   &__field {
     margin-bottom: 16px;
 
@@ -334,7 +503,7 @@ $t-slow:          0.35s;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.07em;
-      color: $text-2;
+      color: var(--text-2);
       margin-bottom: 6px;
     }
 
@@ -346,41 +515,38 @@ $t-slow:          0.35s;
       .field-icon {
         position: absolute;
         left: 12px;
-        color: $text-3;
+        color: var(--text-3);
         font-size: 1.1rem;
         pointer-events: none;
-        transition: color $t-fast;
       }
 
       input, select {
         width: 100%;
-        background: $surface-2;
-        border: 1.5px solid $border;
+        background: var(--surface-2);
+        border: 1.5px solid var(--border);
         border-radius: $radius-sm;
-        color: $text-1;
+        color: var(--text-1);
         font-family: $font-ui;
         font-size: 0.92rem;
         padding: 12px 12px 12px 40px;
         outline: none;
-        transition: border-color $t-fast, background $t-fast, box-shadow $t-fast;
         -webkit-appearance: none;
         appearance: none;
 
-        &::placeholder { color: $text-3; }
+        &::placeholder { color: var(--text-muted); }
 
         &:focus {
-          border-color: $primary;
-          background: $surface-3;
-          box-shadow: 0 0 0 3px $primary-glow;
-          & ~ .field-icon { color: $primary; }
+          border-color: var(--primary);
+          background: var(--surface-3);
+          box-shadow: 0 0 0 3px var(--primary-glow);
         }
 
         &[data-error='true'] {
           border-color: $error;
-          box-shadow: 0 0 0 3px rgba(248,113,113,0.12);
+          box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
         }
 
-        option { background: $surface-2; }
+        option { background: var(--surface-2); color: var(--text-1); }
       }
 
       .field-toggle {
@@ -388,41 +554,26 @@ $t-slow:          0.35s;
         right: 12px;
         background: none;
         border: none;
-        color: $text-3;
+        color: var(--text-3);
         cursor: pointer;
         display: flex;
         align-items: center;
         padding: 0;
-        transition: color $t-fast;
-
-        &:hover { color: $text-2; }
-        &:focus-visible { outline: 2px solid $primary; border-radius: 2px; }
+        &:hover { color: var(--text-2); }
+        &:focus-visible { outline: 2px solid var(--primary); border-radius: 2px; }
       }
     }
 
-    &-hint {
-      font-size: 0.73rem;
-      color: $text-3;
-      margin-top: 4px;
-    }
-
-    &-error {
-      font-size: 0.73rem;
-      color: $error;
-      margin-top: 4px;
-      display: none;
-
-      &--visible { display: block; }
-    }
+    &-hint  { font-size: 0.73rem; color: var(--text-3); margin-top: 4px; }
+    &-error { font-size: 0.73rem; color: $error; margin-top: 4px; display: none; &--visible { display: block; } }
   }
 
-  // Password strength bar
   &__pw-strength {
     margin-top: 8px;
 
     &-bar {
       height: 3px;
-      background: $border;
+      background: var(--border);
       border-radius: $radius-full;
       overflow: hidden;
       margin-bottom: 4px;
@@ -430,60 +581,40 @@ $t-slow:          0.35s;
       &-fill {
         height: 100%;
         border-radius: $radius-full;
-        transition: width $t-med, background $t-med;
         width: 0%;
-
         &--weak   { background: $error;   width: 25%; }
         &--fair   { background: $warning; width: 50%; }
-        &--good   { background: $primary; width: 75%; }
+        &--good   { background: var(--primary); width: 75%; }
         &--strong { background: $success; width: 100%; }
       }
     }
 
     &-label {
       font-size: 0.7rem;
-      color: $text-3;
-
+      color: var(--text-3);
       &--weak   { color: $error;   }
       &--fair   { color: $warning; }
-      &--good   { color: $primary; }
+      &--good   { color: var(--primary); }
       &--strong { color: $success; }
     }
   }
 
-  // Lang selector in register
   &__lang-field {
     margin-bottom: 16px;
 
-    label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: $text-2;
-      margin-bottom: 6px;
-    }
+    label { display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-2); margin-bottom: 6px; }
 
     &-wrap {
       position: relative;
 
-      .material-icons-round {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: $text-3;
-        font-size: 1.1rem;
-        pointer-events: none;
-      }
+      .material-icons-round { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 1.1rem; pointer-events: none; }
 
       select {
         width: 100%;
-        background: $surface-2;
-        border: 1.5px solid $border;
+        background: var(--surface-2);
+        border: 1.5px solid var(--border);
         border-radius: $radius-sm;
-        color: $text-1;
+        color: var(--text-1);
         font-family: $font-ui;
         font-size: 0.92rem;
         padding: 12px 12px 12px 40px;
@@ -491,15 +622,9 @@ $t-slow:          0.35s;
         -webkit-appearance: none;
         appearance: none;
         cursor: pointer;
-        transition: border-color $t-fast, background $t-fast, box-shadow $t-fast;
 
-        option { background: $surface-2; }
-
-        &:focus {
-          border-color: $primary;
-          background: $surface-3;
-          box-shadow: 0 0 0 3px $primary-glow;
-        }
+        option { background: var(--surface-2); color: var(--text-1); }
+        &:focus { border-color: var(--primary); background: var(--surface-3); box-shadow: 0 0 0 3px var(--primary-glow); }
       }
 
       &::after {
@@ -509,14 +634,14 @@ $t-slow:          0.35s;
         right: 12px;
         top: 50%;
         transform: translateY(-50%);
-        color: $text-3;
+        color: var(--text-3);
         pointer-events: none;
         font-size: 1.1rem;
       }
     }
   }
 
-  // ── Auth Buttons ─────────────────────────────────────────────
+  // ── Auth Buttons ──────────────────────────────────────────────
   &__btn {
     display: flex;
     align-items: center;
@@ -530,56 +655,44 @@ $t-slow:          0.35s;
     font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
-    transition: transform $t-fast, opacity $t-fast, box-shadow $t-fast;
     text-decoration: none;
 
-    &:focus-visible { outline: 2px solid $primary; outline-offset: 3px; }
-
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
     &:active { transform: scale(0.98); }
 
     &--primary {
-      background: linear-gradient(135deg, $primary-dim 0%, $primary 100%);
+      background: linear-gradient(135deg, var(--primary-dim) 0%, var(--primary) 100%);
       color: #fff;
-      box-shadow: 0 4px 16px rgba(56,189,248,0.2);
-
-      &:hover:not(:disabled) { opacity: 0.9; box-shadow: 0 6px 24px rgba(56,189,248,0.3); }
+      box-shadow: 0 4px 16px var(--primary-glow);
+      &:hover:not(:disabled) { opacity: 0.9; box-shadow: 0 6px 24px var(--primary-glow); }
     }
 
     &--outline {
       background: transparent;
-      border: 1.5px solid $border-light;
-      color: $text-1;
-
-      &:hover:not(:disabled) { background: $surface-2; border-color: $primary; color: $primary; }
+      border: 1.5px solid var(--border-light);
+      color: var(--text-1);
+      &:hover:not(:disabled) { background: var(--surface-2); border-color: var(--primary); color: var(--primary); }
     }
 
     &--ghost {
       background: transparent;
-      color: $primary;
+      color: var(--primary);
       width: auto;
       padding: 8px 0;
       font-size: 0.88rem;
-
       &:hover { text-decoration: underline; }
     }
 
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      transform: none !important;
-    }
-
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
     .material-icons-round { font-size: 1.1rem; }
 
     &-spinner {
-      width: 16px;
-      height: 16px;
+      width: 16px; height: 16px;
       border: 2px solid rgba(255,255,255,0.3);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
       display: none;
-
       &--visible { display: block; }
     }
   }
@@ -590,41 +703,33 @@ $t-slow:          0.35s;
     gap: 12px;
     margin: 20px 0;
     font-size: 0.78rem;
-    color: $text-3;
-
-    &::before, &::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: $border;
-    }
+    color: var(--text-3);
+    &::before, &::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   }
 
   &__auth-switch {
     text-align: center;
     margin-top: 20px;
     font-size: 0.85rem;
-    color: $text-2;
+    color: var(--text-2);
 
     button {
       background: none;
       border: none;
-      color: $primary;
+      color: var(--primary);
       font-family: $font-ui;
       font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
       padding: 0;
       text-decoration: underline;
-
-      &:focus-visible { outline: 2px solid $primary; border-radius: 2px; }
+      &:focus-visible { outline: 2px solid var(--primary); border-radius: 2px; }
     }
   }
 
-  // ── Form-level error ─────────────────────────────────────────
   &__form-error {
-    background: rgba(248,113,113,0.08);
-    border: 1px solid rgba(248,113,113,0.3);
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.3);
     border-radius: $radius-sm;
     padding: 10px 14px;
     font-size: 0.84rem;
@@ -633,7 +738,6 @@ $t-slow:          0.35s;
     align-items: center;
     gap: 8px;
     margin-bottom: 16px;
-
     &--visible { display: flex; }
     .material-icons-round { font-size: 1rem; flex-shrink: 0; }
   }
@@ -641,25 +745,21 @@ $t-slow:          0.35s;
   // ================================================================
   // APP SCREEN
   // ================================================================
-  &__app {
-    flex-direction: column;
-    position: relative;
-  }
+  &__app { flex-direction: column; position: relative; }
 
-  // ── Top Bar (mobile) ──────────────────────────────────────────
   &__topbar {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba($bg, 0.9);
+    background: var(--topbar-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid $border;
-    padding: 0 16px;
+    border-bottom: 1px solid var(--border);
+    padding: 0 12px;
     height: 56px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 
     &-brand {
       display: flex;
@@ -668,71 +768,52 @@ $t-slow:          0.35s;
       font-family: $font-display;
       font-weight: 800;
       font-size: 1.15rem;
-      color: $text-1;
+      color: var(--text-1);
       letter-spacing: -0.4px;
-
-      .material-icons-round { color: $primary; font-size: 1.4rem; }
-
+      .material-icons-round { color: var(--primary); font-size: 1.4rem; }
       @media (min-width: 768px) { display: none; }
     }
 
     &-title {
       flex: 1;
-      text-align: center;
       font-family: $font-display;
       font-weight: 700;
       font-size: 1rem;
-      color: $text-1;
-
-      @media (min-width: 768px) {
-        text-align: left;
-        font-size: 1.1rem;
-      }
+      color: var(--text-1);
+      text-align: center;
+      @media (min-width: 768px) { text-align: left; font-size: 1.1rem; }
     }
 
     &-lang {
       display: flex;
       align-items: center;
       gap: 6px;
-      background: $surface-2;
-      border: 1px solid $border;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
       border-radius: $radius-full;
       padding: 5px 10px 5px 8px;
       cursor: pointer;
-      color: $text-2;
+      color: var(--text-2);
       font-size: 0.78rem;
       font-weight: 600;
-      transition: border-color $t-fast, color $t-fast;
-
-      .material-icons-round { font-size: 0.95rem; color: $primary; }
-      &:hover { border-color: $primary; color: $primary; }
-      &:focus-visible { outline: 2px solid $primary; }
+      .material-icons-round { font-size: 0.95rem; color: var(--primary); }
+      &:hover { border-color: var(--primary); color: var(--primary); }
+      &:focus-visible { outline: 2px solid var(--primary); }
     }
 
     &-avatar {
-      width: 32px;
-      height: 32px;
+      width: 32px; height: 32px;
       border-radius: 50%;
       object-fit: cover;
       cursor: pointer;
-      border: 2px solid $border;
-      transition: border-color $t-fast;
+      border: 2px solid var(--border);
       flex-shrink: 0;
-
-      &:hover { border-color: $primary; }
+      &:hover { border-color: var(--primary); }
     }
   }
 
-  // ── App Layout (desktop: sidebar + content + sidebar-right) ──
-  &__app-layout {
-    display: flex;
-    flex: 1;
-    max-width: 1200px;
-    margin: 0 auto;
-    width: 100%;
-  }
+  &__app-layout { display: flex; flex: 1; max-width: 1200px; margin: 0 auto; width: 100%; }
 
-  // ── Left Sidebar (desktop only) ───────────────────────────────
   &__sidebar {
     display: none;
     width: 240px;
@@ -742,12 +823,11 @@ $t-slow:          0.35s;
     height: calc(100vh - 56px);
     overflow-y: auto;
     padding: 16px 12px;
-    border-right: 1px solid $border;
+    border-right: 1px solid var(--border);
     flex-direction: column;
     gap: 4px;
 
-    @media (min-width: 768px) { display: flex; }
-
+    @media (min-width: 768px)  { display: flex; }
     @media (min-width: 1024px) { width: 260px; }
   }
 
@@ -759,18 +839,12 @@ $t-slow:          0.35s;
     font-family: $font-display;
     font-weight: 800;
     font-size: 1.3rem;
-    color: $text-1;
+    color: var(--text-1);
     letter-spacing: -0.5px;
-
-    .material-icons-round { color: $primary; font-size: 1.7rem; }
+    .material-icons-round { color: var(--primary); font-size: 1.7rem; }
   }
 
-  &__nav {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-  }
+  &__nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 
   &__nav-item {
     display: flex;
@@ -780,25 +854,18 @@ $t-slow:          0.35s;
     border-radius: $radius-full;
     background: none;
     border: none;
-    color: $text-2;
+    color: var(--text-2);
     font-family: $font-ui;
     font-size: 0.92rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background $t-fast, color $t-fast;
     text-align: left;
     width: 100%;
 
     .material-icons-round { font-size: 1.35rem; }
-
-    &:hover { background: $surface-2; color: $text-1; }
-    &:focus-visible { outline: 2px solid $primary; outline-offset: -2px; }
-
-    &--active {
-      color: $primary;
-      font-weight: 700;
-      background: $primary-glow;
-    }
+    &:hover { background: var(--surface-2); color: var(--text-1); }
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+    &--active { color: var(--primary); font-weight: 700; background: var(--primary-glow); }
   }
 
   &__sidebar-post-btn {
@@ -808,7 +875,7 @@ $t-slow:          0.35s;
     justify-content: center;
     gap: 8px;
     padding: 13px 20px;
-    background: linear-gradient(135deg, $primary-dim, $primary);
+    background: linear-gradient(135deg, var(--primary-dim), var(--primary));
     color: #fff;
     border: none;
     border-radius: $radius-full;
@@ -816,12 +883,11 @@ $t-slow:          0.35s;
     font-weight: 800;
     font-size: 0.92rem;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(56,189,248,0.2);
-    transition: opacity $t-fast, box-shadow $t-fast, transform $t-fast;
+    box-shadow: 0 4px 16px var(--primary-glow);
 
     &:hover { opacity: 0.9; transform: translateY(-1px); }
     &:active { transform: translateY(0); }
-    &:focus-visible { outline: 2px solid $primary; outline-offset: 3px; }
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
     .material-icons-round { font-size: 1.15rem; }
   }
 
@@ -832,35 +898,24 @@ $t-slow:          0.35s;
     padding: 10px 12px;
     border-radius: $radius-md;
     cursor: pointer;
-    transition: background $t-fast;
     margin-top: auto;
+    &:hover { background: var(--surface-2); }
 
-    &:hover { background: $surface-2; }
-
-    img {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
+    img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 
     .su-info {
-      flex: 1;
-      min-width: 0;
-      .su-name { font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .su-handle { font-size: 0.75rem; color: $text-3; }
+      flex: 1; min-width: 0;
+      .su-name   { font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-1); }
+      .su-handle { font-size: 0.75rem; color: var(--text-3); }
     }
 
-    .material-icons-round { color: $text-3; font-size: 1rem; }
+    .material-icons-round { color: var(--text-3); font-size: 1rem; }
   }
 
-  // ── Main Feed ─────────────────────────────────────────────────
   &__feed {
     flex: 1;
     min-width: 0;
-    border-right: 1px solid $border;
-
+    border-right: 1px solid var(--border);
     @media (min-width: 1024px) { max-width: 600px; }
   }
 
@@ -868,56 +923,40 @@ $t-slow:          0.35s;
     position: sticky;
     top: 56px;
     z-index: 50;
-    background: rgba($bg, 0.88);
+    background: var(--topbar-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid var(--border);
     padding: 14px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    h2 {
-      font-family: $font-display;
-      font-weight: 800;
-      font-size: 1.05rem;
-      margin: 0;
-      color: $text-1;
-      letter-spacing: -0.3px;
-    }
+    h2 { font-family: $font-display; font-weight: 800; font-size: 1.05rem; margin: 0; color: var(--text-1); letter-spacing: -0.3px; }
 
     &-lang {
       display: flex;
       align-items: center;
       gap: 5px;
       font-size: 0.73rem;
-      color: $primary;
+      color: var(--primary);
       font-weight: 600;
-      background: $primary-glow;
+      background: var(--primary-glow);
       padding: 3px 10px;
       border-radius: $radius-full;
-
       .material-icons-round { font-size: 0.85rem; }
     }
   }
 
-  // ── Compose Box ───────────────────────────────────────────────
   &__compose {
     display: flex;
     gap: 12px;
     padding: 14px 16px;
-    border-bottom: 1px solid $border;
-    background: $surface;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
 
-    &-avatar {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-
-    &-inner { flex: 1; min-width: 0; }
+    &-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    &-inner  { flex: 1; min-width: 0; }
 
     &-lang-pill {
       display: inline-flex;
@@ -925,8 +964,8 @@ $t-slow:          0.35s;
       gap: 4px;
       font-size: 0.7rem;
       font-weight: 700;
-      color: $primary;
-      background: $primary-glow;
+      color: var(--primary);
+      background: var(--primary-glow);
       padding: 2px 8px;
       border-radius: $radius-full;
       margin-bottom: 8px;
@@ -937,15 +976,14 @@ $t-slow:          0.35s;
       width: 100%;
       background: transparent;
       border: none;
-      color: $text-1;
+      color: var(--text-1);
       font-family: $font-body;
       font-size: 0.95rem;
       line-height: 1.55;
       resize: none;
       outline: none;
       min-height: 64px;
-
-      &::placeholder { color: $text-muted; }
+      &::placeholder { color: var(--text-muted); }
     }
 
     &-footer {
@@ -954,28 +992,25 @@ $t-slow:          0.35s;
       justify-content: space-between;
       margin-top: 8px;
       padding-top: 10px;
-      border-top: 1px solid $border;
+      border-top: 1px solid var(--border);
     }
 
     &-tools {
       display: flex;
       gap: 2px;
-
       button {
-        width: 34px;
-        height: 34px;
+        width: 34px; height: 34px;
         border-radius: 50%;
         border: none;
         background: none;
-        color: $primary;
+        color: var(--primary);
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: background $t-fast;
         .material-icons-round { font-size: 1rem; }
-        &:hover { background: $primary-glow; }
-        &:focus-visible { outline: 2px solid $primary; }
+        &:hover { background: var(--primary-glow); }
+        &:focus-visible { outline: 2px solid var(--primary); }
       }
     }
 
@@ -985,16 +1020,14 @@ $t-slow:          0.35s;
       gap: 10px;
 
       .char-count {
-        font-size: 0.75rem;
-        color: $text-3;
-        font-weight: 600;
-        &--warn { color: $warning; }
+        font-size: 0.75rem; color: var(--text-3); font-weight: 600;
+        &--warn   { color: $warning; }
         &--danger { color: $error; }
       }
 
       .post-btn {
         padding: 7px 18px;
-        background: linear-gradient(135deg, $primary-dim, $primary);
+        background: linear-gradient(135deg, var(--primary-dim), var(--primary));
         color: #fff;
         border: none;
         border-radius: $radius-full;
@@ -1002,70 +1035,45 @@ $t-slow:          0.35s;
         font-weight: 800;
         font-size: 0.85rem;
         cursor: pointer;
-        transition: opacity $t-fast, transform $t-fast;
-
         &:hover:not(:disabled) { opacity: 0.88; }
         &:disabled { opacity: 0.35; cursor: not-allowed; }
-        &:focus-visible { outline: 2px solid $primary; outline-offset: 3px; }
+        &:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
       }
     }
   }
 
-  // ── Tweet List ────────────────────────────────────────────────
-  &__tweet-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
+  &__tweet-list { list-style: none; margin: 0; padding: 0; }
 
   &__tweet {
     display: flex;
     gap: 12px;
     padding: 14px 16px;
-    border-bottom: 1px solid $border;
-    transition: background $t-fast;
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
     animation: tweet-in $t-med $ease-out both;
 
-    &:hover { background: rgba(255,255,255,0.015); }
-    &:focus-within { background: rgba(255,255,255,0.02); }
-
+    &:hover     { background: var(--surface-2); }
+    &:focus-within { background: var(--surface-2); }
     &--new { animation: tweet-in 0.4s $ease-spring both; }
 
-    &-avatar {
-      flex-shrink: 0;
-      img {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        object-fit: cover;
-        display: block;
-      }
-    }
+    &-avatar { flex-shrink: 0; img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; display: block; } }
 
     &-body { flex: 1; min-width: 0; }
 
-    &-header {
-      display: flex;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      gap: 3px 6px;
-      margin-bottom: 4px;
-    }
+    &-header { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 3px 6px; margin-bottom: 4px; }
 
     &-name {
       font-weight: 700;
       font-size: 0.88rem;
+      color: var(--text-1);
       display: flex;
       align-items: center;
       gap: 3px;
-
-      .verified { color: $primary; font-size: 0.88rem !important; }
+      .verified { color: var(--primary); font-size: 0.88rem !important; }
     }
 
-    &-handle { font-size: 0.78rem; color: $text-3; }
-
-    &-time { font-size: 0.75rem; color: $text-3; margin-left: auto; }
+    &-handle { font-size: 0.78rem; color: var(--text-3); }
+    &-time   { font-size: 0.75rem; color: var(--text-3); margin-left: auto; }
 
     &-lang-badge {
       display: inline-flex;
@@ -1076,24 +1084,16 @@ $t-slow:          0.35s;
       letter-spacing: 0.04em;
       padding: 1px 6px;
       border-radius: $radius-full;
-      background: $accent-dim;
-      color: $accent;
+      background: var(--accent-dim);
+      color: var(--accent);
       .material-icons-round { font-size: 0.7rem; }
     }
 
-    &-text {
-      font-family: $font-body;
-      font-size: 0.91rem;
-      line-height: 1.58;
-      color: $text-1;
-      margin: 4px 0 8px;
-      word-break: break-word;
-    }
+    &-text { font-family: $font-body; font-size: 0.91rem; line-height: 1.58; color: var(--text-1); margin: 4px 0 8px; word-break: break-word; }
 
-    // Translation panel
     &-translation {
-      background: $surface-3;
-      border-left: 2px solid $accent;
+      background: var(--surface-3);
+      border-left: 2px solid var(--accent);
       border-radius: 0 $radius-xs $radius-xs 0;
       padding: 8px 12px;
       margin: 6px 0;
@@ -1107,30 +1107,25 @@ $t-slow:          0.35s;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: $accent;
+        color: var(--accent);
         margin-bottom: 5px;
         .material-icons-round { font-size: 0.75rem; }
       }
 
-      &-text {
-        font-family: $font-body;
-        font-size: 0.87rem;
-        color: $text-2;
-        line-height: 1.55;
-      }
+      &-text { font-family: $font-body; font-size: 0.87rem; color: var(--text-2); line-height: 1.55; }
 
       &-loading {
         display: flex;
         align-items: center;
         gap: 8px;
         font-size: 0.8rem;
-        color: $text-3;
+        color: var(--text-3);
         font-style: italic;
 
         .spin {
           width: 12px; height: 12px;
-          border: 2px solid $border;
-          border-top-color: $accent;
+          border: 2px solid var(--border);
+          border-top-color: var(--accent);
           border-radius: 50%;
           animation: spin 0.7s linear infinite;
           flex-shrink: 0;
@@ -1144,18 +1139,16 @@ $t-slow:          0.35s;
       gap: 4px;
       font-size: 0.76rem;
       font-weight: 600;
-      color: $primary;
+      color: var(--primary);
       background: none;
       border: none;
       padding: 2px 0;
       cursor: pointer;
-      transition: color $t-fast;
       .material-icons-round { font-size: 0.85rem; }
-      &:hover { color: lighten($primary, 10%); }
-      &:focus-visible { outline: 2px solid $primary; border-radius: 2px; }
+      &:hover { opacity: 0.8; }
+      &:focus-visible { outline: 2px solid var(--primary); border-radius: 2px; }
     }
 
-    // Actions row
     &-actions {
       display: flex;
       gap: 0;
@@ -1168,34 +1161,31 @@ $t-slow:          0.35s;
         padding: 5px 8px;
         border: none;
         background: none;
-        color: $text-3;
+        color: var(--text-3);
         font-size: 0.76rem;
         font-family: $font-ui;
         border-radius: $radius-full;
         cursor: pointer;
-        transition: color $t-fast, background $t-fast;
         .material-icons-round { font-size: 1rem; }
+        &:focus-visible { outline: 2px solid var(--primary); }
 
-        &:focus-visible { outline: 2px solid $primary; }
+        &.reply-btn:hover  { color: var(--primary); background: var(--primary-glow); }
+        &.rt-btn:hover     { color: $retweet;  background: rgba($retweet,  0.1); }
+        &.like-btn:hover   { color: $like;     background: rgba($like,     0.1); }
+        &.bk-btn:hover     { color: $bookmark; background: rgba($bookmark, 0.1); }
 
-        &.reply-btn:hover   { color: $primary;  background: $primary-glow; }
-        &.rt-btn:hover      { color: $retweet;  background: rgba($retweet,  0.1); }
-        &.like-btn:hover    { color: $like;     background: rgba($like,     0.1); }
-        &.bk-btn:hover      { color: $bookmark; background: rgba($bookmark, 0.1); }
-
-        &.rt-btn--on   { color: $retweet;  }
-        &.like-btn--on { color: $like;     }
+        &.rt-btn--on   { color: $retweet; }
+        &.like-btn--on { color: $like; }
         &.bk-btn--on   { color: $bookmark; }
       }
     }
 
-    // Inline reply box
     &-reply {
       display: none;
       margin-top: 10px;
-      background: $surface-2;
+      background: var(--surface-2);
       border-radius: $radius-md;
-      border: 1px solid $border-light;
+      border: 1px solid var(--border-light);
       padding: 10px 12px;
       animation: fade-up $t-fast $ease-out both;
 
@@ -1203,7 +1193,7 @@ $t-slow:          0.35s;
 
       .reply-lang-note {
         font-size: 0.7rem;
-        color: $primary;
+        color: var(--primary);
         font-weight: 600;
         margin-bottom: 6px;
         display: flex;
@@ -1216,24 +1206,23 @@ $t-slow:          0.35s;
         width: 100%;
         background: transparent;
         border: none;
-        color: $text-1;
+        color: var(--text-1);
         font-family: $font-body;
         font-size: 0.88rem;
         line-height: 1.5;
         resize: none;
         outline: none;
         min-height: 52px;
-        &::placeholder { color: $text-muted; }
+        &::placeholder { color: var(--text-muted); }
       }
 
       .reply-submit-row {
         display: flex;
         justify-content: flex-end;
         margin-top: 8px;
-
         button {
           padding: 6px 16px;
-          background: linear-gradient(135deg, $primary-dim, $primary);
+          background: linear-gradient(135deg, var(--primary-dim), var(--primary));
           color: #fff;
           border: none;
           border-radius: $radius-full;
@@ -1241,16 +1230,14 @@ $t-slow:          0.35s;
           font-weight: 800;
           font-size: 0.8rem;
           cursor: pointer;
-          transition: opacity $t-fast;
           &:hover:not(:disabled) { opacity: 0.88; }
           &:disabled { opacity: 0.35; cursor: not-allowed; }
-          &:focus-visible { outline: 2px solid $primary; outline-offset: 2px; }
+          &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
         }
       }
     }
   }
 
-  // ── Right Sidebar ────────────────────────────────────────────
   &__sidebar-right {
     display: none;
     width: 300px;
@@ -1262,51 +1249,34 @@ $t-slow:          0.35s;
     overflow-y: auto;
     gap: 16px;
     flex-direction: column;
-
     @media (min-width: 1024px) { display: flex; }
   }
 
   &__search-box {
     position: relative;
-    .material-icons-round {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: $text-3;
-      font-size: 1rem;
-      pointer-events: none;
-    }
+    .material-icons-round { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 1rem; pointer-events: none; }
     input {
       width: 100%;
-      background: $surface-2;
+      background: var(--surface-2);
       border: 1.5px solid transparent;
       border-radius: $radius-full;
-      color: $text-1;
+      color: var(--text-1);
       font-family: $font-ui;
       font-size: 0.85rem;
       padding: 9px 14px 9px 36px;
       outline: none;
-      transition: border-color $t-fast;
-      &::placeholder { color: $text-3; }
-      &:focus { border-color: $primary; }
+      &::placeholder { color: var(--text-3); }
+      &:focus { border-color: var(--primary); }
     }
   }
 
   &__widget {
-    background: $surface;
-    border: 1px solid $border;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: $radius-lg;
     overflow: hidden;
 
-    &-title {
-      font-family: $font-display;
-      font-weight: 800;
-      font-size: 0.95rem;
-      color: $text-1;
-      padding: 14px 16px 12px;
-      border-bottom: 1px solid $border;
-    }
+    &-title { font-family: $font-display; font-weight: 800; font-size: 0.95rem; color: var(--text-1); padding: 14px 16px 12px; border-bottom: 1px solid var(--border); }
   }
 
   &__trend-item {
@@ -1315,33 +1285,29 @@ $t-slow:          0.35s;
     gap: 1px;
     padding: 11px 16px;
     cursor: pointer;
-    transition: background $t-fast;
-    &:hover { background: rgba(255,255,255,0.02); }
-    &:focus-visible { outline: 2px solid $primary; outline-offset: -2px; }
-    .tr-meta { font-size: 0.68rem; color: $text-3; }
-    .tr-tag  { font-weight: 700; font-size: 0.87rem; }
-    .tr-posts{ font-size: 0.73rem; color: $text-3; }
+    &:hover { background: var(--surface-2); }
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+    .tr-meta  { font-size: 0.68rem; color: var(--text-3); }
+    .tr-tag   { font-weight: 700; font-size: 0.87rem; color: var(--text-1); }
+    .tr-posts { font-size: 0.73rem; color: var(--text-3); }
   }
 
-  // ── Language Modal ────────────────────────────────────────────
   &__modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba($bg, 0.8);
+    background: var(--modal-bg);
     backdrop-filter: blur(4px);
     z-index: 200;
     align-items: flex-end;
     justify-content: center;
-
     @media (min-width: 480px) { align-items: center; }
-
     &--open { display: flex; }
   }
 
   &__modal {
-    background: $surface;
-    border: 1px solid $border;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: $radius-xl $radius-xl 0 0;
     width: 100%;
     max-width: 480px;
@@ -1350,47 +1316,36 @@ $t-slow:          0.35s;
     max-height: 80vh;
     overflow-y: auto;
 
-    @media (min-width: 480px) {
-      border-radius: $radius-xl;
-      animation: fade-up $t-med $ease-out both;
-    }
+    @media (min-width: 480px) { border-radius: $radius-xl; animation: fade-up $t-med $ease-out both; }
 
     &-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 18px 20px 14px;
-      border-bottom: 1px solid $border;
+      border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
-      background: $surface;
+      background: var(--surface);
 
-      h3 {
-        font-family: $font-display;
-        font-weight: 800;
-        font-size: 1rem;
-        margin: 0;
-      }
+      h3 { font-family: $font-display; font-weight: 800; font-size: 1rem; margin: 0; color: var(--text-1); }
 
       button {
         background: none;
         border: none;
-        color: $text-2;
+        color: var(--text-2);
         cursor: pointer;
         display: flex;
         align-items: center;
         border-radius: 50%;
         padding: 4px;
-        transition: background $t-fast;
         .material-icons-round { font-size: 1.2rem; }
-        &:hover { background: $surface-2; }
-        &:focus-visible { outline: 2px solid $primary; }
+        &:hover { background: var(--surface-2); }
+        &:focus-visible { outline: 2px solid var(--primary); }
       }
     }
 
-    &-body {
-      padding: 8px 0;
-    }
+    &-body { padding: 8px 0; }
   }
 
   &__lang-option {
@@ -1399,33 +1354,30 @@ $t-slow:          0.35s;
     gap: 12px;
     padding: 12px 20px;
     cursor: pointer;
-    transition: background $t-fast;
-
-    &:hover { background: $surface-2; }
-    &:focus-visible { outline: 2px solid $primary; outline-offset: -2px; }
-    &--selected { background: $primary-glow; }
+    &:hover { background: var(--surface-2); }
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+    &--selected { background: var(--primary-glow); }
 
     .lo-flag  { font-size: 1.4rem; }
     .lo-texts {
       flex: 1;
-      .lo-label  { font-weight: 600; font-size: 0.88rem; }
-      .lo-native { font-size: 0.75rem; color: $text-3; }
+      .lo-label  { font-weight: 600; font-size: 0.88rem; color: var(--text-1); }
+      .lo-native { font-size: 0.75rem; color: var(--text-3); }
     }
-    .lo-check { color: $primary; font-size: 1.1rem !important; opacity: 0; }
+    .lo-check { color: var(--primary); font-size: 1.1rem !important; opacity: 0; }
     &--selected .lo-check { opacity: 1; }
   }
 
-  // ── Bottom Navigation (mobile) ────────────────────────────────
   &__bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 100;
-    background: rgba($surface, 0.95);
+    background: var(--topbar-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid $border;
+    border-top: 1px solid var(--border);
     display: flex;
     align-items: center;
     padding: 6px 0 6px;
@@ -1441,7 +1393,7 @@ $t-slow:          0.35s;
       gap: 2px;
       background: none;
       border: none;
-      color: $text-3;
+      color: var(--text-3);
       font-family: $font-ui;
       font-size: 0.58rem;
       font-weight: 600;
@@ -1449,17 +1401,13 @@ $t-slow:          0.35s;
       letter-spacing: 0.05em;
       cursor: pointer;
       padding: 6px 4px;
-      transition: color $t-fast;
       border-radius: $radius-sm;
-
       .material-icons-round { font-size: 1.3rem; }
-
-      &:hover, &.active { color: $primary; }
-      &:focus-visible { outline: 2px solid $primary; }
+      &:hover, &.active { color: var(--primary); }
+      &:focus-visible { outline: 2px solid var(--primary); }
     }
   }
 
-  // FAB (mobile post button)
   &__fab {
     position: fixed;
     bottom: calc(64px + 8px + env(safe-area-inset-bottom, 0px));
@@ -1468,28 +1416,24 @@ $t-slow:          0.35s;
     width: 52px;
     height: 52px;
     border-radius: 50%;
-    background: linear-gradient(135deg, $primary-dim, $primary);
+    background: linear-gradient(135deg, var(--primary-dim), var(--primary));
     color: #fff;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(56,189,248,0.35), 0 8px 32px rgba(0,0,0,0.3);
-    transition: transform $t-fast, box-shadow $t-fast;
+    box-shadow: 0 4px 20px var(--primary-glow), 0 8px 32px rgba(0,0,0,0.2);
 
     @media (min-width: 768px) { display: none; }
-
     .material-icons-round { font-size: 1.4rem; }
-    &:hover { transform: scale(1.06); }
+    &:hover  { transform: scale(1.06); }
     &:active { transform: scale(0.96); }
-    &:focus-visible { outline: 2px solid $primary; outline-offset: 3px; }
+    &:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
   }
 
-  // Feed bottom padding for mobile nav
   &__feed-spacer { height: 80px; @media (min-width: 768px) { display: none; } }
 
-  // ── Toast ─────────────────────────────────────────────────────
   &__toasts {
     position: fixed;
     bottom: calc(80px + env(safe-area-inset-bottom, 0px));
@@ -1500,7 +1444,6 @@ $t-slow:          0.35s;
     flex-direction: column;
     gap: 6px;
     pointer-events: none;
-
     @media (min-width: 768px) { bottom: 24px; }
   }
 
@@ -1508,40 +1451,38 @@ $t-slow:          0.35s;
     display: flex;
     align-items: center;
     gap: 8px;
-    background: $surface-3;
-    border: 1px solid $border-light;
-    border-left: 3px solid $primary;
+    background: var(--surface-3);
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--primary);
     border-radius: $radius-sm;
     padding: 10px 14px;
     font-size: 0.83rem;
     font-weight: 500;
+    color: var(--text-1);
     white-space: nowrap;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     animation: toast-in $t-med $ease-out both;
     pointer-events: all;
 
-    .material-icons-round { font-size: 0.95rem; color: $primary; flex-shrink: 0; }
-
+    .material-icons-round { font-size: 0.95rem; color: var(--primary); flex-shrink: 0; }
     &--error   { border-left-color: $error;   .material-icons-round { color: $error; } }
     &--success { border-left-color: $success; .material-icons-round { color: $success; } }
     &--exit    { animation: toast-out $t-med ease forwards; }
   }
 
-  // ── Profile dropdown ────────────────────────────────────────
   &__profile-menu {
     position: absolute;
     top: 56px;
     right: 12px;
-    background: $surface;
-    border: 1px solid $border-light;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
     border-radius: $radius-md;
     z-index: 150;
-    min-width: 200px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    min-width: 210px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
     animation: fade-up $t-fast $ease-out both;
     overflow: hidden;
     display: none;
-
     &--open { display: block; }
 
     &-item {
@@ -1551,28 +1492,24 @@ $t-slow:          0.35s;
       padding: 12px 16px;
       cursor: pointer;
       font-size: 0.88rem;
-      color: $text-1;
-      transition: background $t-fast;
+      color: var(--text-1);
       border: none;
       background: none;
       width: 100%;
       font-family: $font-ui;
       text-align: left;
 
-      .material-icons-round { font-size: 1.1rem; color: $text-2; }
-      &:hover { background: $surface-2; }
-      &:focus-visible { outline: 2px solid $primary; outline-offset: -2px; }
-
+      .material-icons-round { font-size: 1.1rem; color: var(--text-2); }
+      &:hover { background: var(--surface-2); }
+      &:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
       &--danger { color: $error; .material-icons-round { color: $error; } }
     }
   }
 
-  // ── Empty / Loading states ────────────────────────────────────
   &__empty {
     text-align: center;
     padding: 48px 24px;
-    color: $text-3;
-
+    color: var(--text-3);
     .material-icons-round { font-size: 2.5rem; display: block; margin-bottom: 12px; }
     p { font-size: 0.88rem; }
   }
@@ -1581,21 +1518,14 @@ $t-slow:          0.35s;
     padding: 14px 16px;
     display: flex;
     gap: 12px;
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid var(--border);
     animation: shimmer 1.4s ease infinite;
 
-    &-avatar {
-      width: 42px; height: 42px;
-      border-radius: 50%;
-      background: $surface-2;
-      flex-shrink: 0;
-    }
-
-    &-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
-
-    &-line {
+    &-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--skel); flex-shrink: 0; }
+    &-lines  { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+    &-line   {
       height: 12px;
-      background: $surface-2;
+      background: var(--skel);
       border-radius: $radius-full;
       &--short  { width: 40%; }
       &--medium { width: 70%; }
@@ -1603,53 +1533,19 @@ $t-slow:          0.35s;
     }
   }
 
-  // ── Keyframes ────────────────────────────────────────────────
-  @keyframes brand-in {
-    from { opacity: 0; transform: translateY(-16px) scale(0.96); }
-    to   { opacity: 1; transform: translateY(0)     scale(1); }
-  }
-
-  @keyframes slide-up {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes tweet-in {
-    from { opacity: 0; transform: translateY(-8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes fade-up {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes sheet-up {
-    from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
-  }
-
-  @keyframes toast-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes toast-out {
-    from { opacity: 1; transform: translateY(0); }
-    to   { opacity: 0; transform: translateY(8px); }
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes shimmer {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.5; }
-  }
+  // ── Keyframes ─────────────────────────────────────────────────
+  @keyframes brand-in  { from { opacity:0; transform:translateY(-16px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+  @keyframes slide-up  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes tweet-in  { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fade-up   { from { opacity:0; transform:translateY(6px);  } to { opacity:1; transform:translateY(0); } }
+  @keyframes sheet-up  { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  @keyframes toast-in  { from { opacity:0; transform:translateY(8px);  } to { opacity:1; transform:translateY(0); } }
+  @keyframes toast-out { from { opacity:1; transform:translateY(0);    } to { opacity:0; transform:translateY(8px); } }
+  @keyframes spin      { to   { transform:rotate(360deg); } }
+  @keyframes shimmer   { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
 
   // ── Scrollbar ─────────────────────────────────────────────────
-  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar       { width: 3px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: $border; border-radius: $radius-full; }
+  ::-webkit-scrollbar-thumb { background: var(--scroll); border-radius: $radius-full; }
 }
