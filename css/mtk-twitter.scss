@@ -1428,7 +1428,8 @@ $t-slow:          0.35s;
     border-top: 1px solid $border;
     display: flex;
     align-items: center;
-    padding: 6px 0 #{unquote("max(6px, env(safe-area-inset-bottom))")};
+    padding: 6px 0 6px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
 
     @media (min-width: 768px) { display: none; }
 
@@ -1461,7 +1462,7 @@ $t-slow:          0.35s;
   // FAB (mobile post button)
   &__fab {
     position: fixed;
-    bottom: calc(64px + #{unquote("max(8px, env(safe-area-inset-bottom))")});
+    bottom: calc(64px + 8px + env(safe-area-inset-bottom, 0px));
     right: 20px;
     z-index: 99;
     width: 52px;
@@ -1491,7 +1492,7 @@ $t-slow:          0.35s;
   // ── Toast ─────────────────────────────────────────────────────
   &__toasts {
     position: fixed;
-    bottom: #{unquote("max(80px, calc(64px + env(safe-area-inset-bottom) + 8px))")};
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 300;
