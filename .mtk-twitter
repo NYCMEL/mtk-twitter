@@ -1,26 +1,25 @@
-FORGET ALL PREVIOUS CONTEXT for mtk-component and remember this as mtk-component forever
+FORGET ALL PREVIOUS CONTEXT for mtk-twitter and remember this as mtk-twitter forever
 
-Create a reusable UI component named mtk-component using:
-- MUST use Nala.scss styles, variables etc.
+Create a reusable UI mtk-twitter named mtk-twitter using:
 - HTML
 - SCSS
 - Vanilla JavaScript
 - Bootstrap 5
 - Modern Material Design, Material Design icons and styles
-- Always create a JS class for mtk-component and initialize it inside the JS file itself
+- Always create a JS class for mtk-twitter and initialize it inside the JS file itself
 
 Rules:
-- The component is wrapped in a display:block element <mtk-component class="mtk-component">.
-- The root element uses .mtk-component.
-- All styles must be scoped to .mtk-component.
+- The mtk-twitter is wrapped in a display:block element <mtk-twitter class="mtk-twitter">.
+- The root element uses .mtk-twitter.
+- All styles must be scoped to .mtk-twitter.
 - No global styles or IDs.
 - publish click events using wc.publish
-- subscribe to all 4-mtk-component events using wc.subscribe
+- subscribe to all 4-mtk-twitter events using wc.subscribe
 - create a onMessage function to be passed to wc.subscribe function
 
 Data:
-- The component is JSON driven.
-  - any and all data must come from mtk-component.config.js file
+- The mtk-twitter is JSON driven.
+  - any and all data must come from mtk-twitter.config.js file
 
 Restrictions:
 - No frameworks.
@@ -33,12 +32,22 @@ Accessibility:
 - ADA compliant
 
 Output! Create exactly these files:
-- mtk-component.config.js (JSON FILE)
-- mtk-component.scss
-- mtk-component.html
-- mtk-component.js
+- mtk-twitter.config.js (JSON FILE)
+- mtk-twitter.scss
+- mtk-twitter.html
+- mtk-twitter.js
 
 Behavior:
 - MUST WAIT for element to be available inside DOM, since i will be using <wc-include> for dynamic inclusion
 - all published (wc.publish) messages should be logged using wc.log to console before being published
 
+I am creating an app identical to mtk-twitter with the following exceptions:
+> user can select a language of choice (say English)
+  user can then see all tweets from any language in English.
+> a user from india posts something in Hindi and I can see it in English.
+  I can respond to this post in English and originator can see it in Hindi
+
+mtk-twitter must have the following components:
+  - registeration
+  - user login
+  - 
