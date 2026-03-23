@@ -649,22 +649,94 @@ function startExpress() {
   // ════════════════════════════════════════════════════════════════════════════
   // TRANSLATION
   // ════════════════════════════════════════════════════════════════════════════
+
+  // Built-in dictionary — covers all 5 seed tweets into all supported languages
+  const TRANS_DICT = {
+    'नमस्ते! आज का मौसम बहुत अच्छा है।': {
+      en: 'Hello! The weather is very nice today.',
+      es: '¡Hola! El tiempo está muy bien hoy.',
+      fr: "Bonjour! Le temps est très beau aujourd'hui.",
+      de: 'Hallo! Das Wetter ist heute sehr schön.',
+      zh: '你好！今天天气很好。', ar: 'مرحباً! الطقس جميل جداً اليوم.',
+      pt: 'Olá! O tempo está muito bom hoje.', ja: 'こんにちは！今日の天気はとても良いです。',
+      ru: 'Привет! Сегодня очень хорошая погода.', ko: '안녕하세요! 오늘 날씨가 매우 좋네요.', it: 'Ciao! Il tempo è molto bello oggi.',
+    },
+    'La tecnología nos une a todos.': {
+      en: 'Technology unites us all.',
+      hi: 'प्रौद्योगिकी हम सभी को एकजुट करती है।', fr: 'La technologie nous unit tous.',
+      de: 'Technologie verbindet uns alle.', zh: '技术将我们所有人联合在一起。',
+      ar: 'التكنولوجيا تجمعنا جميعاً.', pt: 'A tecnologia nos une a todos.',
+      ja: 'テクノロジーは私たちみんなをつなげます。', ru: 'Технологии объединяют нас всех.',
+      ko: '기술은 우리 모두를 하나로 묶어줍니다.', it: 'La tecnologia ci unisce tutti.',
+    },
+    'この技術は素晴らしいです！言語の壁がなくなりますね。': {
+      en: 'This technology is amazing! Language barriers will disappear.',
+      hi: 'यह तकनीक अद्भुत है! भाषा की बाधाएं गायब हो जाएंगी।',
+      es: '¡Esta tecnología es increíble! Las barreras del idioma desaparecerán.',
+      fr: 'Cette technologie est incroyable! Les barrières linguistiques vont disparaître.',
+      de: 'Diese Technologie ist erstaunlich! Sprachbarrieren werden verschwinden.',
+      zh: '这项技术太棒了！语言障碍将会消失。', ar: 'هذه التكنولوجيا رائعة! ستختفي الحواجز اللغوية.',
+      pt: 'Esta tecnologia é incrível! As barreiras linguísticas vão desaparecer.',
+      ru: 'Эта технология удивительна! Языковые барьеры исчезнут.',
+      ko: '이 기술은 놀랍습니다! 언어 장벽이 사라질 것입니다.', it: 'Questa tecnologia è incredibile! Le barriere linguistiche scompariranno.',
+    },
+    'مرحبا بالجميع! نحن نبني جسور التواصل بين الشعوب.': {
+      en: 'Hello everyone! We are building bridges of communication between peoples.',
+      hi: 'सभी को नमस्ते! हम लोगों के बीच संचार के पुल बना रहे हैं।',
+      es: '¡Hola a todos! Estamos construyendo puentes de comunicación entre los pueblos.',
+      fr: 'Bonjour à tous! Nous construisons des ponts de communication entre les peuples.',
+      de: 'Hallo alle! Wir bauen Kommunikationsbrücken zwischen den Völkern.',
+      zh: '大家好！我们正在建立人民之间的沟通桥梁。',
+      pt: 'Olá a todos! Estamos construindo pontes de comunicação entre os povos.',
+      ja: 'みなさんこんにちは！私たちは人々の間のコミュニケーションの橋を築いています。',
+      ru: 'Всем привет! Мы строим мосты общения между народами.',
+      ko: '모두 안녕하세요! 우리는 사람들 사이의 소통 다리를 만들고 있습니다.',
+      it: 'Ciao a tutti! Stiamo costruendo ponti di comunicazione tra i popoli.',
+    },
+    'Технологии меняют мир к лучшему каждый день.': {
+      en: 'Technology changes the world for the better every day.',
+      hi: 'प्रौद्योगिकी हर दिन दुनिया को बेहतर बना रही है।',
+      es: 'La tecnología cambia el mundo para mejor cada día.',
+      fr: 'La technologie change le monde pour le mieux chaque jour.',
+      de: 'Technologie verändert die Welt jeden Tag zum Besseren.',
+      zh: '技术每天都在让世界变得更美好。', ar: 'التكنولوجيا تغير العالم نحو الأفضل كل يوم.',
+      pt: 'A tecnologia muda o mundo para melhor todos os dias.',
+      ja: 'テクノロジーは毎日世界をより良い方向に変えています。',
+      ko: '기술은 매일 세상을 더 좋게 변화시킵니다.', it: 'La tecnologia cambia il mondo in meglio ogni giorno.',
+    },
+  };
+
+  function dictLookup(text, target) {
+    const norm = s => s.trim().replace(/\s+/g, ' ');
+    const n = norm(text);
+    for (const k of Object.keys(TRANS_DICT)) {
+      if ((k === text || norm(k) === n) && TRANS_DICT[k][target]) return TRANS_DICT[k][target];
+    }
+    return null;
+  }
+
   app.get('/api/tweets/:id/translate', authOptional, async (req, res) => {
     const target = (req.query.target || 'en').toLowerCase();
     const tweet  = get('SELECT * FROM tweets WHERE id=?', [req.params.id]);
     if (!tweet) return res.status(404).json({ error: 'Tweet not found' });
 
+    // Same language — no translation needed
     if (tweet.original_lang === target) {
       return res.json({ translated_text: tweet.text, source_lang: tweet.original_lang, target_lang: target, cached: false });
     }
 
+    // Check DB cache first
     const cached = get('SELECT translated FROM translations WHERE tweet_id=? AND target_lang=?', [tweet.id, target]);
     if (cached) {
       return res.json({ translated_text: cached.translated, source_lang: tweet.original_lang, target_lang: target, cached: true });
     }
 
-    let translated = null;
-    if (TRANSLATE_URL) {
+    // 1. Built-in dictionary
+    let translated = dictLookup(tweet.text, target);
+    if (translated) console.log('[TRANSLATE] dict hit: tweet', tweet.id, '->', target);
+
+    // 2. LibreTranslate (if configured)
+    if (!translated && TRANSLATE_URL) {
       try {
         const fetchFn = global.fetch || require('node-fetch');
         const r = await fetchFn(TRANSLATE_URL + '/translate', {
@@ -672,14 +744,17 @@ function startExpress() {
           body: JSON.stringify({ q: tweet.text, source: tweet.original_lang, target, format: 'text' }),
         });
         const d = await r.json();
-        if (d.translatedText) translated = d.translatedText;
+        if (d.translatedText) { translated = d.translatedText; console.log('[TRANSLATE] LibreTranslate hit'); }
       } catch (e) { console.warn('[TRANSLATE]', e.message); }
     }
 
+    // 3. Last resort — return original text unchanged (better than a broken bracket prefix)
     if (!translated) {
-      translated = '[' + tweet.original_lang.toUpperCase() + ' → ' + target.toUpperCase() + '] ' + tweet.text;
+      console.log('[TRANSLATE] no translation found for tweet', tweet.id, 'lang', tweet.original_lang, '->', target);
+      translated = tweet.text;
     }
 
+    // Cache result in DB
     run('INSERT OR REPLACE INTO translations (tweet_id,target_lang,translated) VALUES (?,?,?)', [tweet.id, target, translated]);
     saveToDisk();
     res.json({ translated_text: translated, source_lang: tweet.original_lang, target_lang: target, cached: false });

@@ -146,7 +146,7 @@ class MTKTwitter {
     <div class="mtk-twitter__screen mtk-twitter__splash" data-screen="splash" role="main">
       <div class="mtk-twitter__splash-brand">
         <div class="brand-icon" aria-hidden="true">
-          <span class="material-icons-round">translate</span>
+          <span class="material-icons-round">T</span>
         </div>
         <h1>${app.name}</h1>
         <p>${app.tagline}</p>
@@ -205,7 +205,7 @@ class MTKTwitter {
           <span class="material-icons-round" aria-hidden="true">arrow_back</span> Back
         </button>
         <div class="mtk-twitter__auth-logo">
-          <div class="al-icon"><span class="material-icons-round">translate</span></div>
+          <div class="al-icon"><span class="material-icons-round">T</span></div>
           <span>${this._cfg.app.name}</span>
         </div>
         <h1 class="mtk-twitter__auth-heading">Join Melify</h1>
@@ -303,7 +303,7 @@ class MTKTwitter {
           <span class="material-icons-round" aria-hidden="true">arrow_back</span> Back
         </button>
         <div class="mtk-twitter__auth-logo">
-          <div class="al-icon"><span class="material-icons-round">translate</span></div>
+          <div class="al-icon"><span class="material-icons-round">T</span></div>
           <span>${this._cfg.app.name}</span>
         </div>
         <h1 class="mtk-twitter__auth-heading">Welcome back</h1>
@@ -362,7 +362,7 @@ class MTKTwitter {
       <!-- Top Bar -->
       <header class="mtk-twitter__topbar" role="banner">
         <div class="mtk-twitter__topbar-brand" aria-hidden="true">
-          <span class="material-icons-round">translate</span>
+          <span class="material-icons-round">T</span>
           ${app.name}
         </div>
         <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">Home</div>
@@ -385,7 +385,7 @@ class MTKTwitter {
         <!-- Left Sidebar (desktop) -->
         <nav class="mtk-twitter__sidebar" aria-label="Primary navigation">
           <div class="mtk-twitter__sidebar-brand" aria-hidden="true">
-            <span class="material-icons-round">translate</span>
+            <span class="material-icons-round">T</span>
             ${app.name}
           </div>
           <div class="mtk-twitter__nav" role="list">
@@ -566,15 +566,23 @@ class MTKTwitter {
   }
 
   _tplTweet(t) {
-    const cfg   = this._cfg;
-    const lang  = cfg.languages.find(l => l.code === t.original_lang || l.code === t.originalLang);
-    const isOwn = (t.original_lang || t.originalLang) === this._state.userLang;
-    const id    = t.id;
-    const user  = t.user || { name: t.display_name, handle: t.username, avatar: t.avatar_url, verified: t.verified };
-    const text  = t.text;
-    const likes = t.likes_count ?? t.likes ?? 0;
-    const rts   = t.retweets_count ?? t.retweets ?? 0;
-    const reps  = t.replies_count  ?? t.replies  ?? 0;
+    const cfg      = this._cfg;
+    const origLang = t.original_lang || t.originalLang;
+    const lang     = cfg.languages.find(l => l.code === origLang);
+    const isOwn    = origLang === this._state.userLang;
+    const id       = t.id;
+    const user     = t.user || { name: t.display_name, handle: t.username, avatar: t.avatar_url, verified: t.verified };
+    const text     = t.text;
+    const likes    = t.likes_count ?? t.likes ?? 0;
+    const rts      = t.retweets_count ?? t.retweets ?? 0;
+    const reps     = t.replies_count  ?? t.replies  ?? 0;
+
+    // If we already have a cached translation, show it immediately
+    const cacheKey      = `${id}_${this._state.userLang}`;
+    const cachedTrans   = this._state.transCache[cacheKey];
+    const showingTrans  = !isOwn && !!cachedTrans;
+    const displayText   = showingTrans ? cachedTrans : text;
+    const displayLang   = showingTrans ? this._state.userLang : origLang;
 
     return `
     <li class="mtk-twitter__tweet${t._new ? ' mtk-twitter__tweet--new' : ''}"
@@ -594,23 +602,33 @@ class MTKTwitter {
           <span class="mtk-twitter__tweet-handle">@${user.handle || user.username || ''}</span>
           ${lang ? `
             <span class="mtk-twitter__tweet-lang-badge" title="Original: ${lang.label}">
-              <span class="material-icons-round" aria-hidden="true">translate</span>
+              <span class="material-icons-round" aria-hidden="true">T</span>
               ${lang.flag} ${lang.label}
             </span>` : ''}
           <span class="mtk-twitter__tweet-time">${t.timestamp || this._relTime(t.created_at)}</span>
         </div>
 
-        <p class="mtk-twitter__tweet-text" lang="${t.original_lang || t.originalLang || 'und'}">${this._esc(text)}</p>
+        <!-- Tweet text — shows translation if cached, original otherwise -->
+        <p class="mtk-twitter__tweet-text" id="mtk-txt-${id}"
+           lang="${displayLang}"
+           data-original="${this._esc(text)}"
+           data-original-lang="${origLang}"
+           data-showing="${showingTrans ? 'translated' : 'original'}">${this._esc(displayText)}</p>
 
+        <!-- Auto-translate status row (only for foreign tweets) -->
         ${!isOwn ? `
-          <div class="mtk-twitter__tweet-translation" id="mtk-tr-${id}" style="display:none"
-               aria-live="polite"></div>
-          <button class="mtk-twitter__tweet-translate-btn"
-                  data-id="${id}" data-translated="false"
-                  aria-label="Translate this post">
-            <span class="material-icons-round" aria-hidden="true">translate</span>
-            Translate post
-          </button>` : ''}
+          <div class="mtk-twitter__tweet-orig-row" id="mtk-orig-row-${id}">
+            ${showingTrans
+              ? `<button class="mtk-twitter__tweet-orig-btn" data-id="${id}" data-action="show-original"
+                         aria-label="Show original ${lang ? lang.label : ''} text">
+                   <span class="material-icons-round" aria-hidden="true">T</span>
+                   Show original
+                 </button>`
+              : `<span class="mtk-twitter__tweet-translating" id="mtk-translating-${id}">
+                   <span class="spin-inline" aria-hidden="true"></span> Translating…
+                 </span>`
+            }
+          </div>` : ''}
 
         <div class="mtk-twitter__tweet-actions" role="group" aria-label="Post actions">
           <button class="reply-btn" data-id="${id}"
@@ -756,7 +774,7 @@ class MTKTwitter {
     if (btn.classList.contains('rt-btn'))           return this._handleRetweet(btn, id);
     if (btn.classList.contains('reply-btn'))        return this._handleReplyToggle(btn, id);
     if (btn.classList.contains('bk-btn'))           return this._handleBookmark(btn, id);
-    if (btn.classList.contains('mtk-twitter__tweet-translate-btn')) return this._handleTranslate(btn, id);
+    if (btn.classList.contains('mtk-twitter__tweet-orig-btn')) return this._handleOrigToggle(btn, btn.dataset.id);
     const rp = btn.dataset.replyPost;
     if (rp) return this._handleReplySubmit(rp);
   }
@@ -878,12 +896,16 @@ class MTKTwitter {
       const payload = { type: this._cfg.events.FEED_REFRESHED, data: { count: tweets.length, lang: this._state.userLang } };
       wc.publish(this._cfg.events.FEED_REFRESHED, payload);
 
+      // Auto-translate all foreign tweets immediately
+      this._autoTranslateFeed();
+
     } catch (err) {
       // Fallback to seed tweets if backend unavailable
       this._state.tweets = this._cfg.seedTweets.map(t => ({
         ...t, user: t.user, original_lang: t.originalLang,
       }));
       this._renderTweetList();
+      this._autoTranslateFeed();
       console.warn('[MTKTwitter] Backend unavailable, showing seed data:', err.message);
     }
   }
@@ -927,6 +949,11 @@ class MTKTwitter {
           t._new = true;
           this._state.tweets.unshift(t);
           this._prependTweet(t);
+          // Auto-translate newly polled tweets
+          const origLang = t.original_lang || t.originalLang;
+          if (origLang && origLang !== this._state.userLang) {
+            setTimeout(() => this._autoTranslateTweet(String(t.id)), 0);
+          }
         });
       }
     } catch (_) { /* silent */ }
@@ -1115,71 +1142,125 @@ class MTKTwitter {
     if (tweet.bookmarked) this._toast('Bookmarked!', 'bookmark');
   }
 
-  async _handleTranslate(btn, id) {
-    const already = btn.dataset.translated === 'true';
-    const box     = this._root.querySelector(`#mtk-tr-${id}`);
-    const tweet   = this._state.tweets.find(t => String(t.id) === String(id));
-    if (!box || !tweet) return;
+  // Toggle between showing original and translated text inline
+  _handleOrigToggle(btn, id) {
+    const tweet    = this._state.tweets.find(t => String(t.id) === String(id));
+    const textEl   = this._root.querySelector(`#mtk-txt-${id}`);
+    const origRow  = this._root.querySelector(`#mtk-orig-row-${id}`);
+    if (!tweet || !textEl || !origRow) return;
 
-    if (already) {
-      box.style.display = 'none';
-      btn.dataset.translated = 'false';
-      btn.innerHTML = '<span class="material-icons-round" aria-hidden="true">translate</span> Translate post';
-      return;
+    const showing = textEl.dataset.showing;
+    const origLang = textEl.dataset.originalLang;
+    const origText = textEl.dataset.original;
+    const cacheKey = `${id}_${this._state.userLang}`;
+    const transText = this._state.transCache[cacheKey];
+    const lang = this._cfg.languages.find(l => l.code === origLang);
+    const userLangObj = this._cfg.languages.find(l => l.code === this._state.userLang);
+
+    if (showing === 'translated') {
+      // Switch to original
+      textEl.textContent = origText;
+      textEl.lang = origLang;
+      textEl.dataset.showing = 'original';
+      origRow.innerHTML = `
+        <button class="mtk-twitter__tweet-orig-btn" data-id="${id}" data-action="show-translated"
+                aria-label="Show translation">
+          <span class="material-icons-round" aria-hidden="true">T</span>
+          Show in ${userLangObj ? userLangObj.flag + ' ' + userLangObj.label : 'your language'}
+        </button>`;
+    } else {
+      // Switch back to translation
+      if (transText) {
+        textEl.textContent = transText;
+        textEl.lang = this._state.userLang;
+        textEl.dataset.showing = 'translated';
+        origRow.innerHTML = `
+          <button class="mtk-twitter__tweet-orig-btn" data-id="${id}" data-action="show-original"
+                  aria-label="Show original ${lang ? lang.label : ''} text">
+            <span class="material-icons-round" aria-hidden="true">T</span>
+            Show original
+          </button>`;
+      }
     }
+  }
 
-    box.style.display = 'block';
-    box.innerHTML = `
-      <div class="mtk-twitter__tweet-translation-label">
-        <span class="material-icons-round" aria-hidden="true">translate</span> Translating…
-      </div>
-      <div class="mtk-twitter__tweet-translation-loading">
-        <div class="spin" aria-hidden="true"></div> Detecting language…
-      </div>`;
-    btn.innerHTML = '<span class="material-icons-round" aria-hidden="true">translate</span> Hide';
-    btn.dataset.translated = 'true';
+  // Auto-translate a single tweet and update its DOM in place
+  async _autoTranslateTweet(id) {
+    const tweet    = this._state.tweets.find(t => String(t.id) === String(id));
+    const textEl   = this._root.querySelector(`#mtk-txt-${id}`);
+    const origRow  = this._root.querySelector(`#mtk-orig-row-${id}`);
+    if (!tweet || !textEl || !origRow) return;
+
+    const origLang = textEl.dataset.originalLang;
+    if (origLang === this._state.userLang) return;  // no translation needed
 
     const cacheKey = `${id}_${this._state.userLang}`;
-    const toLang   = this._cfg.languages.find(l => l.code === this._state.userLang);
+    const lang = this._cfg.languages.find(l => l.code === origLang);
+    const userLangObj = this._cfg.languages.find(l => l.code === this._state.userLang);
 
-    if (this._state.transCache[cacheKey]) {
-      this._showTransBox(box, this._state.transCache[cacheKey], toLang);
-      return;
+    let translated = this._state.transCache[cacheKey];
+
+    if (!translated) {
+      try {
+        const res = await this._api('GET', `/tweets/${id}/translate?target=${this._state.userLang}`);
+        translated = res.translated_text;
+        this._state.transCache[cacheKey] = translated;
+
+        const payload = {
+          type: this._cfg.events.TWEET_TRANSLATED,
+          data: { tweetId: id, from: res.source_lang, to: this._state.userLang, text: translated },
+        };
+        wc.publish(this._cfg.events.TWEET_TRANSLATED, payload);
+
+      } catch (_) {
+        // Client-side dict fallback
+        translated = this._clientTranslate(tweet.text, origLang, this._state.userLang);
+        this._state.transCache[cacheKey] = translated;
+      }
     }
 
-    try {
-      const res = await this._api('GET', `/tweets/${id}/translate?target=${this._state.userLang}`);
-      this._state.transCache[cacheKey] = res.translated_text;
-      this._showTransBox(box, res.translated_text, toLang);
+    // Update DOM — show translated text, add "Show original" link
+    textEl.textContent = translated;
+    textEl.lang = this._state.userLang;
+    textEl.dataset.showing = 'translated';
 
-      const payload = {
-        type: this._cfg.events.TWEET_TRANSLATED,
-        data: { tweetId: id, from: res.source_lang, to: this._state.userLang, text: res.translated_text },
-      };
-      wc.publish(this._cfg.events.TWEET_TRANSLATED, payload);
-
-    } catch (_) {
-      // Client-side fallback
-      const text     = tweet.text;
-      const fallback = this._clientTranslate(text, tweet.original_lang || tweet.originalLang, this._state.userLang);
-      this._state.transCache[cacheKey] = fallback;
-      this._showTransBox(box, fallback, toLang);
-    }
+    origRow.innerHTML = `
+      <button class="mtk-twitter__tweet-orig-btn" data-id="${id}" data-action="show-original"
+              aria-label="Show original ${lang ? lang.label : ''} text">
+        <span class="material-icons-round" aria-hidden="true">T</span>
+        Show original
+      </button>`;
   }
 
-  _showTransBox(box, text, toLang) {
-    box.innerHTML = `
-      <div class="mtk-twitter__tweet-translation-label">
-        <span class="material-icons-round" aria-hidden="true">translate</span>
-        Translated to ${toLang ? toLang.flag + ' ' + toLang.label : ''}
-      </div>
-      <div class="mtk-twitter__tweet-translation-text">${this._esc(text)}</div>`;
+  // Auto-translate all visible foreign tweets in the feed
+  _autoTranslateFeed() {
+    const userLang = this._state.userLang;
+    this._state.tweets.forEach(t => {
+      const origLang = t.original_lang || t.originalLang;
+      if (origLang && origLang !== userLang) {
+        // Stagger requests slightly to avoid hammering the server
+        setTimeout(() => this._autoTranslateTweet(String(t.id)), 0);
+      }
+    });
   }
+
+  _showTransBox() {}  // kept for compatibility — no longer used directly
 
   _clientTranslate(text, from, to) {
     const dict = this._cfg.translations;
+
+    // 1. Exact match first
     if (dict[text] && dict[text][to]) return dict[text][to];
-    return `[Auto-translated from ${(from||'?').toUpperCase()}] ${text}`;
+
+    // 2. Normalised match — strip extra whitespace, trim
+    const norm = s => s.trim().replace(/\s+/g, ' ');
+    const normText = norm(text);
+    for (const key of Object.keys(dict)) {
+      if (norm(key) === normText && dict[key][to]) return dict[key][to];
+    }
+
+    // 3. Nothing found — return original text unchanged (no ugly bracket prefix)
+    return text;
   }
 
   // ════════════════════════════════════════════════════════════
@@ -1576,13 +1657,16 @@ class MTKTwitter {
   }
 
   _relTime(ts) {
-    if (!ts) return '';
-    const diff = Date.now() - new Date(ts).getTime();
-    const s = Math.floor(diff / 1000);
-    if (s < 60)   return `${s}s`;
-    if (s < 3600) return `${Math.floor(s/60)}m`;
-    if (s < 86400)return `${Math.floor(s/3600)}h`;
-    return `${Math.floor(s/86400)}d`;
+    if (!ts) return 'now';
+    // SQLite returns "2026-03-23 18:00:00" without Z — append Z so JS treats it as UTC
+    const normalized = String(ts).replace(' ', 'T').replace(/Z?$/, 'Z');
+    const diff = Date.now() - new Date(normalized).getTime();
+    const s    = Math.floor(diff / 1000);
+    if (s < 5)    return 'just now';
+    if (s < 60)   return s + 's';
+    if (s < 3600) return Math.floor(s / 60) + 'm';
+    if (s < 86400)return Math.floor(s / 3600) + 'h';
+    return Math.floor(s / 86400) + 'd';
   }
 }
 

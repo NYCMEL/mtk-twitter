@@ -33,33 +33,40 @@ const MTK_TWITTER_CONFIG = {
   ],
 
   // Client-side fallback translation dictionary (backend handles real translation)
+  // Keys MUST exactly match the text stored in the DB seed
   translations: {
+
+    // ── Hindi ─────────────────────────────────────────────────
     'नमस्ते! आज का मौसम बहुत अच्छा है।': {
       en: 'Hello! The weather is very nice today.',
       es: '¡Hola! El tiempo está muy bien hoy.',
       fr: 'Bonjour! Le temps est très beau aujourd\'hui.',
       de: 'Hallo! Das Wetter ist heute sehr schön.',
       zh: '你好！今天天气很好。',
-      ar: 'مرحبا! الطقس جميل جدا اليوم.',
+      ar: 'مرحباً! الطقس جميل جداً اليوم.',
       pt: 'Olá! O tempo está muito bom hoje.',
       ja: 'こんにちは！今日の天気はとても良いです。',
       ru: 'Привет! Сегодня очень хорошая погода.',
       ko: '안녕하세요! 오늘 날씨가 매우 좋네요.',
       it: 'Ciao! Il tempo è molto bello oggi.',
     },
+
+    // ── Spanish ───────────────────────────────────────────────
     'La tecnología nos une a todos.': {
       en: 'Technology unites us all.',
       hi: 'प्रौद्योगिकी हम सभी को एकजुट करती है।',
       fr: 'La technologie nous unit tous.',
       de: 'Technologie verbindet uns alle.',
       zh: '技术将我们所有人联合在一起。',
-      ar: 'التكنولوجيا تجمعنا جميعًا.',
+      ar: 'التكنولوجيا تجمعنا جميعاً.',
       pt: 'A tecnologia nos une a todos.',
       ja: 'テクノロジーは私たちみんなをつなげます。',
       ru: 'Технологии объединяют нас всех.',
       ko: '기술은 우리 모두를 하나로 묶어줍니다.',
       it: 'La tecnologia ci unisce tutti.',
     },
+
+    // ── Japanese ──────────────────────────────────────────────
     'この技術は素晴らしいです！言語の壁がなくなりますね。': {
       en: 'This technology is amazing! Language barriers will disappear.',
       hi: 'यह तकनीक अद्भुत है! भाषा की बाधाएं गायब हो जाएंगी।',
@@ -73,18 +80,35 @@ const MTK_TWITTER_CONFIG = {
       ko: '이 기술은 놀랍습니다! 언어 장벽이 사라질 것입니다.',
       it: 'Questa tecnologia è incredibile! Le barriere linguistiche scompariranno.',
     },
+
+    // ── Arabic ────────────────────────────────────────────────
     'مرحبا بالجميع! نحن نبني جسور التواصل بين الشعوب.': {
       en: 'Hello everyone! We are building bridges of communication between peoples.',
       hi: 'सभी को नमस्ते! हम लोगों के बीच संचार के पुल बना रहे हैं।',
-      es: '¡Hola a todos! Estamos construyendo puentes de comunicación.',
-      fr: 'Bonjour à tous! Nous construisons des ponts de communication.',
+      es: '¡Hola a todos! Estamos construyendo puentes de comunicación entre los pueblos.',
+      fr: 'Bonjour à tous! Nous construisons des ponts de communication entre les peuples.',
       de: 'Hallo alle! Wir bauen Kommunikationsbrücken zwischen den Völkern.',
       zh: '大家好！我们正在建立人民之间的沟通桥梁。',
-      pt: 'Olá a todos! Estamos construindo pontes de comunicação.',
+      pt: 'Olá a todos! Estamos construindo pontes de comunicação entre os povos.',
       ja: 'みなさんこんにちは！私たちは人々の間のコミュニケーションの橋を築いています。',
       ru: 'Всем привет! Мы строим мосты общения между народами.',
       ko: '모두 안녕하세요! 우리는 사람들 사이의 소통 다리를 만들고 있습니다.',
       it: 'Ciao a tutti! Stiamo costruendo ponti di comunicazione tra i popoli.',
+    },
+
+    // ── Russian ───────────────────────────────────────────────
+    'Технологии меняют мир к лучшему каждый день.': {
+      en: 'Technology changes the world for the better every day.',
+      hi: 'प्रौद्योगिकी हर दिन दुनिया को बेहतर बना रही है।',
+      es: 'La tecnología cambia el mundo para mejor cada día.',
+      fr: 'La technologie change le monde pour le mieux chaque jour.',
+      de: 'Technologie verändert die Welt jeden Tag zum Besseren.',
+      zh: '技术每天都在让世界变得更美好。',
+      ar: 'التكنولوجيا تغير العالم نحو الأفضل كل يوم.',
+      pt: 'A tecnologia muda o mundo para melhor todos os dias.',
+      ja: 'テクノロジーは毎日世界をより良い方向に変えています。',
+      ko: '기술은 매일 세상을 더 좋게 변화시킵니다.',
+      it: 'La tecnologia cambia il mondo in meglio ogni giorno.',
     },
   },
 
