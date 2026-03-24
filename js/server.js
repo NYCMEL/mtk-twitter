@@ -328,10 +328,19 @@ async function bootstrap() {
   // 4. Schema (idempotent CREATE IF NOT EXISTS)
   DB.run(SCHEMA);
 
-  // 5. Seed
+  // 5. Purge any stale/bad translation cache entries
+  //    (bracket-prefix strings written by the old fallback)
+  try {
+    DB.run("DELETE FROM translations WHERE translated LIKE '[%→%]%'");
+    DB.run("DELETE FROM translations WHERE translated LIKE '[%->%]%'");
+    dirty = true;
+    console.log('[DB] Purged stale translation cache entries');
+  } catch(e) { /* table may not exist yet on fresh DB */ }
+
+  // 6. Seed
   seedIfEmpty();
 
-  // 6. Initial save if brand new
+  // 7. Initial save if brand new
   if (!loaded) saveToDisk();
 
   // 7. Periodic flush
@@ -725,18 +734,25 @@ function startExpress() {
       return res.json({ translated_text: tweet.text, source_lang: tweet.original_lang, target_lang: target, cached: false });
     }
 
-    // Check DB cache first
+    // 1. Built-in dictionary always wins (fastest, most reliable for seed tweets)
+    const dictResult = dictLookup(tweet.text, target);
+    if (dictResult) {
+      console.log('[TRANSLATE] dict hit: tweet', tweet.id, tweet.original_lang, '->', target);
+      // Update DB cache with the correct value
+      run('INSERT OR REPLACE INTO translations (tweet_id,target_lang,translated) VALUES (?,?,?)', [tweet.id, target, dictResult]);
+      saveToDisk();
+      return res.json({ translated_text: dictResult, source_lang: tweet.original_lang, target_lang: target, cached: false });
+    }
+
+    // 2. DB cache (for user-posted tweets translated previously)
     const cached = get('SELECT translated FROM translations WHERE tweet_id=? AND target_lang=?', [tweet.id, target]);
     if (cached) {
       return res.json({ translated_text: cached.translated, source_lang: tweet.original_lang, target_lang: target, cached: true });
     }
 
-    // 1. Built-in dictionary
-    let translated = dictLookup(tweet.text, target);
-    if (translated) console.log('[TRANSLATE] dict hit: tweet', tweet.id, '->', target);
-
-    // 2. LibreTranslate (if configured)
-    if (!translated && TRANSLATE_URL) {
+    // 3. LibreTranslate (if configured)
+    let translated = null;
+    if (TRANSLATE_URL) {
       try {
         const fetchFn = global.fetch || require('node-fetch');
         const r = await fetchFn(TRANSLATE_URL + '/translate', {
@@ -748,9 +764,9 @@ function startExpress() {
       } catch (e) { console.warn('[TRANSLATE]', e.message); }
     }
 
-    // 3. Last resort — return original text unchanged (better than a broken bracket prefix)
+    // 4. Last resort — return original text unchanged
     if (!translated) {
-      console.log('[TRANSLATE] no translation found for tweet', tweet.id, 'lang', tweet.original_lang, '->', target);
+      console.log('[TRANSLATE] no translation found for tweet', tweet.id, tweet.original_lang, '->', target);
       translated = tweet.text;
     }
 
