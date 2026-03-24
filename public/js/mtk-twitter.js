@@ -940,22 +940,28 @@ class MTKTwitter {
   }
 
   async _pollNewTweets() {
+    // Only poll if we have tweets with real numeric IDs
+    const newest = this._state.tweets[0];
+    if (!newest || !newest.id || typeof newest.id !== 'number') return;
+
     try {
-      const newest = this._state.tweets[0];
-      const since  = newest?.id || newest?.created_at || '';
-      const tweets = await this._api('GET', `/tweets?since=${since}&lang=${this._state.userLang}`);
-      if (tweets.length) {
-        tweets.forEach(t => {
-          t._new = true;
-          this._state.tweets.unshift(t);
-          this._prependTweet(t);
-          // Auto-translate newly polled tweets
-          const origLang = t.original_lang || t.originalLang;
-          if (origLang && origLang !== this._state.userLang) {
-            setTimeout(() => this._autoTranslateTweet(String(t.id)), 0);
-          }
-        });
-      }
+      const tweets = await this._api('GET', `/tweets?since=${newest.id}`);
+      if (!tweets || !tweets.length) return;
+
+      // Only add tweets we don't already have
+      const existingIds = new Set(this._state.tweets.map(t => String(t.id)));
+      const newTweets   = tweets.filter(t => !existingIds.has(String(t.id)));
+      if (!newTweets.length) return;
+
+      newTweets.forEach(t => {
+        t._new = true;
+        this._state.tweets.unshift(t);
+        this._prependTweet(t);
+        const origLang = t.original_lang || t.originalLang;
+        if (origLang && origLang !== this._state.userLang) {
+          setTimeout(() => this._autoTranslateTweet(String(t.id)), 0);
+        }
+      });
     } catch (_) { /* silent */ }
   }
 
@@ -1269,6 +1275,8 @@ class MTKTwitter {
 
   _setLanguage(code) {
     this._state.userLang = code;
+    // Clear translation cache so everything re-translates in new language
+    this._state.transCache = {};
     const lang = this._cfg.languages.find(l => l.code === code);
 
     // Update UI atoms
@@ -1302,8 +1310,8 @@ class MTKTwitter {
 
     this._toast(`Language: ${lang ? lang.flag + ' ' + lang.label : code}`, 'language');
 
-    // Reload feed in new language
-    this._loadFeed();
+    // Re-translate all visible tweets in-place (don't re-render the whole list)
+    this._autoTranslateFeed();
   }
 
   _openLangModal() {
