@@ -129,6 +129,7 @@ console.log('[DB] Ready:', DB_PATH);
     ['kenjitanaka',   'kenji@demo.com',   'Kenji Tanaka',    hash,'ja',av+'56',1],
     ['omarhassan',    'omar@demo.com',    'Omar Hassan',     hash,'ar',av+'59',0],
     ['natasha_v',     'natasha@demo.com', 'Natasha Volkova', hash,'ru',av+'45',0],
+    ['mel',           'mel@melify.com',   'Mel',             hash,'en',av+'11',1],
   ].forEach(u => insUser.run(...u));
 
   const insTweet = db.prepare('INSERT INTO tweets (user_id,text,original_lang) VALUES (?,?,?)');
@@ -641,5 +642,5 @@ app.listen(PORT, () => {
   console.log('  🔑  JWT: ' + JWT_EXPIRES);
   console.log(TRANSLATE_URL ? '  🔤  LibreTranslate: ' + TRANSLATE_URL : '  🔤  Translation: built-in dictionary');
   console.log('\n  Demo accounts  (password: demo1234)');
-  console.log('  @priyasharma  @carlosmendoza  @kenjitanaka  @omarhassan  @natasha_v\n');
+  console.log('  @mel  @priyasharma  @carlosmendoza  @kenjitanaka  @omarhassan  @natasha_v\n');
 });

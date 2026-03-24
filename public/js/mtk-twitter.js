@@ -1016,7 +1016,8 @@ class MTKTwitter {
     const btn = this._root.querySelector('#mtk-post-btn');
     if (btn) btn.disabled = true;
 
-    const lang = this._state.userLang;
+    // Always post in the user's PROFILE language, not the display language
+    const lang = this._state.user.lang || 'en';
 
     try {
       const tweet = await this._api('POST', '/tweets', { text, lang });
@@ -1265,6 +1266,13 @@ class MTKTwitter {
     }
 
     // Update DOM — show translated text, add "Show original" link
+    // If translation equals original text, nothing changed — hide the row
+    if (!translated || translated === tweet.text || translated === textEl.dataset.original) {
+      textEl.dataset.showing = 'original';
+      origRow.innerHTML = '';
+      return;
+    }
+
     textEl.textContent = translated;
     textEl.lang = this._state.userLang;
     textEl.dataset.showing = 'translated';
@@ -1318,15 +1326,15 @@ class MTKTwitter {
     this._state.transCache = {};
     const lang = this._cfg.languages.find(l => l.code === code);
 
-    // Update UI atoms
+    // Update UI atoms — feed header lang indicator only
     const flagEl = this._root.querySelector('#mtk-lang-flag');
     if (flagEl && lang) flagEl.textContent = lang.flag;
 
     const pillText = this._root.querySelector('#mtk-feed-lang-text');
     if (pillText && lang) pillText.textContent = lang.label;
 
-    const compLabel = this._root.querySelector('#mtk-compose-lang-label');
-    if (compLabel && lang) compLabel.textContent = `${lang.flag} ${lang.label}`;
+    // Compose pill always shows PROFILE language, not display language
+    // (don't update it here)
 
     // Mark selected in modal
     this._root.querySelectorAll('.mtk-twitter__lang-option').forEach(el => {
@@ -1511,8 +1519,11 @@ class MTKTwitter {
     if (flagEl && lang) flagEl.textContent = lang.flag;
     const feedText = this._root.querySelector('#mtk-feed-lang-text');
     if (feedText && lang) feedText.textContent = lang.label;
-    const compLabel = this._root.querySelector('#mtk-compose-lang-label');
-    if (compLabel && lang) compLabel.textContent = `${lang.flag} ${lang.label}`;
+
+    // Compose pill shows PROFILE language (the language you write in)
+    const profileLang = this._cfg.languages.find(l => l.code === (u.lang || 'en'));
+    const compLabel   = this._root.querySelector('#mtk-compose-lang-label');
+    if (compLabel && profileLang) compLabel.textContent = `${profileLang.flag} ${profileLang.label}`;
 
     // Mark selected language
     this._root.querySelectorAll('.mtk-twitter__lang-option').forEach(el => {
@@ -1530,6 +1541,54 @@ class MTKTwitter {
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-current', active ? 'page' : 'false');
     });
+
+    // Update feed header title
+    const titleEl = this._root.querySelector('#mtk-topbar-title');
+    const feedH2  = this._root.querySelector('.mtk-twitter__feed-header h2');
+    const titles  = { home: 'Home', explore: 'Explore', notifications: 'Notifications', messages: 'Messages', bookmarks: 'Bookmarks', profile: 'Profile' };
+    const title   = titles[id] || 'Home';
+    if (titleEl)  titleEl.textContent = title;
+    if (feedH2)   feedH2.textContent  = title;
+
+    // Show/hide compose box — only on Home
+    const compose = this._root.querySelector('.mtk-twitter__compose');
+    if (compose) compose.style.display = id === 'home' ? '' : 'none';
+
+    // Load appropriate content
+    if (id === 'bookmarks') {
+      this._loadBookmarks();
+    } else if (id === 'home') {
+      this._loadFeed();
+    }
+    // other nav items (explore, notifications, etc.) can be wired up later
+  }
+
+  async _loadBookmarks() {
+    const list = this._root.querySelector('#mtk-tweet-list');
+    if (list) list.innerHTML = this._tplSkeletons(3);
+
+    try {
+      const tweets = await this._api('GET', '/bookmarks');
+      this._state.tweets = tweets;
+      this._renderTweetList();
+
+      if (!tweets.length) {
+        if (list) list.innerHTML = `
+          <li><div class="mtk-twitter__empty">
+            <span class="material-icons-round">bookmark_border</span>
+            <p>No bookmarks yet. Tap the bookmark icon on any post.</p>
+          </div></li>`;
+        return;
+      }
+
+      this._autoTranslateFeed();
+    } catch (err) {
+      if (list) list.innerHTML = `
+        <li><div class="mtk-twitter__empty">
+          <span class="material-icons-round">error_outline</span>
+          <p>Could not load bookmarks: ${err.message}</p>
+        </div></li>`;
+    }
   }
 
   _toggleProfileMenu() {
