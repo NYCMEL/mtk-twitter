@@ -656,6 +656,12 @@ class MTKTwitter {
                   aria-pressed="${!!t.bookmarked}">
             <span class="material-icons-round" aria-hidden="true">${t.bookmarked ? 'bookmark' : 'bookmark_border'}</span>
           </button>
+          ${(t.user?.handle || t.user?.username) === this._state.user?.username ? `
+          <button class="del-btn" data-id="${id}"
+                  aria-label="Delete this post"
+                  title="Delete post">
+            <span class="material-icons-round" aria-hidden="true">delete_outline</span>
+          </button>` : ''}
         </div>
 
         <div class="mtk-twitter__tweet-reply" id="mtk-reply-${id}" aria-label="Reply to post">
@@ -776,6 +782,7 @@ class MTKTwitter {
     if (btn.classList.contains('rt-btn'))           return this._handleRetweet(btn, id);
     if (btn.classList.contains('reply-btn'))        return this._handleReplyToggle(btn, id);
     if (btn.classList.contains('bk-btn'))           return this._handleBookmark(btn, id);
+    if (btn.classList.contains('del-btn'))          return this._handleDelete(btn, id);
     if (btn.classList.contains('mtk-twitter__tweet-orig-btn')) return this._handleOrigToggle(btn, btn.dataset.id);
     const rp = btn.dataset.replyPost;
     if (rp) return this._handleReplySubmit(rp);
@@ -1148,6 +1155,32 @@ class MTKTwitter {
     wc.publish(this._cfg.events.TWEET_BOOKMARKED, payload);
 
     if (tweet.bookmarked) this._toast('Bookmarked!', 'bookmark');
+  }
+
+  async _handleDelete(btn, id) {
+    // Confirm before deleting
+    if (!confirm('Delete this post?')) return;
+
+    // Remove from DOM immediately (optimistic)
+    const li = btn.closest('li');
+    if (li) {
+      li.style.transition = 'opacity 0.2s, transform 0.2s';
+      li.style.opacity    = '0';
+      li.style.transform  = 'translateX(40px)';
+      setTimeout(() => li.remove(), 200);
+    }
+
+    // Remove from state
+    this._state.tweets = this._state.tweets.filter(t => String(t.id) !== String(id));
+
+    try {
+      await this._api('DELETE', `/tweets/${id}`);
+      this._toast('Post deleted', 'delete_outline');
+    } catch (err) {
+      // Restore on failure
+      this._toast('Could not delete: ' + err.message, 'error_outline');
+      this._loadFeed();
+    }
   }
 
   // Toggle between showing original and translated text inline

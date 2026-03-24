@@ -1211,6 +1211,8 @@ $t-slow:         0.35s;
         &.rt-btn:hover     { color: $retweet;  background: rgba($retweet,  0.1); }
         &.like-btn:hover   { color: $like;     background: rgba($like,     0.1); }
         &.bk-btn:hover     { color: $bookmark; background: rgba($bookmark, 0.1); }
+        &.del-btn:hover    { color: $error;    background: rgba($error,    0.1); }
+        &.del-btn          { margin-left: auto; }
 
         &.rt-btn--on   { color: $retweet; }
         &.like-btn--on { color: $like; }
