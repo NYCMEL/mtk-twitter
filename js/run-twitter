@@ -1,3 +1,3 @@
 #!/bin/zsh
 
-/usr/local/bin/node /Melify/tools/twitter/js/server.js
+/usr/local/bin/node /Melify/tools/mtk-twitter/js/server.js 
