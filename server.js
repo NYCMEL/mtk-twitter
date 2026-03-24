@@ -42,9 +42,9 @@ const BCRYPT_ROUNDS = 10;
 // ── Database — writes directly to disk on every statement ────────────────────
 const db = new DatabaseSync(DB_PATH);
 
-db.exec('PRAGMA journal_mode = WAL;');
+db.exec('PRAGMA journal_mode = DELETE;');  // simpler than WAL — writes directly, no -wal/-shm files
 db.exec('PRAGMA foreign_keys = ON;');
-db.exec('PRAGMA synchronous = NORMAL;');
+db.exec('PRAGMA synchronous = FULL;');    // guarantee every write is flushed to disk
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 db.exec(`

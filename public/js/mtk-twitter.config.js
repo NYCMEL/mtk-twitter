@@ -9,7 +9,7 @@ const MTK_TWITTER_CONFIG = {
     name:             'Melify',
     tagline:          'People Helping People — Worldwide',
     version:          '2.0.0',
-    apiBase:          'http://localhost:3002/api',
+    apiBase:          '/api',
     wsBase:           'ws://localhost:3001',
     defaultLanguage:  'en',
     maxPostLength:    280,
