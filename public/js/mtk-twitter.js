@@ -569,7 +569,6 @@ class MTKTwitter {
     const cfg      = this._cfg;
     const origLang = t.original_lang || t.originalLang;
     const lang     = cfg.languages.find(l => l.code === origLang);
-    const isOwn    = origLang === this._state.userLang;
     const id       = t.id;
     const user     = t.user || { name: t.display_name, handle: t.username, avatar: t.avatar_url, verified: t.verified };
     const text     = t.text;
@@ -578,11 +577,13 @@ class MTKTwitter {
     const reps     = t.replies_count  ?? t.replies  ?? 0;
 
     // If we already have a cached translation, show it immediately
-    const cacheKey      = `${id}_${this._state.userLang}`;
-    const cachedTrans   = this._state.transCache[cacheKey];
-    const showingTrans  = !isOwn && !!cachedTrans;
-    const displayText   = showingTrans ? cachedTrans : text;
-    const displayLang   = showingTrans ? this._state.userLang : origLang;
+    const cacheKey     = `${id}_${this._state.userLang}`;
+    const cachedTrans  = this._state.transCache[cacheKey];
+    // Show translation if: target lang differs from original AND we have a cached value
+    const needsTrans   = origLang !== this._state.userLang;
+    const showingTrans = needsTrans && !!cachedTrans;
+    const displayText  = showingTrans ? cachedTrans : text;
+    const displayLang  = showingTrans ? this._state.userLang : origLang;
 
     return `
     <li class="mtk-twitter__tweet${t._new ? ' mtk-twitter__tweet--new' : ''}"
@@ -615,20 +616,21 @@ class MTKTwitter {
            data-original-lang="${origLang}"
            data-showing="${showingTrans ? 'translated' : 'original'}">${this._esc(displayText)}</p>
 
-        <!-- Auto-translate status row (only for foreign tweets) -->
-        ${!isOwn ? `
-          <div class="mtk-twitter__tweet-orig-row" id="mtk-orig-row-${id}">
-            ${showingTrans
-              ? `<button class="mtk-twitter__tweet-orig-btn" data-id="${id}" data-action="show-original"
-                         aria-label="Show original ${lang ? lang.label : ''} text">
-                   <span class="material-icons-round" aria-hidden="true">T</span>
-                   Show original
-                 </button>`
-              : `<span class="mtk-twitter__tweet-translating" id="mtk-translating-${id}">
+        <!-- Translation row — shown for ALL tweets when target lang differs from original -->
+        <div class="mtk-twitter__tweet-orig-row" id="mtk-orig-row-${id}">
+          ${showingTrans
+            ? `<button class="mtk-twitter__tweet-orig-btn" data-id="${id}" data-action="show-original"
+                       aria-label="Show original ${lang ? lang.label : ''} text">
+                 <span class="material-icons-round" aria-hidden="true">T</span>
+                 Show original
+               </button>`
+            : needsTrans
+              ? `<span class="mtk-twitter__tweet-translating" id="mtk-translating-${id}">
                    <span class="spin-inline" aria-hidden="true"></span> Translating…
                  </span>`
-            }
-          </div>` : ''}
+              : ''
+          }
+        </div>
 
         <div class="mtk-twitter__tweet-actions" role="group" aria-label="Post actions">
           <button class="reply-btn" data-id="${id}"
@@ -1198,7 +1200,11 @@ class MTKTwitter {
     if (!tweet || !textEl || !origRow) return;
 
     const origLang = textEl.dataset.originalLang;
-    if (origLang === this._state.userLang) return;  // no translation needed
+    if (origLang === this._state.userLang) {
+      // Same language — clear any translating spinner and return
+      if (origRow) origRow.innerHTML = '';
+      return;
+    }
 
     const cacheKey = `${id}_${this._state.userLang}`;
     const lang = this._cfg.languages.find(l => l.code === origLang);
@@ -1620,6 +1626,16 @@ class MTKTwitter {
     } else {
       const text = await res.text();
       data = { error: text || ('HTTP ' + res.status) };
+    }
+
+    // Auto-logout on 401 — session is stale (DB was reset, token expired, etc.)
+    if (res.status === 401) {
+      this._clearSession();
+      this._state.user = null;
+      if (this._state.pollTimer) clearInterval(this._state.pollTimer);
+      this._renderAll();
+      this._showScreen('login');
+      throw new Error(data.error || 'Session expired — please log in again');
     }
 
     if (!res.ok) {

@@ -148,15 +148,16 @@ console.log('[DB] Ready:', DB_PATH);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function publicUser(u) {
+  const row = Object.assign({}, u);
   return {
-    id:           u.id,
-    username:     u.username,
-    display_name: u.display_name,
-    lang:         u.lang,
-    bio:          u.bio || '',
-    avatar_url:   u.avatar_url || ('https://i.pravatar.cc/80?u=' + u.username),
-    verified:     u.verified === 1,
-    created_at:   u.created_at,
+    id:           Number(row.id),
+    username:     String(row.username || ''),
+    display_name: String(row.display_name || ''),
+    lang:         String(row.lang || 'en'),
+    bio:          String(row.bio || ''),
+    avatar_url:   row.avatar_url || ('https://i.pravatar.cc/80?u=' + row.username),
+    verified:     Number(row.verified) === 1,
+    created_at:   row.created_at || '',
   };
 }
 
@@ -175,25 +176,27 @@ function tweetSQL(userId) {
 }
 
 function fmt(r, uid) {
-  if (!r) return null;  // guard against null rows
+  if (!r) return null;
+  // node:sqlite returns null-prototype objects — spread into plain object first
+  const row = Object.assign({}, r);
   return {
-    id:             Number(r.id),
-    text:           r.text,
-    original_lang:  r.original_lang,
-    likes_count:    Number(r.likes_count)    || 0,
-    retweets_count: Number(r.retweets_count) || 0,
-    replies_count:  Number(r.replies_count)  || 0,
-    parent_id:      r.parent_id ? Number(r.parent_id) : null,
-    created_at:     r.created_at,
+    id:             Number(row.id),
+    text:           String(row.text || ''),
+    original_lang:  String(row.original_lang || 'en'),
+    likes_count:    Number(row.likes_count)    || 0,
+    retweets_count: Number(row.retweets_count) || 0,
+    replies_count:  Number(row.replies_count)  || 0,
+    parent_id:      row.parent_id ? Number(row.parent_id) : null,
+    created_at:     row.created_at || '',
     user: {
-      name:     r.display_name,
-      handle:   r.username,
-      avatar:   r.avatar_url || ('https://i.pravatar.cc/80?u=' + r.username),
-      verified: r.verified === 1,
+      name:     String(row.display_name || ''),
+      handle:   String(row.username || ''),
+      avatar:   row.avatar_url || ('https://i.pravatar.cc/80?u=' + row.username),
+      verified: Number(row.verified) === 1,
     },
-    liked:      r.user_liked      > 0,
-    retweeted:  r.user_retweeted  > 0,
-    bookmarked: r.user_bookmarked > 0,
+    liked:      Number(row.user_liked)      > 0,
+    retweeted:  Number(row.user_retweeted)  > 0,
+    bookmarked: Number(row.user_bookmarked) > 0,
   };
 }
 
@@ -204,8 +207,18 @@ function makeToken(u) {
 function authRequired(req, res, next) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!token) return res.status(401).json({ error: 'Authentication required' });
-  try { req.user = jwt.verify(token, JWT_SECRET); next(); }
-  catch { res.status(401).json({ error: 'Invalid or expired token' }); }
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    // Verify user still exists in DB
+    const user = db.prepare('SELECT id FROM users WHERE id=?').get(decoded.id);
+    if (!user) {
+      return res.status(401).json({ error: 'Session expired — please log in again' });
+    }
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid or expired token — please log in again' });
+  }
 }
 
 function authOptional(req, _res, next) {
@@ -416,19 +429,49 @@ app.get('/api/tweets', authOptional, (req, res) => {
 });
 
 app.post('/api/tweets', authRequired, (req, res) => {
-  const text = (req.body.text || '').trim();
-  if (!text)           return res.status(400).json({ error: 'Text is required' });
-  if (text.length>280) return res.status(400).json({ error: 'Max 280 characters' });
+  try {
+    const text = (req.body.text || '').trim();
+    if (!text)           return res.status(400).json({ error: 'Text is required' });
+    if (text.length>280) return res.status(400).json({ error: 'Max 280 characters' });
 
-  const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.user.id);
-  const lang = req.body.lang || user?.lang || 'en';
+    const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.user.id);
+    if (!user) return res.status(401).json({ error: 'User not found — please log out and log in again' });
 
-  db.prepare('INSERT INTO tweets (user_id,text,original_lang) VALUES (?,?,?)').run(req.user.id, text, lang);
+    const u    = Object.assign({}, user);
+    const lang = req.body.lang || u.lang || 'en';
 
-  // Fetch the tweet we just inserted — use MAX(id) to avoid lastInsertRowid issues
-  const tweet = db.prepare(tweetSQL(req.user.id) + ' WHERE t.user_id=? ORDER BY t.id DESC LIMIT 1').get(req.user.id);
-  if (!tweet) return res.status(500).json({ error: 'Tweet saved but could not be retrieved' });
-  res.status(201).json(fmt(tweet, req.user.id));
+    const result = db.prepare('INSERT INTO tweets (user_id,text,original_lang) VALUES (?,?,?)').run(req.user.id, text, lang);
+    const newId  = result.lastInsertRowid;
+
+    console.log('[POST tweet] inserted id:', newId, 'user:', req.user.id);
+
+    const t = Object.assign({}, db.prepare('SELECT * FROM tweets WHERE id=?').get(newId));
+    if (!t.id) return res.status(500).json({ error: 'Could not retrieve saved tweet' });
+
+    res.status(201).json({
+      id:             Number(t.id),
+      text:           t.text,
+      original_lang:  t.original_lang,
+      likes_count:    0,
+      retweets_count: 0,
+      replies_count:  0,
+      parent_id:      null,
+      created_at:     t.created_at,
+      user: {
+        name:     u.display_name,
+        handle:   u.username,
+        avatar:   u.avatar_url || ('https://i.pravatar.cc/80?u=' + u.username),
+        verified: Number(u.verified) === 1,
+      },
+      liked:      false,
+      retweeted:  false,
+      bookmarked: false,
+    });
+
+  } catch (err) {
+    console.error('[POST /api/tweets] Error:', err.message, err.stack);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/tweets/:id', authOptional, (req, res) => {
