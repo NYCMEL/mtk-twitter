@@ -175,14 +175,15 @@ function tweetSQL(userId) {
 }
 
 function fmt(r, uid) {
+  if (!r) return null;  // guard against null rows
   return {
-    id:             r.id,
+    id:             Number(r.id),
     text:           r.text,
     original_lang:  r.original_lang,
-    likes_count:    r.likes_count,
-    retweets_count: r.retweets_count,
-    replies_count:  r.replies_count,
-    parent_id:      r.parent_id || null,
+    likes_count:    Number(r.likes_count)    || 0,
+    retweets_count: Number(r.retweets_count) || 0,
+    replies_count:  Number(r.replies_count)  || 0,
+    parent_id:      r.parent_id ? Number(r.parent_id) : null,
     created_at:     r.created_at,
     user: {
       name:     r.display_name,
@@ -411,7 +412,7 @@ app.get('/api/tweets', authOptional, (req, res) => {
   args.push(limit);
 
   const rows = db.prepare(q).all(...args);
-  res.json(rows.map(r => fmt(r, uid)));
+  res.json(rows.map(r => fmt(r, uid)).filter(Boolean));
 });
 
 app.post('/api/tweets', authRequired, (req, res) => {
@@ -422,8 +423,11 @@ app.post('/api/tweets', authRequired, (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.user.id);
   const lang = req.body.lang || user?.lang || 'en';
 
-  const result = db.prepare('INSERT INTO tweets (user_id,text,original_lang) VALUES (?,?,?)').run(req.user.id, text, lang);
-  const tweet  = db.prepare(tweetSQL(req.user.id) + ' WHERE t.id=?').get(result.lastInsertRowid);
+  db.prepare('INSERT INTO tweets (user_id,text,original_lang) VALUES (?,?,?)').run(req.user.id, text, lang);
+
+  // Fetch the tweet we just inserted — use MAX(id) to avoid lastInsertRowid issues
+  const tweet = db.prepare(tweetSQL(req.user.id) + ' WHERE t.user_id=? ORDER BY t.id DESC LIMIT 1').get(req.user.id);
+  if (!tweet) return res.status(500).json({ error: 'Tweet saved but could not be retrieved' });
   res.status(201).json(fmt(tweet, req.user.id));
 });
 
@@ -461,10 +465,11 @@ app.post('/api/tweets/:id/replies', authRequired, (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.user.id);
   const lang = req.body.lang || user?.lang || 'en';
 
-  const result = db.prepare('INSERT INTO tweets (user_id,parent_id,text,original_lang) VALUES (?,?,?,?)').run(req.user.id, parent.id, text, lang);
+  db.prepare('INSERT INTO tweets (user_id,parent_id,text,original_lang) VALUES (?,?,?,?)').run(req.user.id, parent.id, text, lang);
   db.prepare('UPDATE tweets SET replies_count=replies_count+1 WHERE id=?').run(parent.id);
 
-  const reply = db.prepare(tweetSQL(req.user.id) + ' WHERE t.id=?').get(result.lastInsertRowid);
+  const reply = db.prepare(tweetSQL(req.user.id) + ' WHERE t.user_id=? AND t.parent_id=? ORDER BY t.id DESC LIMIT 1').get(req.user.id, parent.id);
+  if (!reply) return res.status(500).json({ error: 'Reply saved but could not be retrieved' });
   res.status(201).json(fmt(reply, req.user.id));
 });
 
