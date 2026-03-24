@@ -8,7 +8,7 @@
  *  node server.js
  *
  * .env (all optional):
- *   PORT=3001
+ *   PORT=3002
  *   DB_PATH=./melify.db
  *   JWT_SECRET=change-in-production
  *   JWT_EXPIRES=7d
@@ -29,7 +29,7 @@ const fs         = require('fs');
 const initSqlJs  = require('sql.js');
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const PORT          = Number(process.env.PORT)              || 3001;
+const PORT          = Number(process.env.PORT)              || 3002;
 const DB_PATH       = process.env.DB_PATH                   || path.join(__dirname, 'melify.db');
 const JWT_SECRET    = process.env.JWT_SECRET                || 'mtk-twitter-dev-secret-CHANGE-IN-PROD';
 const JWT_EXPIRES   = process.env.JWT_EXPIRES               || '7d';
