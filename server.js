@@ -30,25 +30,33 @@ const initSqlJs  = require('sql.js');
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const PORT          = Number(process.env.PORT)              || 3002;
-const DB_PATH       = process.env.DB_PATH                   || path.join(__dirname, 'melify.db');
+const DB_PATH       = process.env.DB_PATH
+                        ? path.resolve(process.env.DB_PATH)
+                        : path.join(__dirname, 'melify.db');  // always absolute
 const JWT_SECRET    = process.env.JWT_SECRET                || 'mtk-twitter-dev-secret-CHANGE-IN-PROD';
 const JWT_EXPIRES   = process.env.JWT_EXPIRES               || '7d';
 const TRANSLATE_URL = process.env.LIBRETRANSLATE_URL        || null;
 const BCRYPT_ROUNDS = 10;
-const SAVE_INTERVAL = Number(process.env.SAVE_INTERVAL_MS)  || 5000;
+const SAVE_INTERVAL = Number(process.env.SAVE_INTERVAL_MS)  || 2000;  // flush every 2s
 
 // ── In-memory DB handle (set during bootstrap) ────────────────────────────────
 let DB = null;
 let dirty = false;
+let saveTimer = null;
 
 // ── sql.js helper layer ───────────────────────────────────────────────────────
-// sql.js uses positional ? params as an array passed to .bind() / getAsObject()
-// We wrap it to match a familiar API.
 
 function run(sql, params) {
   try {
     DB.run(sql, params || []);
     dirty = true;
+    // Schedule a save within 500ms — coalesces rapid writes
+    if (!saveTimer) {
+      saveTimer = setTimeout(() => {
+        saveTimer = null;
+        saveToDisk();
+      }, 500);
+    }
   } catch (e) {
     console.error('[DB:run] Error:', e.message, '\nSQL:', sql, '\nParams:', params);
     throw e;
@@ -61,7 +69,7 @@ function get(sql, params) {
     if (params && params.length) stmt.bind(params);
     const row = stmt.step() ? stmt.getAsObject() : null;
     stmt.free();
-    return row;           // null when no row found
+    return row;
   } catch (e) {
     console.error('[DB:get] Error:', e.message, '\nSQL:', sql, '\nParams:', params);
     throw e;
@@ -83,11 +91,13 @@ function all(sql, params) {
 }
 
 function saveToDisk() {
-  if (!dirty || !DB) return;
+  if (!DB) return;
   try {
     const data = DB.export();
     fs.writeFileSync(DB_PATH, Buffer.from(data));
     dirty = false;
+    // Uncomment below to debug saves:
+    // console.log('[DB] Saved to', DB_PATH);
   } catch (e) {
     console.error('[DB] Save error:', e.message);
   }
@@ -790,9 +800,10 @@ function startExpress() {
   app.listen(PORT, () => {
     console.log('\n  🌍  Melify API ready');
     console.log('  ➜   http://localhost:' + PORT + '/api/health');
-    console.log('  🗄   ' + DB_PATH);
+    console.log('  🗄   DB: ' + DB_PATH);
+    console.log('  💾  Saving every ' + SAVE_INTERVAL + 'ms + on every write');
     console.log('  🔑  JWT: ' + JWT_EXPIRES);
-    console.log(TRANSLATE_URL ? '  🔤  LibreTranslate: ' + TRANSLATE_URL : '  🔤  Translation: fallback mode');
+    console.log(TRANSLATE_URL ? '  🔤  LibreTranslate: ' + TRANSLATE_URL : '  🔤  Translation: built-in dictionary');
     console.log('\n  Demo accounts  (password: demo1234)');
     console.log('  @priyasharma  @carlosmendoza  @kenjitanaka  @omarhassan  @natasha_v\n');
   });
