@@ -11,7 +11,17 @@
 
 require('dotenv').config();
 
-const { DatabaseSync } = require('node:sqlite');
+// node:sqlite requires --experimental-sqlite flag (Node 22+)
+// If not available, we show a clear error
+let DatabaseSync;
+try {
+  ({ DatabaseSync } = require('node:sqlite'));
+} catch (e) {
+  console.error('\n  ❌  ERROR: node:sqlite not available.');
+  console.error('  Run the server with:  node --experimental-sqlite server.js');
+  console.error('  Or use the run script: ./run-server\n');
+  process.exit(1);
+}
 const express   = require('express');
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
