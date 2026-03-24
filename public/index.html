@@ -1,0 +1,80 @@
+<mtk-twitter class="mtk-twitter" role="application" aria-label="Melify Social Feed">
+    <!-- MTKTWITTER RENDERS ITS OWN DOM TREE HERE -->
+</mtk-twitter>
+
+<script>
+ document.addEventListener('DOMContentLoaded', () => {
+     const { events } = MTK_TWITTER_CONFIG;
+
+     // ── Listen to all published events ─────────────────
+     wc.subscribe(events.USER_REGISTERED, payload => {
+         console.log('[Host] New user registered:', payload.data.user.username);
+     });
+
+     wc.subscribe(events.USER_LOGGED_IN, payload => {
+         console.log('[Host] User signed in:', payload.data.user.display_name);
+     });
+
+     wc.subscribe(events.USER_LOGGED_OUT, () => {
+         console.log('[Host] User signed out');
+     });
+
+     wc.subscribe(events.TWEET_POSTED, payload => {
+         console.log('[Host] New post:', payload.data.tweet.text?.substring(0, 40));
+     });
+
+     wc.subscribe(events.TWEET_LIKED, payload => {
+         console.log('[Host] Post liked/unliked:', payload.data);
+     });
+
+     wc.subscribe(events.TWEET_RETWEETED, payload => {
+         console.log('[Host] Post reposted:', payload.data);
+     });
+
+     wc.subscribe(events.TWEET_REPLIED, payload => {
+         console.log('[Host] Reply sent:', payload.data);
+     });
+
+     wc.subscribe(events.TWEET_BOOKMARKED, payload => {
+         console.log('[Host] Post bookmarked:', payload.data);
+     });
+
+     wc.subscribe(events.TWEET_TRANSLATED, payload => {
+         console.log('[Host] Post translated:', payload.data.from, '→', payload.data.to);
+     });
+
+     wc.subscribe(events.LANGUAGE_CHANGED, payload => {
+         console.log('[Host] Display language changed to:', payload.data.label);
+         // Persist to server analytics, etc.
+     });
+
+     wc.subscribe(events.FEED_REFRESHED, payload => {
+         console.log('[Host] Feed refreshed:', payload.data.count, 'posts in', payload.data.lang);
+     });
+
+     wc.subscribe(events.AUTH_ERROR, payload => {
+         console.warn('[Host] Auth error:', payload.data.action, payload.data.error);
+     });
+
+     // ── Example: push an external tweet into the feed ──
+     // Call this from anywhere in the host app to inject a post:
+     //
+     // wc.publish(MTK_TWITTER_CONFIG.events.TWEET_POSTED, {
+     //   type: MTK_TWITTER_CONFIG.events.TWEET_POSTED,
+     //   _external: true,
+     //   data: {
+     //     tweet: {
+     //       id: 'ext_001',
+     //       user: { name: 'External User', handle: 'extuser', avatar: '', verified: false },
+     //       text: 'Hello from an external source!',
+     //       original_lang: 'en',
+     //       timestamp: 'just now',
+     //       likes: 0, retweets: 0, replies: 0,
+     //       liked: false, retweeted: false, bookmarked: false,
+     //     }
+     //   }
+     // });
+
+ });
+</script>
+
