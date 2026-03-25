@@ -1158,6 +1158,17 @@ class MTKTwitter {
     btn.classList.toggle('bk-btn--on', tweet.bookmarked);
     btn.setAttribute('aria-pressed', tweet.bookmarked);
 
+    // Persist to server
+    const method = tweet.bookmarked ? 'POST' : 'DELETE';
+    this._api(method, `/tweets/${id}/bookmark`).catch(err => {
+      // Revert on failure
+      tweet.bookmarked = !tweet.bookmarked;
+      icon.textContent = tweet.bookmarked ? 'bookmark' : 'bookmark_border';
+      btn.classList.toggle('bk-btn--on', tweet.bookmarked);
+      this._toast('Could not save bookmark', 'error_outline');
+      console.error('[bookmark]', err.message);
+    });
+
     const payload = { type: this._cfg.events.TWEET_BOOKMARKED, data: { tweetId: id, bookmarked: tweet.bookmarked } };
     wc.publish(this._cfg.events.TWEET_BOOKMARKED, payload);
 

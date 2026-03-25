@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melify — Users</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0d1117;
+      --surface:    #161b22;
+      --surface-2:  #21262d;
+      --border:     #30363d;
+      --primary:    #38bdf8;
+      --primary-dim:#0369a1;
+      --text-1:     #e6edf3;
+      --text-2:     #8b949e;
+      --text-3:     #484f58;
+      --success:    #3fb950;
+      --error:      #f85149;
+      --radius:     10px;
+      --font:       'DM Sans', sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .header-logo {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--primary-dim), var(--primary));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      .material-icons-round { color: #fff; font-size: 1.4rem; }
+    }
+
+    .header-title {
+      flex: 1;
+      h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+      p  { font-size: 0.82rem; color: var(--text-2); margin-top: 2px; }
+    }
+
+    .header-badge {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      .material-icons-round { font-size: 0.85rem; color: var(--primary); }
+    }
+
+    /* ── Status bar ── */
+    .status {
+      width: 100%;
+      max-width: 860px;
+      margin-bottom: 16px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+    }
+
+    .status-msg {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.84rem;
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      animation: fadein 0.2s ease;
+
+      .material-icons-round { font-size: 1rem; }
+
+      &.loading { color: var(--primary);  background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); }
+      &.success { color: var(--success);  background: rgba(63,185,80,0.08);  border: 1px solid rgba(63,185,80,0.2); }
+      &.error   { color: var(--error);    background: rgba(248,81,73,0.08);   border: 1px solid rgba(248,81,73,0.2); }
+
+      .spinner {
+        width: 14px; height: 14px;
+        border: 2px solid rgba(56,189,248,0.3);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        flex-shrink: 0;
+      }
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 860px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    /* ── Table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    thead th {
+      padding: 12px 18px;
+      text-align: left;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-2);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.12s;
+
+      &:last-child { border-bottom: none; }
+
+      &:hover { background: rgba(56,189,248,0.04); }
+
+      &:active { background: rgba(56,189,248,0.08); }
+
+      &.logging-in {
+        background: rgba(56,189,248,0.06);
+        pointer-events: none;
+        opacity: 0.7;
+      }
+    }
+
+    tbody td {
+      padding: 14px 18px;
+      font-size: 0.88rem;
+      vertical-align: middle;
+    }
+
+    /* ── Avatar cell ── */
+    .cell-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 2px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .user-info {
+      .user-name    { font-weight: 700; font-size: 0.9rem; }
+      .user-handle  { font-size: 0.76rem; color: var(--text-2); }
+    }
+
+    /* ── Lang cell ── */
+    .cell-lang {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.84rem;
+
+      .flag { font-size: 1.1rem; }
+
+      .rtl-badge {
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: rgba(56,189,248,0.1);
+        color: var(--primary);
+        border: 1px solid rgba(56,189,248,0.2);
+      }
+    }
+
+    /* ── ID cell ── */
+    .cell-id {
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      color: var(--text-3);
+    }
+
+    /* ── Verified badge ── */
+    .verified {
+      color: var(--primary);
+      font-size: 1rem !important;
+      vertical-align: middle;
+    }
+
+    /* ── Login hint ── */
+    .cell-action {
+      text-align: right;
+      .hint {
+        font-size: 0.74rem;
+        color: var(--text-3);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        justify-content: flex-end;
+        .material-icons-round { font-size: 0.85rem; }
+      }
+    }
+
+    /* ── Empty / error state ── */
+    .empty {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-2);
+      .material-icons-round { font-size: 2.5rem; display: block; margin-bottom: 12px; color: var(--text-3); }
+      p { font-size: 0.88rem; }
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 20px;
+      font-size: 0.74rem;
+      color: var(--text-3);
+      text-align: center;
+    }
+
+    /* ── Keyframes ── */
+    @keyframes fadein { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin    { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-logo">
+      <span class="material-icons-round">translate</span>
+    </div>
+    <div class="header-title">
+      <h1>Melify Users</h1>
+      <p>Click any row to auto-login as that user</p>
+    </div>
+    <div class="header-badge">
+      <span class="material-icons-round">lock</span>
+      Dev only
+    </div>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="card">
+    <table id="user-table" aria-label="All users">
+      <thead>
+        <tr>
+          <th style="width:40px">#</th>
+          <th>User</th>
+          <th>Language</th>
+          <th>Email</th>
+          <th>Joined</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="user-tbody">
+        <tr>
+          <td colspan="6">
+            <div class="empty">
+              <span class="material-icons-round">hourglass_empty</span>
+              <p>Loading users…</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">Password for all accounts: <strong style="color:var(--text-1)">demo1234</strong></div>
+
+  <script>
+    const API    = '/api';
+    const APP    = '/';          // redirect here after login
+    const LANGS  = {
+      en:'🇺🇸 English', hi:'🇮🇳 Hindi', he:'🇮🇱 Hebrew',
+      ar:'🇸🇦 Arabic',  es:'🇪🇸 Spanish', fr:'🇫🇷 Français',
+      de:'🇩🇪 Deutsch', zh:'🇨🇳 中文', pt:'🇧🇷 Português',
+      ja:'🇯🇵 日本語',  ru:'🇷🇺 Русский', ko:'🇰🇷 한국어', it:'🇮🇹 Italiano',
+    };
+    const RTL    = new Set(['he','ar']);
+    const PASS   = 'demo1234';
+
+    const tbody  = document.getElementById('user-tbody');
+    const status = document.getElementById('status');
+
+    // ── Show status message ───────────────────────────────────────
+    function showStatus(type, icon, msg, spinner = false) {
+      status.innerHTML = `
+        <div class="status-msg ${type}">
+          ${spinner ? '<div class="spinner"></div>' : `<span class="material-icons-round">${icon}</span>`}
+          ${msg}
+        </div>`;
+    }
+
+    function clearStatus() { status.innerHTML = ''; }
+
+    // ── Relative time ─────────────────────────────────────────────
+    function relDate(ts) {
+      if (!ts) return '—';
+      return new Date(ts.replace(' ','T')+'Z').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    }
+
+    // ── Fetch and render users ────────────────────────────────────
+    async function loadUsers() {
+      try {
+        // Hit health to get count, then fetch each user via a known list
+        // Since there's no GET /api/users endpoint, we try known usernames
+        // + fall back to health endpoint for confirmation
+        const known = ['mel','josh','priyasharma','carlosmendoza','kenjitanaka','omarhassan','natasha_v'];
+        const users = [];
+
+        for (const uname of known) {
+          try {
+            const r = await fetch(`${API}/users/${uname}`);
+            if (r.ok) users.push(await r.json());
+          } catch { /* skip */ }
+        }
+
+        // Also check health for total count hint
+        const health = await fetch(`${API}/health`).then(r=>r.json()).catch(()=>null);
+
+        renderUsers(users, health);
+      } catch (err) {
+        tbody.innerHTML = `
+          <tr><td colspan="6">
+            <div class="empty">
+              <span class="material-icons-round">error_outline</span>
+              <p>Could not load users: ${err.message}</p>
+            </div>
+          </td></tr>`;
+      }
+    }
+
+    // ── Render table rows ─────────────────────────────────────────
+    function renderUsers(users, health) {
+      if (!users.length) {
+        tbody.innerHTML = `
+          <tr><td colspan="6">
+            <div class="empty">
+              <span class="material-icons-round">person_off</span>
+              <p>No users found. Is the server running?</p>
+            </div>
+          </td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = users.map((u, i) => {
+        const langStr = LANGS[u.lang] || (u.lang || '—').toUpperCase();
+        const isRtl   = RTL.has(u.lang);
+        const joined  = relDate(u.created_at);
+        const av      = u.avatar_url || `https://i.pravatar.cc/80?u=${u.username}`;
+
+        return `
+        <tr data-username="${u.username}" tabindex="0" role="button"
+            aria-label="Login as ${u.display_name}" title="Click to login as ${u.display_name}">
+          <td class="cell-id">${u.id}</td>
+          <td>
+            <div class="cell-user">
+              <img class="avatar" src="${av}" alt="${u.display_name}" loading="lazy"
+                   onerror="this.src='https://i.pravatar.cc/80?u=${u.username}'" />
+              <div class="user-info">
+                <div class="user-name">
+                  ${u.display_name}
+                  ${u.verified ? '<span class="material-icons-round verified" title="Verified">verified</span>' : ''}
+                </div>
+                <div class="user-handle">@${u.username}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="cell-lang">
+              <span class="flag">${langStr.split(' ')[0]}</span>
+              <span>${langStr.split(' ').slice(1).join(' ') || u.lang}</span>
+              ${isRtl ? '<span class="rtl-badge">RTL</span>' : ''}
+            </div>
+          </td>
+          <td style="color:var(--text-2);font-size:0.82rem">${u.email || '—'}</td>
+          <td style="color:var(--text-2);font-size:0.82rem">${joined}</td>
+          <td class="cell-action">
+            <div class="hint">
+              <span class="material-icons-round">login</span>
+              Auto-login
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+
+      // Bind click and keyboard on each row
+      tbody.querySelectorAll('tr[data-username]').forEach(row => {
+        row.addEventListener('click',   () => loginAs(row));
+        row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') loginAs(row); });
+      });
+
+      if (health) {
+        const extra = health.users - users.length;
+        if (extra > 0) {
+          showStatus('loading', 'info', `${users.length} shown · ${health.users} total in DB. Register more via the app.`);
+          setTimeout(clearStatus, 4000);
+        }
+      }
+    }
+
+    // ── Login as user ─────────────────────────────────────────────
+    async function loginAs(row) {
+      const username = row.dataset.username;
+      const name     = row.querySelector('.user-name').textContent.trim();
+
+      row.classList.add('logging-in');
+      showStatus('loading', '', `Logging in as @${username}…`, true);
+
+      try {
+        const res = await fetch(`${API}/auth/login`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ identifier: username, password: PASS }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+        // Save session the same way mtk-twitter.js does
+        localStorage.setItem('mtk_session', JSON.stringify({ ...data.user, token: data.token }));
+        // Clear display lang so it defaults to profile lang
+        localStorage.removeItem('mtk_display_lang');
+
+        showStatus('success', 'check_circle', `Logged in as ${name} — redirecting…`);
+
+        setTimeout(() => { window.location.href = APP; }, 800);
+
+      } catch (err) {
+        showStatus('error', 'error_outline', `Login failed: ${err.message}`);
+        row.classList.remove('logging-in');
+        setTimeout(clearStatus, 4000);
+      }
+    }
+
+    // ── Boot ──────────────────────────────────────────────────────
+    loadUsers();
+  </script>
+
+</body>
+</html>
