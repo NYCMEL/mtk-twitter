@@ -199,6 +199,13 @@ $t-slow:         0.35s;
 
   *, *::before, *::after { box-sizing: border-box; }
 
+  // RTL language support — Hebrew, Arabic
+  [dir="rtl"] {
+    direction: rtl;
+    text-align: right;
+    unicode-bidi: embed;
+  }
+
   // ── Utility ──────────────────────────────────────────────────
   &__sr-only {
     position: absolute; width: 1px; height: 1px;
@@ -1089,7 +1096,26 @@ $t-slow:         0.35s;
       .material-icons-round { font-size: 0.7rem; }
     }
 
-    &-text { font-family: $font-body; font-size: 0.91rem; line-height: 1.58; color: var(--text-1); margin: 4px 0 8px; word-break: break-word; }
+    &-text {
+      font-family: $font-body;
+      font-size: 0.91rem;
+      line-height: 1.58;
+      color: var(--text-1);
+      margin: 4px 0 8px;
+      word-break: break-word;
+
+      &--rtl {
+        direction: rtl;
+        text-align: right;
+        font-family: $font-ui;
+      }
+    }
+
+    // RTL compose textarea
+    textarea[dir="rtl"] {
+      direction: rtl;
+      text-align: right;
+    }
 
     &-translation {
       background: var(--surface-3);

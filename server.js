@@ -130,15 +130,17 @@ console.log('[DB] Ready:', DB_PATH);
     ['omarhassan',    'omar@demo.com',    'Omar Hassan',     hash,'ar',av+'59',0],
     ['natasha_v',     'natasha@demo.com', 'Natasha Volkova', hash,'ru',av+'45',0],
     ['mel',           'mel@melify.com',   'Mel',             hash,'en',av+'11',1],
+    ['josh',          'josh@melify.com',  'Josh',            hash,'he',av+'33',0],
   ].forEach(u => insUser.run(...u));
 
   const insTweet = db.prepare('INSERT INTO tweets (user_id,text,original_lang) VALUES (?,?,?)');
   [
-    ['priyasharma',   'नमस्ते! आज का मौसम बहुत अच्छा है।',                    'hi'],
+    ['priyasharma',   'נמס্ته! आज का मौसम बहुत अच्छा है।',                    'hi'],
     ['carlosmendoza', 'La tecnología nos une a todos.',                         'es'],
     ['kenjitanaka',   'この技術は素晴らしいです！言語の壁がなくなりますね。', 'ja'],
     ['omarhassan',    'مرحبا بالجميع! نحن نبني جسور التواصل بين الشعوب.',    'ar'],
     ['natasha_v',     'Технологии меняют мир к лучшему каждый день.',          'ru'],
+    ['josh',          'שלום לכולם! הטכנולוגיה מחברת בין עמים.',               'he'],
   ].forEach(([uname, text, lang]) => {
     const u = db.prepare('SELECT id FROM users WHERE username=?').get(uname);
     if (u) insTweet.run(u.id, text, lang);
@@ -233,21 +235,35 @@ function authOptional(req, _res, next) {
 // Free self-hosted: https://github.com/LibreTranslate/LibreTranslate
 const TRANS_DICT = {
   // Common English greetings / phrases
-  'Hello': { hi:'नमस्ते', es:'Hola', fr:'Bonjour', de:'Hallo', zh:'你好', ar:'مرحبا', pt:'Olá', ja:'こんにちは', ru:'Привет', ko:'안녕하세요', it:'Ciao' },
-  'Hello!': { hi:'नमस्ते!', es:'¡Hola!', fr:'Bonjour!', de:'Hallo!', zh:'你好！', ar:'مرحبا!', pt:'Olá!', ja:'こんにちは！', ru:'Привет!', ko:'안녕하세요!', it:'Ciao!' },
-  'Hi': { hi:'नमस्ते', es:'Hola', fr:'Salut', de:'Hallo', zh:'嗨', ar:'مرحبا', pt:'Oi', ja:'やあ', ru:'Привет', ko:'안녕', it:'Ciao' },
-  'Hi!': { hi:'नमस्ते!', es:'¡Hola!', fr:'Salut!', de:'Hallo!', zh:'嗨！', ar:'مرحبا!', pt:'Oi!', ja:'やあ！', ru:'Привет!', ko:'안녕!', it:'Ciao!' },
-  'Good morning': { hi:'शुभ प्रभात', es:'Buenos días', fr:'Bonjour', de:'Guten Morgen', zh:'早上好', ar:'صباح الخير', pt:'Bom dia', ja:'おはようございます', ru:'Доброе утро', ko:'좋은 아침', it:'Buongiorno' },
-  'Good morning!': { hi:'शुभ प्रभात!', es:'¡Buenos días!', fr:'Bonjour!', de:'Guten Morgen!', zh:'早上好！', ar:'صباح الخير!', pt:'Bom dia!', ja:'おはようございます！', ru:'Доброе утро!', ko:'좋은 아침!', it:'Buongiorno!' },
-  'Thank you': { hi:'धन्यवाद', es:'Gracias', fr:'Merci', de:'Danke', zh:'谢谢', ar:'شكراً', pt:'Obrigado', ja:'ありがとう', ru:'Спасибо', ko:'감사합니다', it:'Grazie' },
-  'Thank you!': { hi:'धन्यवाद!', es:'¡Gracias!', fr:'Merci!', de:'Danke!', zh:'谢谢！', ar:'شكراً!', pt:'Obrigado!', ja:'ありがとう！', ru:'Спасибо!', ko:'감사합니다!', it:'Grazie!' },
-  'Welcome': { hi:'स्वागत है', es:'Bienvenido', fr:'Bienvenue', de:'Willkommen', zh:'欢迎', ar:'مرحباً', pt:'Bem-vindo', ja:'ようこそ', ru:'Добро пожаловать', ko:'환영합니다', it:'Benvenuto' },
-  'Welcome!': { hi:'स्वागत है!', es:'¡Bienvenido!', fr:'Bienvenue!', de:'Willkommen!', zh:'欢迎！', ar:'مرحباً!', pt:'Bem-vindo!', ja:'ようこそ！', ru:'Добро пожаловать!', ko:'환영합니다!', it:'Benvenuto!' },
-  'How are you?': { hi:'आप कैसे हैं?', es:'¿Cómo estás?', fr:'Comment allez-vous?', de:'Wie geht es Ihnen?', zh:'你好吗？', ar:'كيف حالك؟', pt:'Como vai você?', ja:'お元気ですか？', ru:'Как дела?', ko:'잘 지내세요?', it:'Come stai?' },
-  'Good night': { hi:'शुभ रात्रि', es:'Buenas noches', fr:'Bonne nuit', de:'Gute Nacht', zh:'晚安', ar:'تصبح على خير', pt:'Boa noite', ja:'おやすみなさい', ru:'Спокойной ночи', ko:'잘 자요', it:'Buona notte' },
-  'Good night!': { hi:'शुभ रात्रि!', es:'¡Buenas noches!', fr:'Bonne nuit!', de:'Gute Nacht!', zh:'晚安！', ar:'تصبح على خير!', pt:'Boa noite!', ja:'おやすみなさい！', ru:'Спокойной ночи!', ko:'잘 자요!', it:'Buona notte!' },
+  'Hello': { hi:'नमस्ते', he:'שלום', es:'Hola', fr:'Bonjour', de:'Hallo', zh:'你好', ar:'مرحبا', pt:'Olá', ja:'こんにちは', ru:'Привет', ko:'안녕하세요', it:'Ciao' },
+  'Hello!': { hi:'नमस्ते!', he:'שלום!', es:'¡Hola!', fr:'Bonjour!', de:'Hallo!', zh:'你好！', ar:'مرحبا!', pt:'Olá!', ja:'こんにちは！', ru:'Привет!', ko:'안녕하세요!', it:'Ciao!' },
+  'Hi': { hi:'नमस्ते', he:'היי', es:'Hola', fr:'Salut', de:'Hallo', zh:'嗨', ar:'مرحبا', pt:'Oi', ja:'やあ', ru:'Привет', ko:'안녕', it:'Ciao' },
+  'Hi!': { hi:'नमस्ते!', he:'היי!', es:'¡Hola!', fr:'Salut!', de:'Hallo!', zh:'嗨！', ar:'مرحبا!', pt:'Oi!', ja:'やあ！', ru:'Привет!', ko:'안녕!', it:'Ciao!' },
+  'Good morning': { hi:'शुभ प्रभात', he:'בוקר טוב', es:'Buenos días', fr:'Bonjour', de:'Guten Morgen', zh:'早上好', ar:'صباح الخير', pt:'Bom dia', ja:'おはようございます', ru:'Доброе утро', ko:'좋은 아침', it:'Buongiorno' },
+  'Good morning!': { hi:'शुभ प्रभात!', he:'בוקר טוב!', es:'¡Buenos días!', fr:'Bonjour!', de:'Guten Morgen!', zh:'早上好！', ar:'صباح الخير!', pt:'Bom dia!', ja:'おはようございます！', ru:'Доброе утро!', ko:'좋은 아침!', it:'Buongiorno!' },
+  'Thank you': { hi:'धन्यवाद', he:'תודה', es:'Gracias', fr:'Merci', de:'Danke', zh:'谢谢', ar:'شكراً', pt:'Obrigado', ja:'ありがとう', ru:'Спасибо', ko:'감사합니다', it:'Grazie' },
+  'Thank you!': { hi:'धन्यवाद!', he:'תודה!', es:'¡Gracias!', fr:'Merci!', de:'Danke!', zh:'谢谢！', ar:'شكراً!', pt:'Obrigado!', ja:'ありがとう！', ru:'Спасибо!', ko:'감사합니다!', it:'Grazie!' },
+  'Welcome': { hi:'स्वागत है', he:'ברוך הבא', es:'Bienvenido', fr:'Bienvenue', de:'Willkommen', zh:'欢迎', ar:'مرحباً', pt:'Bem-vindo', ja:'ようこそ', ru:'Добро пожаловать', ko:'환영합니다', it:'Benvenuto' },
+  'Welcome!': { hi:'स्वागत है!', he:'ברוך הבא!', es:'¡Bienvenido!', fr:'Bienvenue!', de:'Willkommen!', zh:'欢迎！', ar:'مرحباً!', pt:'Bem-vindo!', ja:'ようこそ！', ru:'Добро пожаловать!', ko:'환영합니다!', it:'Benvenuto!' },
+  'How are you?': { hi:'आप कैसे हैं?', he:'מה שלומך?', es:'¿Cómo estás?', fr:'Comment allez-vous?', de:'Wie geht es Ihnen?', zh:'你好吗？', ar:'كيف حالك؟', pt:'Como vai você?', ja:'お元気ですか？', ru:'Как дела?', ko:'잘 지내세요?', it:'Come stai?' },
+  'Good night': { hi:'शुभ रात्रि', he:'לילה טוב', es:'Buenas noches', fr:'Bonne nuit', de:'Gute Nacht', zh:'晚安', ar:'تصبح على خير', pt:'Boa noite', ja:'おやすみなさい', ru:'Спокойной ночи', ko:'잘 자요', it:'Buona notte' },
+  'Good night!': { hi:'शुभ रात्रि!', he:'לילה טוב!', es:'¡Buenas noches!', fr:'Bonne nuit!', de:'Gute Nacht!', zh:'晚安！', ar:'تصبح على خير!', pt:'Boa noite!', ja:'おやすみなさい！', ru:'Спокойной ночи!', ko:'잘 자요!', it:'Buona notte!' },
 
   // Seed tweets
+  'שלום לכולם! הטכנולוגיה מחברת בין עמים.': {
+    en:'Hello everyone! Technology connects peoples.',
+    hi:'सभी को नमस्ते! तकनीक लोगों को जोड़ती है।',
+    es:'¡Hola a todos! La tecnología conecta a los pueblos.',
+    fr:'Bonjour à tous! La technologie connecte les peuples.',
+    de:'Hallo alle! Technologie verbindet Völker.',
+    zh:'大家好！科技将人们联系在一起。',
+    ar:'مرحبا بالجميع! التكنولوجيا تربط الشعوب.',
+    pt:'Olá a todos! A tecnologia conecta os povos.',
+    ja:'みなさんこんにちは！テクノロジーが人々をつなぎます。',
+    ru:'Всем привет! Технологии объединяют народы.',
+    ko:'모두 안녕하세요! 기술이 사람들을 연결합니다.',
+    it:'Ciao a tutti! La tecnologia connette i popoli.',
+  },
   'नमस्ते! आज का मौसम बहुत अच्छा है।': {
     en:'Hello! The weather is very nice today.',
     es:'¡Hola! El tiempo está muy bien hoy.',

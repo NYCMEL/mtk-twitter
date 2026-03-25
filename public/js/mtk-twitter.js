@@ -444,7 +444,8 @@ class MTKTwitter {
                 Posting in <span id="mtk-compose-lang-label">${(() => { const pl = this._cfg.languages.find(l => l.code === (user?.lang || 'en')); return pl ? pl.flag + ' ' + pl.label : '🇺🇸 English'; })()}</span>
               </div>
               <textarea id="mtk-compose-ta" placeholder="What's happening worldwide?"
-                        maxlength="280" aria-label="Compose post" rows="3"></textarea>
+                        maxlength="280" aria-label="Compose post" rows="3"
+                        dir="${(() => { const pl = this._cfg.languages.find(l => l.code === (user?.lang || 'en')); return pl?.rtl ? 'rtl' : 'ltr'; })()}"></textarea>
               <div class="mtk-twitter__compose-footer">
                 <div class="mtk-twitter__compose-tools" role="group" aria-label="Compose tools">
                   <button aria-label="Add image" title="Add image">
@@ -612,8 +613,9 @@ class MTKTwitter {
         </div>
 
         <!-- Tweet text — shows translation if cached, original otherwise -->
-        <p class="mtk-twitter__tweet-text" id="mtk-txt-${id}"
+        <p class="mtk-twitter__tweet-text${lang?.rtl ? ' mtk-twitter__tweet-text--rtl' : ''}" id="mtk-txt-${id}"
            lang="${displayLang}"
+           dir="${lang?.rtl ? 'rtl' : 'ltr'}"
            data-original="${this._esc(text)}"
            data-original-lang="${origLang}"
            data-showing="${showingTrans ? 'translated' : 'original'}">${this._esc(displayText)}</p>
@@ -1279,6 +1281,10 @@ class MTKTwitter {
 
     textEl.textContent = translated;
     textEl.lang = this._state.userLang;
+    // Set direction based on TARGET language
+    const targetLangObj = this._cfg.languages.find(l => l.code === this._state.userLang);
+    textEl.dir = targetLangObj?.rtl ? 'rtl' : 'ltr';
+    textEl.classList.toggle('mtk-twitter__tweet-text--rtl', !!targetLangObj?.rtl);
     textEl.dataset.showing = 'translated';
 
     origRow.innerHTML = `
