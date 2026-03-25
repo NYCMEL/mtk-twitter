@@ -796,7 +796,8 @@ class MTKTwitter {
     if (btn.classList.contains('reply-btn'))        return this._handleReplyToggle(btn, id);
     if (btn.classList.contains('bk-btn'))           return this._handleBookmark(btn, id);
     if (btn.classList.contains('del-btn'))          return this._handleDelete(btn, id);
-    if (btn.classList.contains('mtk-twitter__tweet-orig-btn')) return this._handleOrigToggle(btn, btn.dataset.id);
+    if (btn.classList.contains('mtk-twitter__tweet-orig-btn'))  return this._handleOrigToggle(btn, btn.dataset.id);
+    if (btn.classList.contains('mtk-twitter__tweet-expand-btn')) return this._expandUserTweets(btn.dataset.group, btn);
     const rp = btn.dataset.replyPost;
     if (rp) return this._handleReplySubmit(rp);
   }
@@ -988,14 +989,6 @@ class MTKTwitter {
       const ta = list.querySelector(`[data-for="${id}"]`);
       if (ta) ta.addEventListener('input', () => { btn.disabled = !ta.value.trim(); });
     });
-
-    // Bind expand buttons
-    list.querySelectorAll('.mtk-twitter__tweet-expand-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        this._expandUserTweets(btn.dataset.group, btn);
-      });
-    });
   }
 
   _startPolling() {
@@ -1062,9 +1055,10 @@ class MTKTwitter {
 
     if (isExpanded) {
       // Collapse
-      group.style.display  = 'none';
+      group.style.display    = 'none';
       group.dataset.expanded = '0';
-      const count = group.querySelectorAll('[data-id]').length;
+      // Count only tweet <li> elements, not buttons/other elements with data-id
+      const count = group.querySelectorAll('li.mtk-twitter__tweet').length;
       btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_more</span> ${count} more`;
       btn.setAttribute('aria-label', `Show ${count} more posts from this user`);
     } else {
@@ -1085,7 +1079,7 @@ class MTKTwitter {
       });
 
       // Auto-translate
-      const ids = [...group.querySelectorAll('[data-id]')].map(el => el.dataset.id).filter(Boolean);
+      const ids = [...group.querySelectorAll('li.mtk-twitter__tweet[data-id]')].map(el => el.dataset.id).filter(Boolean);
       setTimeout(() => ids.forEach(id => this._autoTranslateTweet(id)), 100);
 
       btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_less</span> Hide`;
@@ -1689,7 +1683,6 @@ class MTKTwitter {
 
     try {
       const tweets = await this._api('GET', '/bookmarks');
-      this._state.tweets = tweets;
 
       if (!tweets.length) {
         if (list) list.innerHTML = `
@@ -1700,9 +1693,22 @@ class MTKTwitter {
         return;
       }
 
-      // Bookmarks show all tweets ungrouped — no collapsing
-      this._renderTweetListFlat();
+      // Render bookmarks flat — all tweets, no grouping
+      // Use a temp render that doesn't touch _state.tweets (home feed)
+      if (!list) return;
+      list.innerHTML = tweets.map(t => this._tplTweet(t)).join('');
+      list.querySelectorAll('[data-reply-post]').forEach(btn => {
+        const id = btn.dataset.replyPost;
+        const ta = list.querySelector(`[data-for="${id}"]`);
+        if (ta) ta.addEventListener('input', () => { btn.disabled = !ta.value.trim(); });
+      });
+
+      // Translate bookmarked tweets
+      const savedTweets = this._state.tweets;
+      this._state.tweets = tweets;
       this._autoTranslateFeed();
+      this._state.tweets = savedTweets;
+
     } catch (err) {
       if (list) list.innerHTML = `
         <li><div class="mtk-twitter__empty">
