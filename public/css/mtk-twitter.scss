@@ -1286,11 +1286,17 @@ $t-slow:         0.35s;
       &-group-hidden {
         padding: 0;
         list-style: none;
+        border-left: 3px solid var(--primary-glow, rgba(56,189,248,0.15));
+        margin-left: 24px;
+
+        .mtk-twitter__tweet-group-inner {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
 
         .mtk-twitter__tweet {
           border-top: 1px dashed var(--border);
-          margin-left: 16px;
-          padding-left: 8px;
 
           &:first-child { border-top: none; }
         }
