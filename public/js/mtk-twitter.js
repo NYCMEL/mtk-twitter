@@ -1345,27 +1345,67 @@ class MTKTwitter {
     const tweet = this._state.tweets.find(t => String(t.id) === String(id));
     if (!tweet) return;
 
-    tweet.bookmarked = !tweet.bookmarked;
+    const handle        = tweet.user?.handle || tweet.user?.username;
+    const wasBookmarked = tweet.bookmarked;
+    const nowBookmarked = !wasBookmarked;
+
+    // If bookmarking: un-bookmark any previously bookmarked tweet from same user
+    if (nowBookmarked && handle) {
+      this._state.tweets.forEach(t => {
+        const tHandle = t.user?.handle || t.user?.username;
+        if (tHandle === handle && String(t.id) !== String(id) && t.bookmarked) {
+          t.bookmarked = false;
+          this._api('DELETE', `/tweets/${t.id}/bookmark`).catch(() => {});
+          // Update DOM for the previously bookmarked tweet
+          const oldBtn  = this._root.querySelector(`li[data-id="${t.id}"] .bk-btn`);
+          const oldIcon = oldBtn?.querySelector('.material-icons-round');
+          if (oldBtn)  { oldBtn.classList.remove('bk-btn--on'); oldBtn.setAttribute('aria-pressed', 'false'); }
+          if (oldIcon) oldIcon.textContent = 'bookmark_border';
+        }
+      });
+    }
+
+    // Toggle current tweet
+    tweet.bookmarked = nowBookmarked;
     const icon = btn.querySelector('.material-icons-round');
-    icon.textContent = tweet.bookmarked ? 'bookmark' : 'bookmark_border';
-    btn.classList.toggle('bk-btn--on', tweet.bookmarked);
-    btn.setAttribute('aria-pressed', tweet.bookmarked);
+    icon.textContent = nowBookmarked ? 'bookmark' : 'bookmark_border';
+    btn.classList.toggle('bk-btn--on', nowBookmarked);
+    btn.setAttribute('aria-pressed', nowBookmarked);
+
+    // Mark ALL other tweets from this user with the bookmark icon (filled but not primary)
+    // to show they are "covered" by the bookmark
+    if (handle) {
+      this._state.tweets.forEach(t => {
+        const tHandle = t.user?.handle || t.user?.username;
+        if (tHandle === handle && String(t.id) !== String(id)) {
+          const tBtn  = this._root.querySelector(`li[data-id="${t.id}"] .bk-btn`);
+          const tIcon = tBtn?.querySelector('.material-icons-round');
+          if (tBtn && tIcon) {
+            // Show as filled (dimmed) if this user has an active bookmark, outline if not
+            tIcon.textContent = nowBookmarked ? 'bookmark' : 'bookmark_border';
+            tBtn.classList.toggle('bk-btn--on', nowBookmarked);
+            tBtn.style.opacity = nowBookmarked ? '0.4' : '';
+          }
+          t.bookmarked = nowBookmarked;
+        }
+      });
+    }
 
     // Persist to server
-    const method = tweet.bookmarked ? 'POST' : 'DELETE';
+    const method = nowBookmarked ? 'POST' : 'DELETE';
     this._api(method, `/tweets/${id}/bookmark`).catch(err => {
       // Revert on failure
-      tweet.bookmarked = !tweet.bookmarked;
-      icon.textContent = tweet.bookmarked ? 'bookmark' : 'bookmark_border';
-      btn.classList.toggle('bk-btn--on', tweet.bookmarked);
+      tweet.bookmarked = wasBookmarked;
+      icon.textContent = wasBookmarked ? 'bookmark' : 'bookmark_border';
+      btn.classList.toggle('bk-btn--on', wasBookmarked);
       this._toast('Could not save bookmark', 'error_outline');
-      console.error('[bookmark]', err.message);
     });
 
-    const payload = { type: this._cfg.events.TWEET_BOOKMARKED, data: { tweetId: id, bookmarked: tweet.bookmarked } };
+    const payload = { type: this._cfg.events.TWEET_BOOKMARKED, data: { tweetId: id, bookmarked: nowBookmarked } };
     wc.publish(this._cfg.events.TWEET_BOOKMARKED, payload);
 
-    if (tweet.bookmarked) this._toast('Bookmarked!', 'bookmark');
+    if (nowBookmarked) this._toast('Bookmarked!', 'bookmark');
+    else this._toast('Bookmark removed', 'bookmark_border');
   }
 
   async _handleDelete(btn, id) {

@@ -605,7 +605,24 @@ app.delete('/api/tweets/:id/retweet', authRequired, (req, res) => {
 // BOOKMARKS
 // ════════════════════════════════════════════════════════════════════════════════
 app.post('/api/tweets/:id/bookmark', authRequired, (req, res) => {
-  db.prepare('INSERT OR IGNORE INTO bookmarks (user_id,tweet_id) VALUES (?,?)').run(req.user.id, Number(req.params.id));
+  const tweetId  = Number(req.params.id);
+  const userId   = req.user.id;
+
+  // Find the author of this tweet
+  const tweet = db.prepare('SELECT user_id FROM tweets WHERE id=?').get(tweetId);
+  if (!tweet) return res.status(404).json({ error: 'Tweet not found' });
+
+  // Remove any existing bookmark from this user for tweets by the same author
+  db.prepare(`
+    DELETE FROM bookmarks
+    WHERE user_id = ?
+      AND tweet_id IN (
+        SELECT id FROM tweets WHERE user_id = ?
+      )
+  `).run(userId, tweet.user_id);
+
+  // Add the new bookmark
+  db.prepare('INSERT OR IGNORE INTO bookmarks (user_id,tweet_id) VALUES (?,?)').run(userId, tweetId);
   res.json({ bookmarked: true });
 });
 

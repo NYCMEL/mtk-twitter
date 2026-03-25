@@ -1252,6 +1252,12 @@ $t-slow:         0.35s;
         &.rt-btn--on   { color: $retweet; }
         &.like-btn--on { color: $like; }
         &.bk-btn--on   { color: $bookmark; }
+
+        // Sibling tweets from same bookmarked user — faded bookmark icon
+        &.bk-btn[style*="opacity"] {
+          color: $bookmark;
+          .material-icons-round { font-size: inherit; }
+        }
       }
 
       // ── More posts from this user button ──────────────────
