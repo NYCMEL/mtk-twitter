@@ -36,7 +36,6 @@ const DB_PATH       = process.env.DB_PATH
                         : path.join(__dirname, 'melify.db');
 const JWT_SECRET    = process.env.JWT_SECRET           || 'mtk-twitter-dev-secret-CHANGE-IN-PROD';
 const JWT_EXPIRES   = process.env.JWT_EXPIRES          || '7d';
-const TRANSLATE_URL = process.env.LIBRETRANSLATE_URL   || null;
 const BCRYPT_ROUNDS = 10;
 
 // ── Database — writes directly to disk on every statement ────────────────────
@@ -623,42 +622,93 @@ app.get('/api/bookmarks', authRequired, (req, res) => {
 // ════════════════════════════════════════════════════════════════════════════════
 // TRANSLATION
 // ════════════════════════════════════════════════════════════════════════════════
+
+// Google Translate language code overrides (where GT uses different codes)
+const GT_LANG_MAP = {
+  he: 'iw',   // Hebrew: Google uses 'iw' not 'he'
+  zh: 'zh-CN', // Chinese simplified
+};
+
+function toGTLang(code) {
+  return GT_LANG_MAP[code] || code;
+}
+
+async function googleTranslate(text, sourceLang, targetLang) {
+  const sl = toGTLang(sourceLang);
+  const tl = toGTLang(targetLang);
+
+  // Google Translate unofficial endpoint
+  const url = 'https://translate.googleapis.com/translate_a/single'
+    + '?client=gtx'
+    + '&sl=' + encodeURIComponent(sl)
+    + '&tl=' + encodeURIComponent(tl)
+    + '&dt=t'
+    + '&q='  + encodeURIComponent(text);
+
+  const r = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; Melify/2.0)',
+    },
+  });
+
+  if (!r.ok) throw new Error('Google Translate HTTP ' + r.status);
+
+  const data = await r.json();
+
+  // Response format: [[[translated, original, ...], ...], ...]
+  // Concatenate all translated segments
+  if (!Array.isArray(data) || !Array.isArray(data[0])) {
+    throw new Error('Unexpected Google Translate response format');
+  }
+
+  const translated = data[0]
+    .filter(seg => Array.isArray(seg) && seg[0])
+    .map(seg => seg[0])
+    .join('');
+
+  if (!translated) throw new Error('Empty translation result');
+  return translated;
+}
+
 app.get('/api/tweets/:id/translate', authOptional, async (req, res) => {
   const target = (req.query.target || 'en').toLowerCase();
   const tweet  = db.prepare('SELECT * FROM tweets WHERE id=?').get(req.params.id);
   if (!tweet) return res.status(404).json({ error: 'Tweet not found' });
 
+  // Same language — no translation needed
   if (tweet.original_lang === target) {
     return res.json({ translated_text: tweet.text, source_lang: tweet.original_lang, target_lang: target });
   }
 
-  // 1. Built-in dictionary (fastest, always correct for seed tweets)
+  // 1. Built-in dictionary — instant, always correct for seed tweets
   const dictResult = dictLookup(tweet.text, target);
   if (dictResult) {
     db.prepare('INSERT OR REPLACE INTO translations (tweet_id,target_lang,translated) VALUES (?,?,?)').run(tweet.id, target, dictResult);
     return res.json({ translated_text: dictResult, source_lang: tweet.original_lang, target_lang: target });
   }
 
-  // 2. DB cache
+  // 2. DB cache — previously translated
   const cached = db.prepare('SELECT translated FROM translations WHERE tweet_id=? AND target_lang=?').get(tweet.id, target);
-  if (cached) return res.json({ translated_text: cached.translated, source_lang: tweet.original_lang, target_lang: target });
-
-  // 3. LibreTranslate
-  let translated = null;
-  if (TRANSLATE_URL) {
-    try {
-      const r = await fetch(TRANSLATE_URL + '/translate', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ q: tweet.text, source: tweet.original_lang, target, format:'text' }),
-      });
-      const d = await r.json();
-      if (d.translatedText) translated = d.translatedText;
-    } catch (e) { console.warn('[TRANSLATE]', e.message); }
+  if (cached) {
+    return res.json({ translated_text: cached.translated, source_lang: tweet.original_lang, target_lang: target });
   }
 
-  // 4. Return original if nothing found
-  if (!translated) translated = tweet.text;
+  // 3. Google Translate (unofficial, free)
+  let translated = null;
+  try {
+    translated = await googleTranslate(tweet.text, tweet.original_lang, target);
+    console.log('[TRANSLATE] Google: tweet', tweet.id, tweet.original_lang, '->', target, ':', translated.substring(0, 60));
+  } catch (err) {
+    console.warn('[TRANSLATE] Google Translate failed:', err.message);
+  }
 
+  // 4. Last resort — return original text unchanged
+  if (!translated) {
+    console.log('[TRANSLATE] No translation available for tweet', tweet.id);
+    translated = tweet.text;
+  }
+
+  // Cache result so next request is instant
   db.prepare('INSERT OR REPLACE INTO translations (tweet_id,target_lang,translated) VALUES (?,?,?)').run(tweet.id, target, translated);
   res.json({ translated_text: translated, source_lang: tweet.original_lang, target_lang: target });
 });
@@ -679,7 +729,7 @@ app.listen(PORT, () => {
   console.log('  ➜   http://localhost:' + PORT + '/api/health');
   console.log('  🗄   DB: ' + DB_PATH + '  (writes directly to disk)');
   console.log('  🔑  JWT: ' + JWT_EXPIRES);
-  console.log(TRANSLATE_URL ? '  🔤  LibreTranslate: ' + TRANSLATE_URL : '  🔤  Translation: built-in dictionary');
+  console.log('  🔤  Translation: Google Translate (unofficial) + built-in dictionary');
   console.log('\n  Demo accounts  (password: demo1234)');
   console.log('  @mel  @priyasharma  @carlosmendoza  @kenjitanaka  @omarhassan  @natasha_v\n');
 });

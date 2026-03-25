@@ -1080,7 +1080,16 @@ $t-slow:         0.35s;
     }
 
     &-handle { font-size: 0.78rem; color: var(--text-3); }
-    &-time   { font-size: 0.75rem; color: var(--text-3); margin-left: auto; }
+    &-time   {
+      font-size: 0.75rem;
+      color: var(--text-3);
+      margin-left: auto;
+
+      &--fresh {
+        color: var(--primary);
+        font-weight: 600;
+      }
+    }
 
     &-lang-badge {
       display: inline-flex;
@@ -1243,6 +1252,49 @@ $t-slow:         0.35s;
         &.rt-btn--on   { color: $retweet; }
         &.like-btn--on { color: $like; }
         &.bk-btn--on   { color: $bookmark; }
+      }
+
+      // ── More posts from this user button ──────────────────
+      .mtk-twitter__tweet-expand-btn {
+        display:     inline-flex;
+        align-items: center;
+        gap:         4px;
+        margin-left: auto;
+        font-size:   0.76rem;
+        font-weight: 600;
+        color:       var(--primary);
+        background:  none;
+        border:      none;
+        cursor:      pointer;
+        padding:     2px 6px;
+        border-radius: 999px;
+        font-family: $font-ui;
+        transition:  background 0.15s;
+
+        .material-icons-round { font-size: 1rem; }
+
+        &:hover {
+          background: var(--primary-glow);
+        }
+        &:focus-visible {
+          outline: 2px solid var(--primary);
+          outline-offset: 2px;
+        }
+      }
+
+      // ── Hidden tweet group wrapper ────────────────────────
+      &-group-hidden {
+        padding: 0;
+        list-style: none;
+
+        .mtk-twitter__tweet {
+          border-top: 1px dashed var(--border);
+          margin-left: 16px;
+          padding-left: 8px;
+
+          &:first-child { border-top: none; }
+        }
+      }
       }
     }
 

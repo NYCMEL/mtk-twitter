@@ -609,7 +609,7 @@ class MTKTwitter {
               <span class="material-icons-round" aria-hidden="true">T</span>
               ${lang.flag} ${lang.label}
             </span>` : ''}
-          <span class="mtk-twitter__tweet-time">${t.timestamp || this._relTime(t.created_at)}</span>
+          <span class="mtk-twitter__tweet-time${this._isFresh(t.created_at) && !t.timestamp ? ' mtk-twitter__tweet-time--fresh' : ''}">${t.timestamp || this._relTime(t.created_at)}</span>
         </div>
 
         <!-- Tweet text — shows translation if cached, original otherwise -->
@@ -665,6 +665,13 @@ class MTKTwitter {
                   aria-label="Delete this post"
                   title="Delete post">
             <span class="material-icons-round" aria-hidden="true">delete_outline</span>
+          </button>` : ''}
+          ${t._hiddenCount > 0 ? `
+          <button class="mtk-twitter__tweet-expand-btn" data-group="${t.user?.handle || t.user?.username}"
+                  aria-label="Show ${t._hiddenCount} more post${t._hiddenCount > 1 ? 's' : ''} from ${t.user?.name || t.user?.handle}"
+                  title="Show more from this user">
+            <span class="material-icons-round" aria-hidden="true">expand_more</span>
+            ${t._hiddenCount} more
           </button>` : ''}
         </div>
 
@@ -937,13 +944,53 @@ class MTKTwitter {
       return;
     }
 
-    list.innerHTML = this._state.tweets.map(t => this._tplTweet(t)).join('');
+    // Group by user handle — keep insertion order (latest first), collect hidden ones
+    const groups   = new Map();   // handle → { latest, hidden[] }
+    const ordered  = [];          // handles in order of first appearance
+
+    this._state.tweets.forEach(t => {
+      const handle = t.user?.handle || t.user?.username || String(t.id);
+      if (!groups.has(handle)) {
+        groups.set(handle, { latest: t, hidden: [] });
+        ordered.push(handle);
+      } else {
+        // tweets are newest-first, so subsequent ones are older → hidden
+        groups.get(handle).hidden.push(t);
+      }
+    });
+
+    // Build HTML — one visible tweet per user, hidden tweets stored in data attr
+    let html = '';
+    for (const handle of ordered) {
+      const { latest, hidden } = groups.get(handle);
+      const hiddenCount = hidden.length;
+
+      // Render the visible tweet with _hiddenCount injected
+      html += this._tplTweet({ ...latest, _hiddenCount: hiddenCount });
+
+      // Render hidden tweets collapsed (display:none), revealed on expand
+      if (hiddenCount > 0) {
+        html += `<li class="mtk-twitter__tweet-group-hidden" data-group="${handle}" style="display:none">`;
+        html += hidden.map(t => this._tplTweet(t)).join('');
+        html += `</li>`;
+      }
+    }
+
+    list.innerHTML = html;
 
     // Bind reply textareas
     list.querySelectorAll('[data-reply-post]').forEach(btn => {
       const id = btn.dataset.replyPost;
       const ta = list.querySelector(`[data-for="${id}"]`);
       if (ta) ta.addEventListener('input', () => { btn.disabled = !ta.value.trim(); });
+    });
+
+    // Bind expand buttons
+    list.querySelectorAll('.mtk-twitter__tweet-expand-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        this._expandUserTweets(btn.dataset.group, btn);
+      });
     });
   }
 
@@ -1002,9 +1049,45 @@ class MTKTwitter {
     if (btn && ta) ta.addEventListener('input', () => { btn.disabled = !ta.value.trim(); });
   }
 
-  // ════════════════════════════════════════════════════════════
-  // ACTIONS
-  // ════════════════════════════════════════════════════════════
+  _expandUserTweets(handle, btn) {
+    const list  = this._root.querySelector('#mtk-tweet-list');
+    const group = list?.querySelector(`.mtk-twitter__tweet-group-hidden[data-group="${handle}"]`);
+    if (!group) return;
+
+    // Reveal the hidden tweets with a smooth animation
+    group.style.display = '';
+    group.querySelectorAll('.mtk-twitter__tweet').forEach((li, i) => {
+      li.style.animationDelay = (i * 60) + 'ms';
+      li.classList.add('mtk-twitter__tweet--new');
+    });
+
+    // Bind reply textareas inside the now-visible group
+    group.querySelectorAll('[data-reply-post]').forEach(b => {
+      const id = b.dataset.replyPost;
+      const ta = group.querySelector(`[data-for="${id}"]`);
+      if (ta) ta.addEventListener('input', () => { b.disabled = !ta.value.trim(); });
+    });
+
+    // Auto-translate newly visible tweets
+    const ids = [...group.querySelectorAll('.mtk-twitter__tweet[data-id]')]
+      .map(el => el.dataset.id);
+    setTimeout(() => ids.forEach(id => this._autoTranslateTweet(id)), 100);
+
+    // Update the expand button to a collapse button
+    btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_less</span> Hide`;
+    btn.setAttribute('aria-label', 'Hide older posts from this user');
+    btn.onclick = e => {
+      e.stopPropagation();
+      group.style.display = 'none';
+      btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_more</span> ${ids.length} more`;
+      btn.setAttribute('aria-label', `Show ${ids.length} more posts from this user`);
+      btn.onclick = null;
+      btn.addEventListener('click', ev => {
+        ev.stopPropagation();
+        this._expandUserTweets(handle, btn);
+      });
+    };
+  }
 
   _onComposeInput(e) {
     const v   = e.target.value;
@@ -1816,6 +1899,13 @@ class MTKTwitter {
     if (s < 3600) return Math.floor(s / 60) + 'm';
     if (s < 86400)return Math.floor(s / 3600) + 'h';
     return Math.floor(s / 86400) + 'd';
+  }
+
+  _isFresh(ts) {
+    if (!ts) return false;
+    const normalized = String(ts).replace(' ', 'T').replace(/Z?$/, 'Z');
+    const s = Math.floor((Date.now() - new Date(normalized).getTime()) / 1000);
+    return s < 90; // within 90 seconds = fresh
   }
 }
 
