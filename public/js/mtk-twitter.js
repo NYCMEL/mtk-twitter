@@ -1058,41 +1058,39 @@ class MTKTwitter {
     const group = list?.querySelector(`.mtk-twitter__tweet-group-hidden[data-group="${handle}"]`);
     if (!group) return;
 
-    // Reveal the hidden tweets
-    group.style.display = '';
-    group.querySelectorAll('.mtk-twitter__tweet').forEach((li, i) => {
-      li.style.animationDelay = (i * 60) + 'ms';
-      li.classList.add('mtk-twitter__tweet--new');
-    });
+    const isExpanded = group.dataset.expanded === '1';
 
-    // Bind reply textareas inside the now-visible group
-    group.querySelectorAll('[data-reply-post]').forEach(b => {
-      const id = b.dataset.replyPost;
-      const ta = group.querySelector(`[data-for="${id}"]`);
-      if (ta) ta.addEventListener('input', () => { b.disabled = !ta.value.trim(); });
-    });
-
-    // Auto-translate newly visible tweets
-    const ids = [...group.querySelectorAll('[data-id]')]
-      .map(el => el.dataset.id)
-      .filter(Boolean);
-    setTimeout(() => ids.forEach(id => this._autoTranslateTweet(id)), 100);
-
-    // Flip to collapse button
-    const count = ids.length;
-    btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_less</span> Hide`;
-    btn.setAttribute('aria-label', 'Hide older posts from this user');
-    btn.onclick = e => {
-      e.stopPropagation();
-      group.style.display = 'none';
+    if (isExpanded) {
+      // Collapse
+      group.style.display  = 'none';
+      group.dataset.expanded = '0';
+      const count = group.querySelectorAll('[data-id]').length;
       btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_more</span> ${count} more`;
       btn.setAttribute('aria-label', `Show ${count} more posts from this user`);
-      btn.onclick = null;
-      btn.addEventListener('click', ev => {
-        ev.stopPropagation();
-        this._expandUserTweets(handle, btn);
+    } else {
+      // Expand
+      group.style.display    = '';
+      group.dataset.expanded = '1';
+
+      group.querySelectorAll('.mtk-twitter__tweet').forEach((li, i) => {
+        li.style.animationDelay = (i * 60) + 'ms';
+        li.classList.add('mtk-twitter__tweet--new');
       });
-    };
+
+      // Bind reply textareas
+      group.querySelectorAll('[data-reply-post]').forEach(b => {
+        const id = b.dataset.replyPost;
+        const ta = group.querySelector(`[data-for="${id}"]`);
+        if (ta) ta.addEventListener('input', () => { b.disabled = !ta.value.trim(); });
+      });
+
+      // Auto-translate
+      const ids = [...group.querySelectorAll('[data-id]')].map(el => el.dataset.id).filter(Boolean);
+      setTimeout(() => ids.forEach(id => this._autoTranslateTweet(id)), 100);
+
+      btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_less</span> Hide`;
+      btn.setAttribute('aria-label', 'Hide older posts from this user');
+    }
   }
 
   _onComposeInput(e) {
@@ -1692,7 +1690,6 @@ class MTKTwitter {
     try {
       const tweets = await this._api('GET', '/bookmarks');
       this._state.tweets = tweets;
-      this._renderTweetList();
 
       if (!tweets.length) {
         if (list) list.innerHTML = `
@@ -1703,6 +1700,8 @@ class MTKTwitter {
         return;
       }
 
+      // Bookmarks show all tweets ungrouped — no collapsing
+      this._renderTweetListFlat();
       this._autoTranslateFeed();
     } catch (err) {
       if (list) list.innerHTML = `
@@ -1711,6 +1710,18 @@ class MTKTwitter {
           <p>Could not load bookmarks: ${err.message}</p>
         </div></li>`;
     }
+  }
+
+  // Render all tweets flat — no grouping, no hidden counts (used by bookmarks)
+  _renderTweetListFlat() {
+    const list = this._root.querySelector('#mtk-tweet-list');
+    if (!list) return;
+    list.innerHTML = this._state.tweets.map(t => this._tplTweet(t)).join('');
+    list.querySelectorAll('[data-reply-post]').forEach(btn => {
+      const id = btn.dataset.replyPost;
+      const ta = list.querySelector(`[data-for="${id}"]`);
+      if (ta) ta.addEventListener('input', () => { btn.disabled = !ta.value.trim(); });
+    });
   }
 
   _toggleProfileMenu() {
