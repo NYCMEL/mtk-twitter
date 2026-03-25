@@ -952,12 +952,11 @@ class MTKTwitter {
     const ordered  = [];          // handles in order of first appearance
 
     this._state.tweets.forEach(t => {
-      const handle = t.user?.handle || t.user?.username || String(t.id);
+      const handle = t.user?.handle || t.user?.username || t.username || String(t.id);
       if (!groups.has(handle)) {
         groups.set(handle, { latest: t, hidden: [] });
         ordered.push(handle);
       } else {
-        // tweets are newest-first, so subsequent ones are older → hidden
         groups.get(handle).hidden.push(t);
       }
     });
@@ -982,6 +981,23 @@ class MTKTwitter {
     }
 
     list.innerHTML = html;
+
+    // Flash expand button primary on fresh tweets (posted within 90s)
+    list.querySelectorAll('.mtk-twitter__tweet-expand-btn').forEach(btn => {
+      const li = btn.closest('li.mtk-twitter__tweet');
+      if (!li) return;
+      const id    = li.dataset.id;
+      const tweet = this._state.tweets.find(t => String(t.id) === String(id));
+      if (tweet && this._isFresh(tweet.created_at)) {
+        btn.style.color      = 'var(--primary)';
+        btn.style.fontWeight = '700';
+        setTimeout(() => {
+          btn.style.transition = 'color 1s';
+          btn.style.color      = '';
+          btn.style.fontWeight = '';
+        }, 8000);
+      }
+    });
 
     // Bind reply textareas
     list.querySelectorAll('[data-reply-post]').forEach(btn => {
@@ -1035,15 +1051,98 @@ class MTKTwitter {
     const empty = list.querySelector('.mtk-twitter__empty');
     if (empty) empty.closest('li').remove();
 
-    const tmp = document.createElement('ul');
-    tmp.innerHTML = this._tplTweet({ ...tweet, _new: true });
-    const li = tmp.firstElementChild;
-    list.prepend(li);
+    const handle       = tweet.user?.handle || tweet.user?.username || String(tweet.id);
+    const existingTweet = list.querySelector(`li.mtk-twitter__tweet[data-id]`
+      + `:not(.mtk-twitter__tweet-group-hidden *)`);
 
-    // Bind reply textarea for new tweet
-    const btn = li.querySelector('[data-reply-post]');
-    const ta  = li.querySelector('textarea[data-for]');
-    if (btn && ta) ta.addEventListener('input', () => { btn.disabled = !ta.value.trim(); });
+    // Find the visible tweet <li> from this user (if any)
+    const allVisible = [...list.querySelectorAll('li.mtk-twitter__tweet')]
+      .filter(li => !li.closest('.mtk-twitter__tweet-group-hidden'));
+    const existingLi = allVisible.find(li => {
+      const h = li.querySelector('.mtk-twitter__tweet-handle, [class*="handle"]');
+      // Match by data-id lookup in state
+      const id = li.dataset.id;
+      const t  = this._state.tweets.find(tw => String(tw.id) === String(id));
+      return t && (t.user?.handle || t.user?.username) === handle;
+    });
+
+    const group = list.querySelector(`.mtk-twitter__tweet-group-hidden[data-group="${CSS.escape(handle)}"]`);
+
+    if (existingLi) {
+      // User already has a visible tweet — move new tweet to top, push old into hidden group
+      const newLi = document.createElement('li');
+      newLi.outerHTML; // dummy
+      const tmp = document.createElement('ul');
+      tmp.innerHTML = this._tplTweet({ ...tweet, _new: true });
+      const newTweetLi = tmp.firstElementChild;
+
+      // Increment the count
+      const currentCount = group ? Number(group.dataset.count) || 0 : 0;
+      const newCount = currentCount + 1;
+
+      if (group) {
+        // Move existing visible tweet into the hidden group (prepend inside inner ul)
+        const inner = group.querySelector('.mtk-twitter__tweet-group-inner');
+        if (inner) {
+          // Clone existing li and prepend to hidden group
+          const clone = existingLi.cloneNode(true);
+          clone.classList.remove('mtk-twitter__tweet--new');
+          inner.prepend(clone);
+        }
+        group.dataset.count = newCount;
+      } else {
+        // Create a new hidden group for the old tweet
+        const groupLi = document.createElement('li');
+        groupLi.className = 'mtk-twitter__tweet-group-hidden';
+        groupLi.dataset.group = handle;
+        groupLi.dataset.count = '1';
+        groupLi.dataset.expanded = '0';
+        groupLi.style.display = 'none';
+        const clone = existingLi.cloneNode(true);
+        clone.classList.remove('mtk-twitter__tweet--new');
+        groupLi.innerHTML = `<ul class="mtk-twitter__tweet-group-inner"></ul>`;
+        groupLi.querySelector('ul').appendChild(clone);
+        existingLi.insertAdjacentElement('afterend', groupLi);
+      }
+
+      // Update the expand button count on the NEW tweet
+      // We need to re-render the new tweet with the correct count
+      tmp.innerHTML = this._tplTweet({ ...tweet, _new: true, _hiddenCount: newCount });
+      const newLiFinal = tmp.firstElementChild;
+
+      // Replace existing visible tweet with new one
+      existingLi.replaceWith(newLiFinal);
+
+      // Move new tweet to very top
+      list.prepend(newLiFinal);
+
+      // Flash the counter primary color then fade back
+      const expandBtn = newLiFinal.querySelector('.mtk-twitter__tweet-expand-btn');
+      if (expandBtn) {
+        expandBtn.style.color      = 'var(--primary)';
+        expandBtn.style.fontWeight = '700';
+        setTimeout(() => {
+          expandBtn.style.transition = 'color 1s, font-weight 1s';
+          expandBtn.style.color      = '';
+          expandBtn.style.fontWeight = '';
+        }, 8000);
+      }
+
+      // Bind reply textarea
+      const replyBtn = newLiFinal.querySelector('[data-reply-post]');
+      const ta       = newLiFinal.querySelector('textarea[data-for]');
+      if (replyBtn && ta) ta.addEventListener('input', () => { replyBtn.disabled = !ta.value.trim(); });
+
+    } else {
+      // No existing visible tweet from this user — simple prepend
+      const tmp = document.createElement('ul');
+      tmp.innerHTML = this._tplTweet({ ...tweet, _new: true });
+      const li = tmp.firstElementChild;
+      list.prepend(li);
+      const replyBtn = li.querySelector('[data-reply-post]');
+      const ta       = li.querySelector('textarea[data-for]');
+      if (replyBtn && ta) ta.addEventListener('input', () => { replyBtn.disabled = !ta.value.trim(); });
+    }
   }
 
   _expandUserTweets(handle, btn) {
@@ -1699,21 +1798,10 @@ class MTKTwitter {
         return;
       }
 
-      // Render bookmarks flat — all tweets, no grouping
-      // Use a temp render that doesn't touch _state.tweets (home feed)
-      if (!list) return;
-      list.innerHTML = tweets.map(t => this._tplTweet(t)).join('');
-      list.querySelectorAll('[data-reply-post]').forEach(btn => {
-        const id = btn.dataset.replyPost;
-        const ta = list.querySelector(`[data-for="${id}"]`);
-        if (ta) ta.addEventListener('input', () => { btn.disabled = !ta.value.trim(); });
-      });
-
-      // Translate bookmarked tweets
-      const savedTweets = this._state.tweets;
+      // Use same grouped rendering as home feed
       this._state.tweets = tweets;
+      this._renderTweetList();
       this._autoTranslateFeed();
-      this._state.tweets = savedTweets;
 
     } catch (err) {
       if (list) list.innerHTML = `
