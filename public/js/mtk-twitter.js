@@ -973,7 +973,7 @@ class MTKTwitter {
 
       // Render hidden tweets in a div wrapper (not li — avoids invalid nesting)
       if (hiddenCount > 0) {
-        html += `<li class="mtk-twitter__tweet-group-hidden" data-group="${handle}" style="display:none">
+        html += `<li class="mtk-twitter__tweet-group-hidden" data-group="${handle}" data-count="${hiddenCount}" style="display:none">
           <ul class="mtk-twitter__tweet-group-inner">
             ${hidden.map(t => this._tplTweet(t)).join('')}
           </ul>
@@ -1048,17 +1048,22 @@ class MTKTwitter {
 
   _expandUserTweets(handle, btn) {
     const list  = this._root.querySelector('#mtk-tweet-list');
-    const group = list?.querySelector(`.mtk-twitter__tweet-group-hidden[data-group="${handle}"]`);
-    if (!group) return;
+    const group = list?.querySelector(`.mtk-twitter__tweet-group-hidden[data-group="${CSS.escape(handle)}"]`);
+
+    if (!group) {
+      console.warn('[expand] No group found for handle:', handle);
+      return;
+    }
 
     const isExpanded = group.dataset.expanded === '1';
+    const count      = Number(group.dataset.count) || 0;
+
+    console.log('[expand] handle:', handle, '| count:', count, '| expanded:', isExpanded);
 
     if (isExpanded) {
       // Collapse
       group.style.display    = 'none';
       group.dataset.expanded = '0';
-      // Count only tweet <li> elements, not buttons/other elements with data-id
-      const count = group.querySelectorAll('li.mtk-twitter__tweet').length;
       btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_more</span> ${count} more`;
       btn.setAttribute('aria-label', `Show ${count} more posts from this user`);
     } else {
@@ -1078,8 +1083,9 @@ class MTKTwitter {
         if (ta) ta.addEventListener('input', () => { b.disabled = !ta.value.trim(); });
       });
 
-      // Auto-translate
-      const ids = [...group.querySelectorAll('li.mtk-twitter__tweet[data-id]')].map(el => el.dataset.id).filter(Boolean);
+      // Auto-translate newly visible tweets
+      const ids = [...group.querySelectorAll('.mtk-twitter__tweet-group-inner > li[data-id]')]
+        .map(el => el.dataset.id).filter(Boolean);
       setTimeout(() => ids.forEach(id => this._autoTranslateTweet(id)), 100);
 
       btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_less</span> Hide`;
