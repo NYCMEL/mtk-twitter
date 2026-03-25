@@ -1,0 +1,2 @@
+cd /System/Volumes/Data/sw/Melify/tools/mtk-twitter
+node --experimental-sqlite seed-tweets.js
