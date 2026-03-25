@@ -972,11 +972,15 @@ class MTKTwitter {
         t._new = true;
         this._state.tweets.unshift(t);
         this._prependTweet(t);
-        const origLang = t.original_lang || t.originalLang;
-        if (origLang && origLang !== this._state.userLang) {
-          setTimeout(() => this._autoTranslateTweet(String(t.id)), 0);
-        }
       });
+
+      // Translate all new tweets AFTER they are all in the DOM
+      // Use a small delay to ensure DOM is fully updated
+      setTimeout(() => {
+        newTweets.forEach(t => {
+          this._autoTranslateTweet(String(t.id));
+        });
+      }, 100);
     } catch (_) { /* silent */ }
   }
 
@@ -1030,6 +1034,9 @@ class MTKTwitter {
       tweet._new  = true;
       this._state.tweets.unshift(tweet);
       this._prependTweet(tweet);
+
+      // Translate if display language differs from post language
+      setTimeout(() => this._autoTranslateTweet(String(tweet.id)), 100);
 
       ta.value = '';
       if (this._root.querySelector('#mtk-char-count')) {
@@ -1283,8 +1290,14 @@ class MTKTwitter {
     }
 
     // Update DOM — show translated text, add "Show original" link
-    // If translation equals original text, nothing changed — hide the row
-    if (!translated || translated === tweet.text || translated === textEl.dataset.original) {
+    // Skip if: no translation, same as original, or clearly not translated (same script)
+    const originalText = textEl.dataset.original;
+    const noTranslation = !translated
+      || translated === tweet.text
+      || translated === originalText
+      || translated.trim() === originalText?.trim();
+
+    if (noTranslation) {
       textEl.dataset.showing = 'original';
       origRow.innerHTML = '';
       return;
