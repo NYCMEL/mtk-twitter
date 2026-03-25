@@ -78,8 +78,10 @@ class MTKTwitter {
     // Restore session
     const saved = this._loadSession();
     if (saved) {
-      this._state.user     = saved;
-      this._state.userLang = saved.lang || this._cfg.app.defaultLanguage;
+      this._state.user = saved;
+      // Display language: user's explicit choice, falls back to profile language
+      const savedDisplayLang = (() => { try { return localStorage.getItem('mtk_display_lang'); } catch(_){return null;} })();
+      this._state.userLang = savedDisplayLang || saved.lang || this._cfg.app.defaultLanguage;
       this._renderApp();
       this._showScreen('app');
       this._loadFeed();
@@ -439,7 +441,7 @@ class MTKTwitter {
             <div class="mtk-twitter__compose-inner">
               <div class="mtk-twitter__compose-lang-pill" id="mtk-compose-lang-pill">
                 <span class="material-icons-round" aria-hidden="true">language</span>
-                Posting in <span id="mtk-compose-lang-label">🇺🇸 English</span>
+                Posting in <span id="mtk-compose-lang-label">${(() => { const pl = this._cfg.languages.find(l => l.code === (user?.lang || 'en')); return pl ? pl.flag + ' ' + pl.label : '🇺🇸 English'; })()}</span>
               </div>
               <textarea id="mtk-compose-ta" placeholder="What's happening worldwide?"
                         maxlength="280" aria-label="Compose post" rows="3"></textarea>
@@ -817,7 +819,8 @@ class MTKTwitter {
       const res = await this._api('POST', '/auth/register', { display_name: name, username, email, password, lang });
       this._saveSession(res.user, res.token);
       this._state.user     = { ...res.user, token: res.token };
-      this._state.userLang = res.user.lang || 'en';
+      const savedDL = (() => { try { return localStorage.getItem('mtk_display_lang'); } catch(_){return null;} })();
+      this._state.userLang = savedDL || res.user.lang || 'en';
 
       const payload = { type: this._cfg.events.USER_REGISTERED, data: { user: res.user } };
       wc.publish(this._cfg.events.USER_REGISTERED, payload);
@@ -855,7 +858,8 @@ class MTKTwitter {
       const res = await this._api('POST', '/auth/login', { identifier, password });
       this._saveSession(res.user, res.token);
       this._state.user     = { ...res.user, token: res.token };
-      this._state.userLang = res.user.lang || 'en';
+      const savedDL = (() => { try { return localStorage.getItem('mtk_display_lang'); } catch(_){return null;} })();
+      this._state.userLang = savedDL || res.user.lang || 'en';
 
       const payload = { type: this._cfg.events.USER_LOGGED_IN, data: { user: res.user } };
       wc.publish(this._cfg.events.USER_LOGGED_IN, payload);
@@ -1345,12 +1349,11 @@ class MTKTwitter {
 
     this._closeLangModal();
 
-    // Persist to backend
-    if (this._state.user) {
-      this._api('PATCH', '/users/me', { lang: code }).catch(() => {});
-      const s = this._loadSession();
-      if (s) { s.lang = code; localStorage.setItem('mtk_session', JSON.stringify(s)); }
-    }
+    // Persist display language preference (separate from profile/writing language)
+    // We store displayLang in localStorage but do NOT update the user's profile lang
+    try { localStorage.setItem('mtk_display_lang', code); } catch (_) {}
+
+    // Do NOT call PATCH /users/me here — that would change the posting language
 
     const payload = { type: this._cfg.events.LANGUAGE_CHANGED, data: { lang: code, label: lang?.label } };
     wc.publish(this._cfg.events.LANGUAGE_CHANGED, payload);

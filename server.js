@@ -229,7 +229,25 @@ function authOptional(req, _res, next) {
 }
 
 // ── Built-in translation dictionary ──────────────────────────────────────────
+// For real translation of user posts, set LIBRETRANSLATE_URL in .env
+// Free self-hosted: https://github.com/LibreTranslate/LibreTranslate
 const TRANS_DICT = {
+  // Common English greetings / phrases
+  'Hello': { hi:'नमस्ते', es:'Hola', fr:'Bonjour', de:'Hallo', zh:'你好', ar:'مرحبا', pt:'Olá', ja:'こんにちは', ru:'Привет', ko:'안녕하세요', it:'Ciao' },
+  'Hello!': { hi:'नमस्ते!', es:'¡Hola!', fr:'Bonjour!', de:'Hallo!', zh:'你好！', ar:'مرحبا!', pt:'Olá!', ja:'こんにちは！', ru:'Привет!', ko:'안녕하세요!', it:'Ciao!' },
+  'Hi': { hi:'नमस्ते', es:'Hola', fr:'Salut', de:'Hallo', zh:'嗨', ar:'مرحبا', pt:'Oi', ja:'やあ', ru:'Привет', ko:'안녕', it:'Ciao' },
+  'Hi!': { hi:'नमस्ते!', es:'¡Hola!', fr:'Salut!', de:'Hallo!', zh:'嗨！', ar:'مرحبا!', pt:'Oi!', ja:'やあ！', ru:'Привет!', ko:'안녕!', it:'Ciao!' },
+  'Good morning': { hi:'शुभ प्रभात', es:'Buenos días', fr:'Bonjour', de:'Guten Morgen', zh:'早上好', ar:'صباح الخير', pt:'Bom dia', ja:'おはようございます', ru:'Доброе утро', ko:'좋은 아침', it:'Buongiorno' },
+  'Good morning!': { hi:'शुभ प्रभात!', es:'¡Buenos días!', fr:'Bonjour!', de:'Guten Morgen!', zh:'早上好！', ar:'صباح الخير!', pt:'Bom dia!', ja:'おはようございます！', ru:'Доброе утро!', ko:'좋은 아침!', it:'Buongiorno!' },
+  'Thank you': { hi:'धन्यवाद', es:'Gracias', fr:'Merci', de:'Danke', zh:'谢谢', ar:'شكراً', pt:'Obrigado', ja:'ありがとう', ru:'Спасибо', ko:'감사합니다', it:'Grazie' },
+  'Thank you!': { hi:'धन्यवाद!', es:'¡Gracias!', fr:'Merci!', de:'Danke!', zh:'谢谢！', ar:'شكراً!', pt:'Obrigado!', ja:'ありがとう！', ru:'Спасибо!', ko:'감사합니다!', it:'Grazie!' },
+  'Welcome': { hi:'स्वागत है', es:'Bienvenido', fr:'Bienvenue', de:'Willkommen', zh:'欢迎', ar:'مرحباً', pt:'Bem-vindo', ja:'ようこそ', ru:'Добро пожаловать', ko:'환영합니다', it:'Benvenuto' },
+  'Welcome!': { hi:'स्वागत है!', es:'¡Bienvenido!', fr:'Bienvenue!', de:'Willkommen!', zh:'欢迎！', ar:'مرحباً!', pt:'Bem-vindo!', ja:'ようこそ！', ru:'Добро пожаловать!', ko:'환영합니다!', it:'Benvenuto!' },
+  'How are you?': { hi:'आप कैसे हैं?', es:'¿Cómo estás?', fr:'Comment allez-vous?', de:'Wie geht es Ihnen?', zh:'你好吗？', ar:'كيف حالك؟', pt:'Como vai você?', ja:'お元気ですか？', ru:'Как дела?', ko:'잘 지내세요?', it:'Come stai?' },
+  'Good night': { hi:'शुभ रात्रि', es:'Buenas noches', fr:'Bonne nuit', de:'Gute Nacht', zh:'晚安', ar:'تصبح على خير', pt:'Boa noite', ja:'おやすみなさい', ru:'Спокойной ночи', ko:'잘 자요', it:'Buona notte' },
+  'Good night!': { hi:'शुभ रात्रि!', es:'¡Buenas noches!', fr:'Bonne nuit!', de:'Gute Nacht!', zh:'晚安！', ar:'تصبح على خير!', pt:'Boa noite!', ja:'おやすみなさい！', ru:'Спокойной ночи!', ko:'잘 자요!', it:'Buona notte!' },
+
+  // Seed tweets
   'नमस्ते! आज का मौसम बहुत अच्छा है।': {
     en:'Hello! The weather is very nice today.',
     es:'¡Hola! El tiempo está muy bien hoy.',
