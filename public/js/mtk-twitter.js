@@ -86,12 +86,52 @@ class MTKTwitter {
       this._showScreen('app');
       this._loadFeed();
       this._startPolling();
+      this._requestNotificationPermission();
     } else {
       this._renderAll();
       this._showScreen('splash');
     }
     this._subscribeAll();
     console.log('%c[MTKTwitter] booted', 'color:#38bdf8;font-weight:bold');
+  }
+
+  // ── Notifications ────────────────────────────────────────────
+  _requestNotificationPermission() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      // Ask after a short delay so it doesn't feel intrusive on load
+      setTimeout(() => Notification.requestPermission(), 3000);
+    }
+  }
+
+  _notify(tweet) {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    // Don't notify for your own tweets
+    if (tweet.user?.handle === this._state.user?.username) return;
+    // Don't notify if tab is focused
+    if (document.visibilityState === 'visible') return;
+
+    const name = tweet.user?.name || tweet.user?.handle || 'Someone';
+    const text = tweet.text?.substring(0, 100) + (tweet.text?.length > 100 ? '…' : '');
+    const icon = tweet.user?.avatar || 'https://i.pravatar.cc/80';
+
+    const n = new Notification(`${name} posted on Melify`, {
+      body:    text,
+      icon,
+      badge:   icon,
+      tag:     `mtk-tweet-${tweet.id}`,   // prevents duplicate notifications
+      silent:  false,
+    });
+
+    // Click notification → focus the tab
+    n.onclick = () => {
+      window.focus();
+      n.close();
+    };
+
+    // Auto-close after 6 seconds
+    setTimeout(() => n.close(), 6000);
   }
 
   // ── Render everything ───────────────────────────────────────
@@ -657,11 +697,12 @@ class MTKTwitter {
             <span class="material-icons-round" aria-hidden="true">${t.liked ? 'favorite' : 'favorite_border'}</span>
             ${likes}
           </button>
+          ${!t._inGroup ? `
           <button class="bk-btn${t.bookmarked ? ' bk-btn--on' : ''}" data-id="${id}"
                   aria-label="${t.bookmarked?'Remove bookmark':'Bookmark'}"
                   aria-pressed="${!!t.bookmarked}">
             <span class="material-icons-round" aria-hidden="true">${t.bookmarked ? 'bookmark' : 'bookmark_border'}</span>
-          </button>
+          </button>` : ''}
           ${(t.user?.handle || t.user?.username) === this._state.user?.username ? `
           <button class="del-btn" data-id="${id}"
                   aria-label="Delete this post"
@@ -842,6 +883,7 @@ class MTKTwitter {
       this._showScreen('app');
       this._loadFeed();
       this._startPolling();
+      this._requestNotificationPermission();
 
     } catch (err) {
       this._showFormError('mtk-reg-error', 'mtk-reg-error-msg', err.message || 'Registration failed. Please try again.');
@@ -881,6 +923,7 @@ class MTKTwitter {
       this._showScreen('app');
       this._loadFeed();
       this._startPolling();
+      this._requestNotificationPermission();
 
     } catch (err) {
       this._showFormError('mtk-login-error', 'mtk-login-error-msg', err.message || 'Invalid credentials. Please try again.');
@@ -974,7 +1017,7 @@ class MTKTwitter {
       if (hiddenCount > 0) {
         html += `<li class="mtk-twitter__tweet-group-hidden" data-group="${handle}" data-count="${hiddenCount}" style="display:none">
           <ul class="mtk-twitter__tweet-group-inner">
-            ${hidden.map(t => this._tplTweet(t)).join('')}
+            ${hidden.map(t => this._tplTweet({ ...t, _inGroup: true })).join('')}
           </ul>
         </li>`;
       }
@@ -1032,6 +1075,7 @@ class MTKTwitter {
         t._new = true;
         this._state.tweets.unshift(t);
         this._prependTweet(t);
+        this._notify(t);
       });
 
       // Translate all new tweets AFTER they are all in the DOM
@@ -1157,8 +1201,6 @@ class MTKTwitter {
     const isExpanded = group.dataset.expanded === '1';
     const count      = Number(group.dataset.count) || 0;
 
-    console.log('[expand] handle:', handle, '| count:', count, '| expanded:', isExpanded);
-
     if (isExpanded) {
       // Collapse
       group.style.display    = 'none';
@@ -1166,7 +1208,31 @@ class MTKTwitter {
       btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_more</span> ${count} more`;
       btn.setAttribute('aria-label', `Show ${count} more posts from this user`);
     } else {
-      // Expand
+      // Expand — if in bookmarks view, rebuild hidden group from home feed tweets
+      const isBookmarks = this._state.activeNav === 'bookmarks';
+
+      if (isBookmarks) {
+        // Get the visible tweet's id to exclude it
+        const visibleLi = list.querySelector(`li.mtk-twitter__tweet:not(.mtk-twitter__tweet-group-hidden *)[data-id]`);
+        const visibleIds = new Set(
+          [...list.querySelectorAll('li.mtk-twitter__tweet:not(.mtk-twitter__tweet-group-hidden *)')]
+            .map(li => li.dataset.id)
+        );
+
+        // Get all home feed tweets from this user, excluding the visible one
+        const homeTweets = this._state.tweets.filter(t => {
+          const h = t.user?.handle || t.user?.username;
+          return h === handle && !visibleIds.has(String(t.id));
+        });
+
+        if (homeTweets.length > 0) {
+          const inner = group.querySelector('.mtk-twitter__tweet-group-inner');
+          if (inner) {
+            inner.innerHTML = homeTweets.map(t => this._tplTweet({ ...t, _inGroup: true })).join('');
+          }
+        }
+      }
+
       group.style.display    = '';
       group.dataset.expanded = '1';
 
@@ -1827,9 +1893,9 @@ class MTKTwitter {
     if (list) list.innerHTML = this._tplSkeletons(3);
 
     try {
-      const tweets = await this._api('GET', '/bookmarks');
+      const bookmarked = await this._api('GET', '/bookmarks');
 
-      if (!tweets.length) {
+      if (!bookmarked.length) {
         if (list) list.innerHTML = `
           <li><div class="mtk-twitter__empty">
             <span class="material-icons-round">bookmark_border</span>
@@ -1838,10 +1904,62 @@ class MTKTwitter {
         return;
       }
 
-      // Use same grouped rendering as home feed
-      this._state.tweets = tweets;
-      this._renderTweetList();
+      // Calculate hidden counts from the home feed (_state.tweets) per user
+      // so bookmark counter matches home feed counter
+      const homeFeedCounts = new Map(); // handle → hiddenCount
+      const homeSeen       = new Set();
+      this._state.tweets.forEach(t => {
+        const handle = t.user?.handle || t.user?.username || String(t.id);
+        if (!homeSeen.has(handle)) {
+          homeSeen.add(handle);
+          homeFeedCounts.set(handle, 0);
+        } else {
+          homeFeedCounts.set(handle, (homeFeedCounts.get(handle) || 0) + 1);
+        }
+      });
+
+      // Render bookmarked tweets with home-feed hidden counts
+      // Group by user same as home feed
+      const groups  = new Map();
+      const ordered = [];
+      bookmarked.forEach(t => {
+        const handle = t.user?.handle || t.user?.username || String(t.id);
+        if (!groups.has(handle)) {
+          groups.set(handle, { latest: t, hidden: [] });
+          ordered.push(handle);
+        } else {
+          groups.get(handle).hidden.push(t);
+        }
+      });
+
+      let html = '';
+      for (const handle of ordered) {
+        const { latest, hidden } = groups.get(handle);
+        // Use home feed count, fall back to bookmarks count
+        const hiddenCount = homeFeedCounts.get(handle) ?? hidden.length;
+        html += this._tplTweet({ ...latest, _hiddenCount: hiddenCount });
+        if (hidden.length > 0) {
+          html += `<li class="mtk-twitter__tweet-group-hidden" data-group="${handle}" data-count="${hiddenCount}" style="display:none">
+            <ul class="mtk-twitter__tweet-group-inner">
+              ${hidden.map(t => this._tplTweet({ ...t, _inGroup: true })).join('')}
+            </ul>
+          </li>`;
+        }
+      }
+
+      if (!list) return;
+      list.innerHTML = html;
+      list.querySelectorAll('[data-reply-post]').forEach(btn => {
+        const id = btn.dataset.replyPost;
+        const ta = list.querySelector(`[data-for="${id}"]`);
+        if (ta) ta.addEventListener('input', () => { btn.disabled = !ta.value.trim(); });
+      });
+
+      // Translate
+      const saved = this._state.tweets;
+      this._state.tweets = bookmarked;
       this._autoTranslateFeed();
+      this._state.tweets = saved;
 
     } catch (err) {
       if (list) list.innerHTML = `
