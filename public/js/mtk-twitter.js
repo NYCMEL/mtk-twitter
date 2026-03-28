@@ -404,10 +404,9 @@ class MTKTwitter {
       <!-- Top Bar -->
       <header class="mtk-twitter__topbar" role="banner">
         <div class="mtk-twitter__topbar-brand" aria-hidden="true">
-          <span class="material-icons-round">T</span>
-          ${app.name}
+          Melify Twitter
         </div>
-        <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">Home</div>
+        <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">${user?.display_name || 'Home'}</div>
         <button class="mtk-twitter__topbar-lang" id="mtk-lang-btn"
                 aria-label="Change display language" aria-haspopup="dialog">
           <span class="material-icons-round" aria-hidden="true">language</span>
@@ -427,17 +426,16 @@ class MTKTwitter {
         <!-- Left Sidebar (desktop) -->
         <nav class="mtk-twitter__sidebar" aria-label="Primary navigation">
           <div class="mtk-twitter__sidebar-brand" aria-hidden="true">
-            <span class="material-icons-round">T</span>
-            ${app.name}
+            Melify Twitter
           </div>
           <div class="mtk-twitter__nav" role="list">
             ${navItems.map(n => `
               <button class="mtk-twitter__nav-item${n.id === 'home' ? ' mtk-twitter__nav-item--active' : ''}"
                       data-nav="${n.id}" role="listitem"
                       aria-current="${n.id === 'home' ? 'page' : 'false'}"
-                      aria-label="${n.label}">
+                      aria-label="${n.id === 'home' ? (user?.display_name || n.label) : n.label}">
                 <span class="material-icons-round" aria-hidden="true">${n.icon}</span>
-                ${n.label}
+                ${n.id === 'home' ? (user?.display_name || n.label) : n.label}
               </button>`).join('')}
           </div>
           <button class="mtk-twitter__sidebar-post-btn" id="mtk-sidebar-post-btn"
@@ -466,7 +464,7 @@ class MTKTwitter {
         <!-- Feed -->
         <main class="mtk-twitter__feed" aria-label="Post feed">
           <div class="mtk-twitter__feed-header">
-            <h2>Home</h2>
+            <h2 id="mtk-feed-h2">${user?.display_name || 'Home'}</h2>
             <div class="mtk-twitter__feed-header-lang" id="mtk-feed-lang-pill">
               <span class="material-icons-round" aria-hidden="true">language</span>
               <span id="mtk-feed-lang-text">English</span>
@@ -534,9 +532,10 @@ class MTKTwitter {
       <nav class="mtk-twitter__bottom-nav" aria-label="Mobile navigation">
         ${this._cfg.navItems.map(n => `
           <button data-nav="${n.id}" class="${n.id==='home'?'active':''}"
-                  aria-label="${n.label}" aria-current="${n.id==='home'?'page':'false'}">
+                  aria-label="${n.id==='home'?(user?.display_name||n.label):n.label}"
+                  aria-current="${n.id==='home'?'page':'false'}">
             <span class="material-icons-round" aria-hidden="true">${n.icon}</span>
-            ${n.label}
+            ${n.id==='home'?(user?.display_name||n.label):n.label}
           </button>`).join('')}
       </nav>
 
@@ -571,6 +570,21 @@ class MTKTwitter {
               </div>
               <span class="material-icons-round lo-check" aria-hidden="true">check_circle</span>
             </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Thread / replies panel ─────────────────────────── -->
+    <div class="mtk-twitter__thread-overlay" id="mtk-thread-overlay" aria-hidden="true">
+      <div class="mtk-twitter__thread-panel" role="dialog" aria-label="Tweet thread" id="mtk-thread-panel">
+        <div class="mtk-twitter__thread-header">
+          <button class="mtk-twitter__thread-back" id="mtk-thread-back" aria-label="Close thread">
+            <span class="material-icons-round">arrow_back</span>
+          </button>
+          <h2>Thread</h2>
+        </div>
+        <div class="mtk-twitter__thread-body" id="mtk-thread-body">
+          <!-- filled dynamically -->
         </div>
       </div>
     </div>`;
@@ -794,6 +808,8 @@ class MTKTwitter {
     // Language picker
     this._on('#mtk-lang-btn',   'click', () => this._openLangModal());
     this._on('#mtk-lang-close', 'click', () => this._closeLangModal());
+    this._on('#mtk-thread-back', 'click', () => this._closeThread());
+    this._on('#mtk-thread-overlay', 'click', e => { if (e.target.id === 'mtk-thread-overlay') this._closeThread(); });
     this._on('#mtk-lang-overlay','click', e => {
       if (e.target.id === 'mtk-lang-overlay') this._closeLangModal();
     });
@@ -834,7 +850,7 @@ class MTKTwitter {
     const id = btn.dataset.id;
     if (btn.classList.contains('like-btn'))         return this._handleLike(btn, id);
     if (btn.classList.contains('rt-btn'))           return this._handleRetweet(btn, id);
-    if (btn.classList.contains('reply-btn'))        return this._handleReplyToggle(btn, id);
+    if (btn.classList.contains('reply-btn'))        return this._openThread(id);
     if (btn.classList.contains('bk-btn'))           return this._handleBookmark(btn, id);
     if (btn.classList.contains('del-btn'))          return this._handleDelete(btn, id);
     if (btn.classList.contains('mtk-twitter__tweet-orig-btn'))  return this._handleOrigToggle(btn, btn.dataset.id);
@@ -844,8 +860,208 @@ class MTKTwitter {
   }
 
   // ════════════════════════════════════════════════════════════
-  // AUTH
+  // THREAD VIEW
   // ════════════════════════════════════════════════════════════
+
+  async _openThread(id) {
+    const overlay = this._root.querySelector('#mtk-thread-overlay');
+    const body    = this._root.querySelector('#mtk-thread-body');
+
+    console.log('[thread] opening id:', id, '| overlay:', !!overlay, '| body:', !!body);
+
+    if (!overlay || !body) {
+      console.error('[thread] panel elements not found in DOM — was _tplApp updated?');
+      // Fallback: try old inline reply toggle
+      const replyBox = this._root.querySelector(`#mtk-reply-${id}`);
+      if (replyBox) {
+        replyBox.classList.toggle('mtk-twitter__tweet-reply--open');
+        const ta = replyBox.querySelector('textarea');
+        if (ta) ta.focus();
+      }
+      return;
+    }
+
+    // Show panel with loading state
+    overlay.setAttribute('aria-hidden', 'false');
+    overlay.classList.add('mtk-twitter__thread-overlay--open');
+    // Inline styles ensure visibility even without recompiled CSS
+    overlay.style.cssText = `
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-end;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(0,0,0,0.5);
+    `;
+    const panel = overlay.querySelector('#mtk-thread-panel');
+    if (panel) panel.style.cssText = `
+      background: var(--surface, #fff);
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: -4px 0 32px rgba(0,0,0,0.2);
+    `;
+    body.style.cssText = 'flex:1; overflow-y:auto;';
+    body.innerHTML = this._tplSkeletons(3);
+
+    try {
+      // Fetch the original tweet and its replies in parallel
+      const [tweet, replies] = await Promise.all([
+        this._api('GET', `/tweets/${id}`),
+        this._api('GET', `/tweets/${id}/replies`),
+      ]);
+
+      const uid = this._state.user?.id || 0;
+
+      body.innerHTML = `
+        <!-- Original tweet -->
+        <div class="mtk-twitter__thread-original">
+          <ul class="mtk-twitter__thread-tweet-list">
+            ${this._tplTweet({ ...tweet, _inThread: true })}
+          </ul>
+        </div>
+
+        <!-- Replies section -->
+        <div class="mtk-twitter__thread-replies">
+          <div class="mtk-twitter__thread-replies-header">
+            <span class="material-icons-round">forum</span>
+            ${replies.length} ${replies.length === 1 ? 'Reply' : 'Replies'}
+          </div>
+          ${replies.length ? `
+            <ul class="mtk-twitter__thread-tweet-list">
+              ${replies.map(r => this._tplTweet({ ...r, _inThread: true, _inGroup: true })).join('')}
+            </ul>` : `
+            <div class="mtk-twitter__thread-empty">
+              <span class="material-icons-round">chat_bubble_outline</span>
+              <p>No replies yet. Be the first!</p>
+            </div>`
+          }
+        </div>
+
+        <!-- Reply compose -->
+        ${this._state.user ? `
+        <div class="mtk-twitter__thread-compose">
+          <img class="mtk-twitter__thread-compose-avatar"
+               src="${this._state.user.avatar_url || this._cfg.app.avatarBaseUrl + '?img=11'}"
+               alt="Your avatar" />
+          <div class="mtk-twitter__thread-compose-inner">
+            <textarea id="mtk-thread-reply-ta" placeholder="Write a reply…"
+                      maxlength="280" rows="2" aria-label="Write a reply"></textarea>
+            <div class="mtk-twitter__thread-compose-footer">
+              <span id="mtk-thread-char-count" class="char-count">280</span>
+              <button id="mtk-thread-reply-btn" disabled
+                      data-tweet-id="${id}"
+                      aria-label="Post reply">Reply</button>
+            </div>
+          </div>
+        </div>` : ''}
+      `;
+
+      // Bind reply compose
+      const ta      = body.querySelector('#mtk-thread-reply-ta');
+      const replyBtn = body.querySelector('#mtk-thread-reply-btn');
+      const cc      = body.querySelector('#mtk-thread-char-count');
+      if (ta && replyBtn) {
+        ta.addEventListener('input', () => {
+          const rem = 280 - ta.value.length;
+          replyBtn.disabled = !ta.value.trim();
+          if (cc) { cc.textContent = rem; cc.className = 'char-count' + (rem < 20 ? ' char-count--danger' : rem < 60 ? ' char-count--warn' : ''); }
+        });
+        replyBtn.addEventListener('click', () => this._handleThreadReply(id, ta, replyBtn, body));
+      }
+
+      // Auto-translate tweets in thread
+      const savedTweets = this._state.tweets;
+      this._state.tweets = [tweet, ...replies];
+      setTimeout(() => {
+        this._state.tweets.forEach(t => this._autoTranslateTweet(String(t.id)));
+        this._state.tweets = savedTweets;
+      }, 100);
+
+      // Scroll to top
+      body.scrollTop = 0;
+
+    } catch (err) {
+      body.innerHTML = `<div class="mtk-twitter__thread-empty">
+        <span class="material-icons-round">error_outline</span>
+        <p>Could not load thread: ${err.message}</p>
+      </div>`;
+    }
+  }
+
+  async _handleThreadReply(tweetId, ta, btn, body) {
+    const text = ta.value.trim();
+    if (!text) return;
+    btn.disabled = true;
+    btn.textContent = 'Posting…';
+
+    try {
+      const lang  = this._state.user?.lang || 'en';
+      const reply = await this._api('POST', `/tweets/${tweetId}/replies`, { text, lang });
+
+      // Add reply to thread view
+      const ul = body.querySelector('.mtk-twitter__thread-replies .mtk-twitter__thread-tweet-list');
+      const emptyEl = body.querySelector('.mtk-twitter__thread-empty');
+      if (emptyEl) emptyEl.remove();
+
+      // Update replies header count
+      const header = body.querySelector('.mtk-twitter__thread-replies-header');
+
+      if (!ul) {
+        // Create the list if it was empty
+        const repliesDiv = body.querySelector('.mtk-twitter__thread-replies');
+        if (repliesDiv) {
+          repliesDiv.innerHTML = `
+            <div class="mtk-twitter__thread-replies-header">
+              <span class="material-icons-round">forum</span> 1 Reply
+            </div>
+            <ul class="mtk-twitter__thread-tweet-list">
+              ${this._tplTweet({ ...reply, _inThread: true, _inGroup: true })}
+            </ul>`;
+        }
+      } else {
+        const tmp = document.createElement('ul');
+        tmp.innerHTML = this._tplTweet({ ...reply, _inThread: true, _inGroup: true, _new: true });
+        ul.appendChild(tmp.firstElementChild);
+        if (header) {
+          const count = ul.querySelectorAll('li.mtk-twitter__tweet').length;
+          header.innerHTML = `<span class="material-icons-round">forum</span> ${count} ${count === 1 ? 'Reply' : 'Replies'}`;
+        }
+      }
+
+      // Update reply count on the tweet in the main feed
+      const feedTweet = this._state.tweets.find(t => String(t.id) === String(tweetId));
+      if (feedTweet) {
+        feedTweet.replies_count = (feedTweet.replies_count || 0) + 1;
+        const feedBtn = this._root.querySelector(`li[data-id="${tweetId}"] .reply-btn`);
+        if (feedBtn) feedBtn.innerHTML = `<span class="material-icons-round" aria-hidden="true">chat_bubble_outline</span> ${feedTweet.replies_count}`;
+      }
+
+      ta.value = '';
+      btn.textContent = 'Reply';
+      this._toast('Reply posted!', 'check_circle', 'success');
+
+    } catch (err) {
+      btn.disabled  = false;
+      btn.textContent = 'Reply';
+      this._toast('Could not post reply: ' + err.message, 'error_outline');
+    }
+  }
+
+  _closeThread() {
+    const overlay = this._root.querySelector('#mtk-thread-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('mtk-twitter__thread-overlay--open');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.style.cssText = 'display:none';
+    setTimeout(() => {
+      const body = this._root.querySelector('#mtk-thread-body');
+      if (body) body.innerHTML = '';
+    }, 300);
+  }
 
   async _handleRegister() {
     const name     = this._val('#mtk-reg-name');
@@ -1840,6 +2056,14 @@ class MTKTwitter {
     if (nameEl) nameEl.textContent = u.display_name || u.username;
     const handleEl = this._root.querySelector('#mtk-sidebar-handle');
     if (handleEl) handleEl.textContent = '@' + (u.username || '');
+
+    // Update topbar title and feed h2 with user's display name (Home view)
+    if (this._state.activeNav === 'home' || !this._state.activeNav) {
+      const titleEl = this._root.querySelector('#mtk-topbar-title');
+      const feedH2  = this._root.querySelector('#mtk-feed-h2');
+      if (titleEl) titleEl.textContent = u.display_name || u.username;
+      if (feedH2)  feedH2.textContent  = u.display_name || u.username;
+    }
     const flagEl = this._root.querySelector('#mtk-lang-flag');
     if (flagEl && lang) flagEl.textContent = lang.flag;
     const feedText = this._root.querySelector('#mtk-feed-lang-text');
@@ -1870,8 +2094,9 @@ class MTKTwitter {
     // Update feed header title
     const titleEl = this._root.querySelector('#mtk-topbar-title');
     const feedH2  = this._root.querySelector('.mtk-twitter__feed-header h2');
-    const titles  = { home: 'Home', explore: 'Explore', notifications: 'Notifications', messages: 'Messages', bookmarks: 'Bookmarks', profile: 'Profile' };
-    const title   = titles[id] || 'Home';
+    const userName = this._state.user?.display_name || 'Home';
+    const titles  = { home: userName, explore: 'Explore', notifications: 'Notifications', messages: 'Messages', bookmarks: 'Bookmarks', profile: 'Profile' };
+    const title   = titles[id] || userName;
     if (titleEl)  titleEl.textContent = title;
     if (feedH2)   feedH2.textContent  = title;
 
