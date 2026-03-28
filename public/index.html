@@ -2,13 +2,10 @@
 <html lang="en">
     <head>
 	<meta charset="UTF-8">
-	<title>Twitter</title>
-
+	<title>Melify</title>
 	<link rel="icon" href="img/cropped-favicon-32x32.png" sizes="32x32">
 	<link rel="icon" href="img/cropped-favicon-192x192.png" sizes="192x192">
 	<link rel="apple-touch-icon" href="img/cropped-favicon-180x180.png">
-	
-	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<!-- W3C LOGGING -->
@@ -26,6 +23,36 @@
 
 	<!-- APPLICATION SPECIFIC STYLES -->
 	<link href="css/fonts/fonts.css" rel="stylesheet">
+	<link href="css/mtk-twitter.css" rel="stylesheet">
+
+	<!-- Reset Bootstrap interference on mtk-twitter -->
+	<style>
+	  html, body {
+	    margin: 0;
+	    padding: 0;
+	    background: #0d1117;
+	    overscroll-behavior-y: contain;
+	  }
+	  /* Neutralise Bootstrap heading resets inside the component */
+	  .mtk-twitter h1,
+	  .mtk-twitter h2,
+	  .mtk-twitter h3,
+	  .mtk-twitter h4,
+	  .mtk-twitter h5,
+	  .mtk-twitter h6 {
+	    margin: 0;
+	    padding: 0;
+	    text-align: left !important;
+	    font-weight: inherit;
+	    font-size: inherit;
+	    line-height: inherit;
+	    color: inherit;
+	  }
+	  /* Remove Bootstrap container/row padding bleed */
+	  .mtk-twitter * {
+	    box-sizing: border-box;
+	  }
+	</style>
 
 	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
@@ -33,20 +60,10 @@
 	<!-- COMMON JAVASCRIPTS -->
 	<script src="js/_wc.js"></script>
     </head>
-
     <body id="wc">
-	<!-- YOUR CODE FROM HERE... -->
-
 	<!-- TWITTER -->
-	<div>
-	    <link href="css/mtk-twitter.css" rel="stylesheet">
-	    
-	    <wc-include href="mtk-twitter.html" />
-
-	    <script src="js/mtk-twitter.config.js"></script>
-	    <script src="js//mtk-twitter.js"></script>
-	</div>
-
-	<!-- YOUR CODE TO HERE -->
+	<wc-include href="mtk-twitter.html" />
+	<script src="js/mtk-twitter.config.js"></script>
+	<script src="js/mtk-twitter.js"></script>
     </body>
 </html>
