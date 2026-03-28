@@ -1041,7 +1041,8 @@
   margin: 0;
   color: var(--text-1);
   letter-spacing: -0.3px;
-  padding-left: 0; }
+  text-align: left;
+  flex: 1; }
 
 .mtk-twitter__feed-header-lang {
   display: flex;

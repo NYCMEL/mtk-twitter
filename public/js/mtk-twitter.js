@@ -405,7 +405,7 @@ class MTKTwitter {
         <div class="mtk-twitter__topbar-brand" aria-hidden="true">
           Melify Twitter
         </div>
-        <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">${user?.display_name || 'Home'}</div>
+        <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">Home</div>
         <button class="mtk-twitter__topbar-lang" id="mtk-lang-btn"
                 aria-label="Change display language" aria-haspopup="dialog">
           <span class="material-icons-round" aria-hidden="true">language</span>
@@ -424,15 +424,12 @@ class MTKTwitter {
 
         <!-- Left Sidebar (desktop) -->
         <nav class="mtk-twitter__sidebar" aria-label="Primary navigation">
-          <div class="mtk-twitter__sidebar-brand" aria-hidden="true">
-            Melify Twitter
-          </div>
           <div class="mtk-twitter__nav" role="list">
             ${navItems.map(n => `
               <button class="mtk-twitter__nav-item${n.id === 'home' ? ' mtk-twitter__nav-item--active' : ''}"
                       data-nav="${n.id}" role="listitem"
                       aria-current="${n.id === 'home' ? 'page' : 'false'}"
-                      aria-label="${n.id === 'home' ? (user?.display_name || n.label) : n.label}">
+                      aria-label="${n.label}">
                 <span class="material-icons-round" aria-hidden="true">${n.icon}</span>
                 ${n.id === 'home' ? (user?.display_name || n.label) : n.label}
               </button>`).join('')}
@@ -464,7 +461,7 @@ class MTKTwitter {
         <main class="mtk-twitter__feed" aria-label="Post feed">
           <div class="mtk-twitter__feed-header" style="padding-left:16px;padding-right:16px;">
             <!-- 42px avatar + 12px gap = 54px offset to align with tweet name text -->
-            <h2 id="mtk-feed-h2" style="padding-left:54px">${user?.display_name || 'Home'}</h2>
+            <h2 id="mtk-feed-h2">Home</h2>
             <div class="mtk-twitter__feed-header-lang" id="mtk-feed-lang-pill">
               <span class="material-icons-round" aria-hidden="true">language</span>
               <span id="mtk-feed-lang-text">English</span>
@@ -2057,9 +2054,8 @@ class MTKTwitter {
     // Update topbar title and feed h2 with user's display name (Home view)
     if (this._state.activeNav === 'home' || !this._state.activeNav) {
       const titleEl = this._root.querySelector('#mtk-topbar-title');
-      const feedH2  = this._root.querySelector('#mtk-feed-h2');
       if (titleEl) titleEl.textContent = u.display_name || u.username;
-      if (feedH2)  feedH2.textContent  = u.display_name || u.username;
+      // feed h2 always shows "Melify Twitter" — don't overwrite with display_name
     }
     const flagEl = this._root.querySelector('#mtk-lang-flag');
     if (flagEl && lang) flagEl.textContent = lang.flag;
@@ -2091,9 +2087,8 @@ class MTKTwitter {
     // Update feed header title
     const titleEl = this._root.querySelector('#mtk-topbar-title');
     const feedH2  = this._root.querySelector('.mtk-twitter__feed-header h2');
-    const userName = this._state.user?.display_name || 'Home';
-    const titles  = { home: userName, explore: 'Explore', notifications: 'Notifications', messages: 'Messages', bookmarks: 'Bookmarks', profile: 'Profile' };
-    const title   = titles[id] || userName;
+    const titles  = { home: 'Melify Twitter', explore: 'Explore', notifications: 'Notifications', messages: 'Messages', bookmarks: 'Bookmarks', profile: 'Profile' };
+    const title   = titles[id] || 'Melify Twitter';
     if (titleEl)  titleEl.textContent = title;
     if (feedH2)   feedH2.textContent  = title;
 
