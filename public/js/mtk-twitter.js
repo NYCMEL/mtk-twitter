@@ -20,7 +20,6 @@ window.wc = window.wc || (() => {
     },
     log(event, payload) {
       console.groupCollapsed(`%c[wc.publish] ${event}`, 'color:#38bdf8;font-weight:bold;font-family:monospace');
-      console.log('payload →', payload);
       console.groupEnd();
     },
   };
@@ -463,8 +462,9 @@ class MTKTwitter {
 
         <!-- Feed -->
         <main class="mtk-twitter__feed" aria-label="Post feed">
-          <div class="mtk-twitter__feed-header">
-            <h2 id="mtk-feed-h2">${user?.display_name || 'Home'}</h2>
+          <div class="mtk-twitter__feed-header" style="padding-left:16px;padding-right:16px;">
+            <!-- 42px avatar + 12px gap = 54px offset to align with tweet name text -->
+            <h2 id="mtk-feed-h2" style="padding-left:54px">${user?.display_name || 'Home'}</h2>
             <div class="mtk-twitter__feed-header-lang" id="mtk-feed-lang-pill">
               <span class="material-icons-round" aria-hidden="true">language</span>
               <span id="mtk-feed-lang-text">English</span>
@@ -867,10 +867,7 @@ class MTKTwitter {
     const overlay = this._root.querySelector('#mtk-thread-overlay');
     const body    = this._root.querySelector('#mtk-thread-body');
 
-    console.log('[thread] opening id:', id, '| overlay:', !!overlay, '| body:', !!body);
-
     if (!overlay || !body) {
-      console.error('[thread] panel elements not found in DOM — was _tplApp updated?');
       // Fallback: try old inline reply toggle
       const replyBox = this._root.querySelector(`#mtk-reply-${id}`);
       if (replyBox) {

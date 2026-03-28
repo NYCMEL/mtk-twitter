@@ -177,6 +177,8 @@ $t-slow:         0.35s;
   background: var(--bg);
   color: var(--text-1);
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
@@ -754,15 +756,22 @@ $t-slow:         0.35s;
   // ================================================================
   &__app { flex-direction: column; position: relative; }
 
+  // Allow host page to set outer topbar height via CSS variable
+  // e.g. in host page CSS: .mtk-twitter { --host-topbar: 48px; }
+  --host-topbar: 0px;
+  // Shared horizontal padding — topbar, feed-header, compose, and tweets all use this
+  // so left edges are guaranteed pixel-perfect aligned
+  --h-pad: 20px;
+
   &__topbar {
     position: sticky;
-    top: 0;
+    top: var(--host-topbar);
     z-index: 100;
     background: var(--topbar-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
-    padding: 0 12px;
+    padding: 0 var(--h-pad);
     height: 56px;
     display: flex;
     align-items: center;
@@ -826,8 +835,8 @@ $t-slow:         0.35s;
     width: 240px;
     flex-shrink: 0;
     position: sticky;
-    top: 56px;
-    height: calc(100vh - 56px);
+    top: calc(56px + var(--host-topbar));
+    height: calc(100vh - 56px - var(--host-topbar));
     overflow-y: auto;
     padding: 16px 12px;
     border-right: 1px solid var(--border);
@@ -928,18 +937,19 @@ $t-slow:         0.35s;
 
   &__feed-header {
     position: sticky;
-    top: 56px;
+    top: calc(56px + var(--host-topbar));
     z-index: 50;
     background: var(--topbar-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
-    padding: 14px 16px;
+    padding: 14px var(--h-pad);
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    h2 { font-family: $font-display; font-weight: 800; font-size: 1.05rem; margin: 0; color: var(--text-1); letter-spacing: -0.3px; }
+    // h2 left edge aligns with tweet avatar (padding-left matches tweet padding)
+    h2 { font-family: $font-display; font-weight: 800; font-size: 1.05rem; margin: 0; color: var(--text-1); letter-spacing: -0.3px; padding-left: 0; }
 
     &-lang {
       display: flex;
@@ -958,7 +968,7 @@ $t-slow:         0.35s;
   &__compose {
     display: flex;
     gap: 12px;
-    padding: 14px 16px;
+    padding: 14px var(--h-pad);
     border-bottom: 1px solid var(--border);
     background: var(--surface);
 
@@ -1054,7 +1064,7 @@ $t-slow:         0.35s;
   &__tweet {
     display: flex;
     gap: 12px;
-    padding: 14px 16px;
+    padding: 14px var(--h-pad);
     border-bottom: 1px solid var(--border);
     cursor: pointer;
     animation: tweet-in $t-med $ease-out both;
@@ -1373,8 +1383,8 @@ $t-slow:         0.35s;
     flex-shrink: 0;
     padding: 16px;
     position: sticky;
-    top: 56px;
-    height: calc(100vh - 56px);
+    top: calc(56px + var(--host-topbar));
+    height: calc(100vh - 56px - var(--host-topbar));
     overflow-y: auto;
     gap: 16px;
     flex-direction: column;
@@ -1601,7 +1611,7 @@ $t-slow:         0.35s;
 
   &__profile-menu {
     position: absolute;
-    top: 56px;
+    top: calc(56px + var(--host-topbar));
     right: 12px;
     background: var(--surface);
     border: 1px solid var(--border-light);
@@ -1684,7 +1694,7 @@ $t-slow:         0.35s;
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 14px 18px;
+    padding: 14px var(--h-pad);
     border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
@@ -1755,7 +1765,7 @@ $t-slow:         0.35s;
   &__thread-compose {
     display: flex;
     gap: 12px;
-    padding: 16px 18px;
+    padding: 16px var(--h-pad);
     border-top: 1px solid var(--border);
     position: sticky;
     bottom: 0;
