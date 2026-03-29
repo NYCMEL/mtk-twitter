@@ -158,6 +158,7 @@ class MTKTwitter {
     this._bindLogin();
     this._bindApp();
     this._updateThemeUI();
+    this._updateNavLabels();
   }
 
   _renderApp() {
@@ -176,6 +177,7 @@ class MTKTwitter {
     this._bindApp();
     this._updateAppUser();
     this._updateThemeUI();
+    this._updateNavLabels();
   }
 
   // ── Screen manager ──────────────────────────────────────────
@@ -539,7 +541,7 @@ class MTKTwitter {
         <aside class="mtk-twitter__sidebar-right" aria-label="Sidebar">
           <div class="mtk-twitter__search-box" role="search">
             <span class="material-icons-round" aria-hidden="true">search</span>
-            <input type="search" id="mtk-search-input" placeholder="Search Melify" aria-label="Search" />
+            <input type="search" id="mtk-search-input" placeholder="${this._uiLabel('search')}" aria-label="Search" />
           </div>
           <div class="mtk-twitter__widget" role="region" aria-label="Trending topics">
             <div class="mtk-twitter__widget-title" id="mtk-trending-title">Trending</div>
