@@ -1045,7 +1045,12 @@ class MTKTwitter {
         const feedBtn = this._root.querySelector(`li[data-id="${tweetId}"] .reply-btn`);
         if (feedBtn) {
           feedBtn.innerHTML = `<span class="material-icons-round" aria-hidden="true">chat_bubble_outline</span> ${feedTweet.replies_count}`;
-          this._markTweetHasReplies(tweetId);
+          // Only show red dot on the receiver's tweet (not on the logged-in user's own tweets)
+          const tweetOwner = feedTweet.user?.handle || feedTweet.user?.username;
+          const currentUser = this._state.user?.username;
+          if (tweetOwner && tweetOwner !== currentUser) {
+            this._markTweetHasReplies(tweetId);
+          }
         }
       }
 
