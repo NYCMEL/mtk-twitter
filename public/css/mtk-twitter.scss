@@ -7,7 +7,7 @@
 // System prefers-color-scheme respected when no class set
 // ================================================================
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Source+Serif+4:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Source+Serif+4:wght@300;400;600&family=Keania+One&display=swap');
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
 
 // ── Static tokens (mode-independent) ────────────────────────────
@@ -837,11 +837,10 @@ $t-slow:         0.35s;
   }
 
   #mtk-topbar-title {
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-style: italic;
-      font-size: 1.2rem;
-      color: var(--primary);
-      text-decoration: none;      
+    font-family: 'Keania One', cursive;
+    font-style: normal;
+    font-size: 1.8rem;
+    color: var(--primary);
   }
 
   &__sidebar {
