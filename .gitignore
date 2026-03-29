@@ -3,3 +3,4 @@ node_modules
 package-lock.json
 melify.db-shm
 melify.db-wal
+uploads
