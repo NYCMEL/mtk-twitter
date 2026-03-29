@@ -55,6 +55,7 @@ class MTKTwitter {
       ws: null,
       activeNav: 'home',
       theme: 'dark',        // 'dark' | 'light' — overwritten by _initTheme()
+      transObserver: null,
     };
 
     this._waitForElement(selector).then(el => {
@@ -2150,12 +2151,66 @@ class MTKTwitter {
 
   // Auto-translate all visible foreign tweets in the feed
   _autoTranslateFeed() {
+    // Use IntersectionObserver to only translate tweets when they scroll into view
+    // and stop observing once translated (don't repeat)
     const userLang = this._state.userLang;
-    this._state.tweets.forEach(t => {
-      const origLang = t.original_lang || t.originalLang;
+
+    // Disconnect any existing observer (language changed or feed reloaded)
+    if (this._transObserver) {
+      this._transObserver.disconnect();
+      this._transObserver = null;
+    }
+
+    const list = this._root.querySelector('#mtk-tweet-list');
+    if (!list) return;
+
+    // Find all tweet <li> elements that need translation
+    const tweetsToTranslate = list.querySelectorAll('li[data-id]');
+    if (!tweetsToTranslate.length) return;
+
+    this._transObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const id = entry.target.dataset.id;
+        if (!id) return;
+
+        const tweet = this._state.tweets.find(t => String(t.id) === String(id));
+        if (!tweet) return;
+
+        const origLang = tweet.original_lang || tweet.originalLang;
+        if (!origLang || origLang === this._state.userLang) {
+          // No translation needed — stop watching
+          this._transObserver.unobserve(entry.target);
+          return;
+        }
+
+        // Check if already translated
+        const cacheKey = `${id}_${userLang}`;
+        if (this._state.transCache[cacheKey]) {
+          // Already cached — translate immediately and stop watching
+          this._autoTranslateTweet(id);
+          this._transObserver.unobserve(entry.target);
+          return;
+        }
+
+        // Visible and not yet translated — translate now, then stop watching
+        this._autoTranslateTweet(id);
+        this._transObserver.unobserve(entry.target);
+      });
+    }, {
+      root: null,           // viewport
+      rootMargin: '100px',  // start translating 100px before entering view
+      threshold: 0.1,
+    });
+
+    // Observe all tweet list items
+    tweetsToTranslate.forEach(li => {
+      const id = li.dataset.id;
+      const tweet = this._state.tweets.find(t => String(t.id) === String(id));
+      if (!tweet) return;
+      const origLang = tweet.original_lang || tweet.originalLang;
       if (origLang && origLang !== userLang) {
-        // Stagger requests slightly to avoid hammering the server
-        setTimeout(() => this._autoTranslateTweet(String(t.id)), 0);
+        this._transObserver.observe(li);
       }
     });
   }
@@ -2187,6 +2242,11 @@ class MTKTwitter {
     this._state.userLang = code;
     // Clear translation cache so everything re-translates in new language
     this._state.transCache = {};
+    // Disconnect existing observer — _autoTranslateFeed will create a new one
+    if (this._transObserver) {
+      this._transObserver.disconnect();
+      this._transObserver = null;
+    }
     const lang = this._cfg.languages.find(l => l.code === code);
 
     // Update UI atoms — feed header lang indicator only
