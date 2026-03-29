@@ -1746,15 +1746,10 @@ class MTKTwitter {
 
   async _expandUserTweets(handle, btn) {
     const list  = this._root.querySelector('#mtk-tweet-list');
-    const group = list?.querySelector(`.mtk-twitter__tweet-group-hidden[data-group="${CSS.escape(handle)}"]`);
+    let group = list?.querySelector(`.mtk-twitter__tweet-group-hidden[data-group="${CSS.escape(handle)}"]`);
 
-    if (!group) {
-      console.warn('[expand] No group found for handle:', handle);
-      return;
-    }
-
-    const isExpanded = group.dataset.expanded === '1';
-    const count      = Number(group.dataset.count) || 0;
+    const isExpanded = group?.dataset.expanded === '1';
+    const count      = Number(group?.dataset.count) || 0;
 
     if (isExpanded) {
       // Collapse
@@ -1772,7 +1767,7 @@ class MTKTwitter {
     try {
       const allTweets = await this._api('GET', `/users/${encodeURIComponent(handle)}/tweets`);
 
-      // Find the visible tweet li for THIS user (the one with the expand button)
+      // Find the visible tweet li for THIS user
       const visibleLi = btn.closest('li.mtk-twitter__tweet');
       const visibleId  = visibleLi?.dataset.id;
 
@@ -1780,6 +1775,17 @@ class MTKTwitter {
       const hidden = allTweets
         .filter(t => String(t.id) !== String(visibleId))
         .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+      // Create group if it doesn't exist yet
+      if (!group) {
+        group = document.createElement('li');
+        group.className = 'mtk-twitter__tweet-group-hidden';
+        group.dataset.group = handle;
+        group.dataset.count = hidden.length;
+        group.style.display = 'none';
+        group.innerHTML = `<ul class="mtk-twitter__tweet-group-inner"></ul>`;
+        visibleLi?.insertAdjacentElement('afterend', group);
+      }
 
       const inner = group.querySelector('.mtk-twitter__tweet-group-inner');
       if (inner) {
