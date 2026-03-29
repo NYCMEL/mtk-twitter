@@ -356,6 +356,7 @@ function tweetSQL(userId) {
            t.likes_count, t.retweets_count, t.replies_count,
            t.parent_id, t.created_at,
            u.username, u.display_name, u.avatar_url, u.verified,
+           (SELECT COUNT(*) FROM tweets WHERE user_id=t.user_id AND parent_id IS NULL) AS user_tweet_count,
            ${uid ? `(SELECT COUNT(*) FROM likes     WHERE user_id=${uid} AND tweet_id=t.id)` : '0'} AS user_liked,
            ${uid ? `(SELECT COUNT(*) FROM retweets  WHERE user_id=${uid} AND tweet_id=t.id)` : '0'} AS user_retweeted,
            ${uid ? `(SELECT COUNT(*) FROM bookmarks WHERE user_id=${uid} AND tweet_id=t.id)` : '0'} AS user_bookmarked
@@ -365,17 +366,17 @@ function tweetSQL(userId) {
 
 function fmt(r, uid) {
   if (!r) return null;
-  // node:sqlite returns null-prototype objects — spread into plain object first
   const row = Object.assign({}, r);
   return {
-    id:             Number(row.id),
-    text:           String(row.text || ''),
-    original_lang:  String(row.original_lang || 'en'),
-    likes_count:    Number(row.likes_count)    || 0,
-    retweets_count: Number(row.retweets_count) || 0,
-    replies_count:  Number(row.replies_count)  || 0,
-    parent_id:      row.parent_id ? Number(row.parent_id) : null,
-    created_at:     row.created_at || '',
+    id:               Number(row.id),
+    text:             String(row.text || ''),
+    original_lang:    String(row.original_lang || 'en'),
+    likes_count:      Number(row.likes_count)    || 0,
+    retweets_count:   Number(row.retweets_count) || 0,
+    replies_count:    Number(row.replies_count)  || 0,
+    parent_id:        row.parent_id ? Number(row.parent_id) : null,
+    created_at:       row.created_at || '',
+    user_tweet_count: Number(row.user_tweet_count) || 1,
     user: {
       name:     String(row.display_name || ''),
       handle:   String(row.username || ''),

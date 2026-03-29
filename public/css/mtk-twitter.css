@@ -1461,20 +1461,26 @@
   align-items: center;
   gap: 4px;
   margin-left: auto;
-  font-size: 0.73rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  color: var(--text-3);
+  color: var(--primary);
   background: none;
   border: none;
-  cursor: default;
+  cursor: pointer;
   padding: 2px 6px;
   border-radius: 999px;
   font-family: "DM Sans", sans-serif;
-  pointer-events: none;
-  user-select: none; }
+  transition: background 0.15s; }
 
 .mtk-twitter__tweet-actions .mtk-twitter__tweet-expand-btn .material-icons-round {
-  font-size: 0.9rem; }
+  font-size: 1rem; }
+
+.mtk-twitter__tweet-actions .mtk-twitter__tweet-expand-btn:hover {
+  background: var(--primary-glow); }
+
+.mtk-twitter__tweet-actions .mtk-twitter__tweet-expand-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px; }
 
 .mtk-twitter__tweet-actions-group-hidden {
   padding: 0;
