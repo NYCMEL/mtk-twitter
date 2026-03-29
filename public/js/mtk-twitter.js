@@ -405,7 +405,7 @@ class MTKTwitter {
         <div class="mtk-twitter__topbar-brand" aria-hidden="true">
           Melify Twitter
         </div>
-        <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">Melify - Twitter</div>
+        <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">Mwitter</div>
         <button class="mtk-twitter__topbar-lang" id="mtk-lang-btn"
                 aria-label="Change display language" aria-haspopup="dialog">
           <span class="material-icons-round" aria-hidden="true">language</span>
@@ -431,7 +431,7 @@ class MTKTwitter {
                       aria-current="${n.id === 'home' ? 'page' : 'false'}"
                       aria-label="${n.label}">
                 <span class="material-icons-round" aria-hidden="true">${n.icon}</span>
-                ${n.id === 'home' ? 'My Tweeter' : n.label}
+                ${n.id === 'home' ? 'My Mweets' : n.label}
               </button>`).join('')}
           </div>
           <button class="mtk-twitter__sidebar-post-btn" id="mtk-sidebar-post-btn"

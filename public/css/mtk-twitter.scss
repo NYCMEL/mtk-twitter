@@ -836,6 +836,14 @@ $t-slow:         0.35s;
     width: 100%;
   }
 
+  #mtk-topbar-title {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.2rem;
+      color: var(--primary);
+      text-decoration: none;      
+  }
+
   &__sidebar {
     display: none;
     width: 240px;
