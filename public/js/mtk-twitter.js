@@ -1763,9 +1763,9 @@ class MTKTwitter {
     try {
       const allTweets = await this._api('GET', `/users/${encodeURIComponent(handle)}/tweets`);
 
-      // Find the visible tweet's id so we can exclude it
-      const visibleLi = list.querySelector(`li.mtk-twitter__tweet:not(.mtk-twitter__tweet-group-hidden *)[data-id]`);
-      const visibleId = visibleLi?.dataset.id;
+      // Find the visible tweet li for THIS user (the one with the expand button)
+      const visibleLi = btn.closest('li.mtk-twitter__tweet');
+      const visibleId  = visibleLi?.dataset.id;
 
       // All tweets except the visible one, sorted oldest→newest
       const hidden = allTweets
@@ -1774,7 +1774,12 @@ class MTKTwitter {
 
       const inner = group.querySelector('.mtk-twitter__tweet-group-inner');
       if (inner) {
-        inner.innerHTML = hidden.map(t => this._tplTweet({ ...t, _inGroup: true })).join('');
+        inner.innerHTML = hidden.map(t => this._tplTweet({ ...t })).join('');
+      }
+
+      // Move group immediately after the visible tweet so it expands in place
+      if (visibleLi && visibleLi.nextSibling !== group) {
+        visibleLi.insertAdjacentElement('afterend', group);
       }
 
       // Add to state for translation lookups
@@ -1791,6 +1796,13 @@ class MTKTwitter {
       group.querySelectorAll('.mtk-twitter__tweet').forEach((li, i) => {
         li.style.animationDelay = (i * 40) + 'ms';
         li.classList.add('mtk-twitter__tweet--new');
+      });
+
+      // Bind reply textareas
+      group.querySelectorAll('[data-reply-post]').forEach(b => {
+        const id = b.dataset.replyPost;
+        const ta = group.querySelector(`[data-for="${id}"]`);
+        if (ta) ta.addEventListener('input', () => { b.disabled = !ta.value.trim(); });
       });
 
       // Auto-translate newly visible tweets
