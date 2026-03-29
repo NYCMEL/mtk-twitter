@@ -1,3 +1,12 @@
+// ── Font: DM Serif Display ───────────────────────────────────
+if (!document.querySelector('#mtk-dm-serif-font')) {
+  const lnk = document.createElement('link');
+  lnk.id = 'mtk-dm-serif-font';
+  lnk.rel = 'stylesheet';
+  lnk.href = 'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@1&display=swap';
+  document.head.appendChild(lnk);
+}
+
 /**
  * mtk-twitter.js
  * Melify — Multilingual Social Feed
@@ -402,10 +411,11 @@ class MTKTwitter {
 
       <!-- Top Bar -->
       <header class="mtk-twitter__topbar" role="banner">
-        <div class="mtk-twitter__topbar-brand" aria-hidden="true">
-          Melify Twitter
+        <div class="mtk-twitter__topbar-brand" aria-hidden="true"
+             style="font-family:'DM Serif Display',serif;font-style:italic;font-weight:400;">
+          Mwitter
         </div>
-        <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">Mwitter</div>
+        <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">Melify - Twitter</div>
         <button class="mtk-twitter__topbar-lang" id="mtk-lang-btn"
                 aria-label="Change display language" aria-haspopup="dialog">
           <span class="material-icons-round" aria-hidden="true">language</span>
@@ -431,7 +441,7 @@ class MTKTwitter {
                       aria-current="${n.id === 'home' ? 'page' : 'false'}"
                       aria-label="${n.label}">
                 <span class="material-icons-round" aria-hidden="true">${n.icon}</span>
-                ${n.id === 'home' ? 'My Mweets' : n.label}
+                ${n.id === 'home' ? 'My Tweeter' : n.label}
               </button>`).join('')}
           </div>
           <button class="mtk-twitter__sidebar-post-btn" id="mtk-sidebar-post-btn"
@@ -828,7 +838,7 @@ class MTKTwitter {
 
     // Escape closes menus/modals
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { this._closeLangModal(); this._closeProfileMenu(); }
+      if (e.key === 'Escape') { this._closeLangModal(); this._closeProfileMenu(); this._closeThread(); }
     });
     document.addEventListener('click', e => {
       if (!e.target.closest('#mtk-profile-menu') &&
@@ -2084,7 +2094,7 @@ class MTKTwitter {
     const feedH2  = this._root.querySelector('.mtk-twitter__feed-header h2');
     const titles  = { home: 'Home', explore: 'Explore', notifications: 'Notifications', messages: 'Messages', bookmarks: 'Bookmarks', profile: 'Profile' };
     const title   = titles[id] || 'Home';
-    if (titleEl)  titleEl.textContent = 'Melify - Twitter';  // always fixed
+    if (titleEl)  titleEl.textContent = 'Mwitter';  // always fixed
     if (feedH2)   feedH2.textContent  = title;                // changes per section
 
     // Show/hide compose box — only on Home
