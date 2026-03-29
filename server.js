@@ -140,26 +140,112 @@ console.log('[DB] Ready:', DB_PATH);
   ].forEach(u => insUser.run(...u));
 
   const insTweet = db.prepare('INSERT INTO tweets (user_id,text,original_lang) VALUES (?,?,?)');
-  [
-    ['priyasharma',   'נמס্ته! आज का मौसम बहुत अच्छा है।',                    'hi'],
-    ['carlosmendoza', 'La tecnología nos une a todos.',                         'es'],
-    ['kenjitanaka',   'この技術は素晴らしいです！言語の壁がなくなりますね。', 'ja'],
-    ['omarhassan',    'مرحبا بالجميع! نحن نبني جسور التواصل بين الشعوب.',    'ar'],
-    ['natasha_v',     'Технологии меняют мир к лучшему каждый день.',          'ru'],
-    ['josh',          'שלום לכולם! הטכנולוגיה מחברת בין עמים.',               'he'],
-    ['farid',         'سلام! این فناوری شگفت\u200cانگیز است. زبان دیگر مانع ارتباط نیست.', 'fa'],
-    ['sophie_m',      'Bonjour le monde ! La technologie efface les frontières linguistiques.', 'fr'],
-    ['klausberg',     'Hallo zusammen! Technologie verbindet Menschen über Sprachgrenzen hinweg.', 'de'],
-    ['wei_zhang',     '大家好！科技让语言不再是障碍，我们可以自由交流。', 'zh'],
-    ['ana_silva',     'Olá a todos! A tecnologia nos aproxima, independentemente do idioma.', 'pt'],
-    ['jiwon_k',       '안녕하세요! 기술 덕분에 언어 장벽이 사라지고 있어요.', 'ko'],
-    ['giulia_r',      'Ciao a tutti! La tecnologia abbatte le barriere linguistiche nel mondo.', 'it'],
-  ].forEach(([uname, text, lang]) => {
-    const u = db.prepare('SELECT id FROM users WHERE username=?').get(uname);
-    if (u) insTweet.run(u.id, text, lang);
-  });
 
-  console.log('[DB] Seeded 14 users and 13 tweets');
+  // Each user has a pool of tweets — 2 to pool-size are randomly seeded
+  const userTweets = {
+    mel:           { lang:'en', tweets:[
+      'Welcome to Mwitter — where the world speaks as one! 🌍',
+      'Just posted in English, but everyone can read it in their language. Magic!',
+      'Language barriers are so last century.',
+      'Shoutout to everyone posting from around the globe today!',
+      'The future of communication is multilingual. 🚀',
+    ]},
+    josh:          { lang:'he', tweets:[
+      'שלום לכולם! הטכנולוגיה מחברת בין עמים.',
+      'כיף לדבר עם אנשים מכל העולם בשפה שלי.',
+      'היום למדתי מילים חדשות בשלוש שפות שונות!',
+      'הטכנולוגיה הזאת פשוט מדהימה. תודה למלִיפַי!',
+    ]},
+    priyasharma:   { lang:'hi', tweets:[
+      'नमस्ते! आज का मौसम बहुत अच्छा है।',
+      'तकनीक ने हमारी दुनिया को बदल दिया है।',
+      'आज मैंने एक नई भाषा सीखने की कोशिश की!',
+      'भाषा कोई बाधा नहीं है जब दिल मिलते हैं।',
+      'मेलिफाई पर सभी का स्वागत है। 🌍',
+    ]},
+    carlosmendoza: { lang:'es', tweets:[
+      'La tecnología nos une a todos.',
+      '¡Buenos días! Hoy es un gran día para aprender algo nuevo.',
+      'Me encanta poder hablar con personas de todo el mundo.',
+      'La diversidad lingüística es una riqueza enorme.',
+      '¡Saludos desde España! ¿Cómo están todos?',
+    ]},
+    kenjitanaka:   { lang:'ja', tweets:[
+      'この技術は素晴らしいです！言語の壁がなくなりますね。',
+      'おはようございます！今日もいい日にしましょう。',
+      '世界中の人々とつながれるのは本当に素晴らしい。',
+      '日本語で話しても、みんなに伝わるのが嬉しいです。',
+    ]},
+    omarhassan:    { lang:'ar', tweets:[
+      'مرحبا بالجميع! نحن نبني جسور التواصل بين الشعوب.',
+      'التكنولوجيا تجعل العالم قرية صغيرة.',
+      'يسعدني التواصل مع أشخاص من مختلف أنحاء العالم.',
+      'اللغة هي جسر التواصل بين الثقافات.',
+      'صباح الخير يا عالم! 🌅',
+    ]},
+    natasha_v:     { lang:'ru', tweets:[
+      'Технологии меняют мир к лучшему каждый день.',
+      'Привет всем! Рада общаться с людьми со всего мира.',
+      'Язык — это не барьер, это возможность учиться.',
+      'Сегодня прекрасный день для новых знакомств!',
+    ]},
+    farid:         { lang:'fa', tweets:[
+      'سلام! این فناوری شگفت‌انگیز است. زبان دیگر مانع ارتباط نیست.',
+      'امروز با افراد از ده کشور مختلف صحبت کردم!',
+      'فارسی زبان شعر و ادب است. خوشحالم که می‌توانم آن را به اشتراک بگذارم.',
+      'دنیا بدون مرزهای زبانی زیباتر است.',
+    ]},
+    sophie_m:      { lang:'fr', tweets:[
+      'Bonjour le monde ! La technologie efface les frontières linguistiques.',
+      "J'adore pouvoir communiquer avec des gens du monde entier en français.",
+      'La langue française est si belle — content de la partager!',
+      "Aujourd'hui j'ai appris trois mots en japonais. 🇯🇵",
+      'Merci Mwitter pour cette plateforme incroyable!',
+    ]},
+    klausberg:     { lang:'de', tweets:[
+      'Hallo zusammen! Technologie verbindet Menschen über Sprachgrenzen hinweg.',
+      'Guten Morgen aus Deutschland! Heute ist ein schöner Tag.',
+      'Es ist faszinierend, wie Technologie die Welt kleiner macht.',
+      'Ich lerne jeden Tag neue Wörter in anderen Sprachen.',
+    ]},
+    wei_zhang:     { lang:'zh', tweets:[
+      '大家好！科技让语言不再是障碍，我们可以自由交流。',
+      '今天天气很好，心情也很好！🌞',
+      '语言是文化的窗口，很高兴能和大家分享。',
+      '科技真的很神奇，可以跨越语言交流。',
+      '向世界各地的朋友们问好！',
+    ]},
+    ana_silva:     { lang:'pt', tweets:[
+      'Olá a todos! A tecnologia nos aproxima, independentemente do idioma.',
+      'Bom dia! Que dia lindo para aprender algo novo.',
+      'Adoro poder conversar com pessoas do mundo todo em português.',
+      'A diversidade de idiomas é uma das maiores riquezas da humanidade.',
+    ]},
+    jiwon_k:       { lang:'ko', tweets:[
+      '안녕하세요! 기술 덕분에 언어 장벽이 사라지고 있어요.',
+      '오늘도 좋은 하루 되세요! 🌸',
+      '한국어로 전 세계 사람들과 소통할 수 있다니 정말 신기해요.',
+      '오늘 새로운 친구를 사귀었어요. 반가워요!',
+    ]},
+    giulia_r:      { lang:'it', tweets:[
+      'Ciao a tutti! La tecnologia abbatte le barriere linguistiche nel mondo.',
+      'Buongiorno! Oggi è una bella giornata per imparare qualcosa di nuovo.',
+      'Adoro poter parlare con persone di tutto il mondo in italiano.',
+      'La lingua italiana è musica per le orecchie!',
+    ]},
+  };
+
+  let tweetCount = 0;
+  for (const [uname, { lang, tweets }] of Object.entries(userTweets)) {
+    const u = db.prepare('SELECT id FROM users WHERE username=?').get(uname);
+    if (!u) continue;
+    // Pick between 2 and all available tweets
+    const count = Math.floor(Math.random() * (tweets.length - 1)) + 2;
+    const shuffled = [...tweets].sort(() => Math.random() - 0.5).slice(0, count);
+    shuffled.forEach(text => { insTweet.run(u.id, text, lang); tweetCount++; });
+  }
+
+  console.log(`[DB] Seeded 14 users and ${tweetCount} tweets`);
 })();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
