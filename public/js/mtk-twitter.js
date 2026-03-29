@@ -753,12 +753,10 @@ class MTKTwitter {
             <span class="material-icons-round" aria-hidden="true">delete_outline</span>
           </button>` : ''}
           ${t._hiddenCount > 0 ? `
-          <button class="mtk-twitter__tweet-expand-btn" data-group="${t.user?.handle || t.user?.username}"
-                  aria-label="Show ${t._hiddenCount} more post${t._hiddenCount > 1 ? 's' : ''} from ${t.user?.name || t.user?.handle}"
-                  title="Show more from this user">
+          <span class="mtk-twitter__tweet-expand-btn" aria-label="${t._hiddenCount} more post${t._hiddenCount > 1 ? 's' : ''} from ${t.user?.name || t.user?.handle}">
             <span class="material-icons-round" aria-hidden="true">expand_more</span>
             ${t._hiddenCount} more
-          </button>` : ''}
+          </span>` : ''}
         </div>
 
         <div class="mtk-twitter__tweet-reply" id="mtk-reply-${id}" aria-label="Reply to post">
@@ -898,7 +896,6 @@ class MTKTwitter {
       if (btn.classList.contains('bk-btn'))           return this._handleBookmark(btn, id);
       if (btn.classList.contains('del-btn'))          return this._handleDelete(btn, id);
       if (btn.classList.contains('mtk-twitter__tweet-orig-btn'))   return this._handleOrigToggle(btn, btn.dataset.id);
-      if (btn.classList.contains('mtk-twitter__tweet-expand-btn')) return this._openUserTweetsPanel(btn.dataset.group);
       const rp = btn.dataset.replyPost;
       if (rp) return this._handleReplySubmit(rp);
       return; // other buttons — do nothing
@@ -985,9 +982,95 @@ class MTKTwitter {
         <span class="material-icons-round">person</span>
         ${sorted.length} post${sorted.length !== 1 ? 's' : ''} from @${handle}
       </div>
-      <ul class="mtk-twitter__thread-tweet-list">
-        ${sorted.map(t => this._tplTweet({ ...t, _inThread: true, _inGroup: true })).join('')}
+      <ul class="mtk-twitter__thread-tweet-list" id="mtk-user-panel-list">
+        ${sorted.map(t => `
+          ${this._tplTweet({ ...t, _inThread: true, _inGroup: true })}
+          <li class="mtk-twitter__panel-reply-box" id="mtk-panel-reply-${t.id}" style="display:none">
+            <div style="display:flex;gap:10px;padding:10px 16px 12px;background:var(--surface-2);border-bottom:1px solid var(--border);">
+              <img src="${this._state.user?.avatar_url || this._cfg.app.avatarBaseUrl + '?img=11'}"
+                   style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="You" />
+              <div style="flex:1;">
+                <textarea id="mtk-panel-reply-ta-${t.id}"
+                  placeholder="Reply to @${handle}…"
+                  maxlength="280" rows="2"
+                  style="width:100%;background:transparent;border:none;color:var(--text-1);font-family:'DM Sans',sans-serif;font-size:0.88rem;resize:none;outline:none;line-height:1.5;"
+                  aria-label="Reply to @${handle}"></textarea>
+                <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">
+                  <span id="mtk-panel-reply-cc-${t.id}" style="font-size:0.73rem;color:var(--text-3);font-weight:600;">280</span>
+                  <button id="mtk-panel-reply-btn-${t.id}"
+                    data-tweet-id="${t.id}"
+                    disabled
+                    style="padding:6px 16px;background:var(--primary);color:#fff;border:none;border-radius:999px;font-weight:700;font-size:0.8rem;cursor:pointer;opacity:0.5;"
+                    aria-label="Post reply">Reply</button>
+                </div>
+              </div>
+            </div>
+          </li>`).join('')}
       </ul>`;
+
+    // Bind reply boxes — click tweet body opens inline reply below it
+    const list = body.querySelector('#mtk-user-panel-list');
+    if (list) {
+      list.addEventListener('click', e => {
+        const btn = e.target.closest('button');
+
+        // Reply submit button
+        if (btn?.dataset.tweetId) {
+          const tid = btn.dataset.tweetId;
+          const ta  = body.querySelector(`#mtk-panel-reply-ta-${tid}`);
+          if (ta?.value.trim()) this._handlePanelReply(tid, ta, btn, sorted);
+          return;
+        }
+
+        // Like/RT/bookmark/delete buttons inside panel — handle normally
+        if (btn) {
+          const id = btn.dataset.id;
+          if (btn.classList.contains('like-btn'))  { this._handleLike(btn, id); return; }
+          if (btn.classList.contains('rt-btn'))    { this._handleRetweet(btn, id); return; }
+          if (btn.classList.contains('bk-btn'))    { this._handleBookmark(btn, id); return; }
+          if (btn.classList.contains('del-btn'))   { this._handleDelete(btn, id); return; }
+          if (btn.classList.contains('mtk-twitter__tweet-orig-btn')) { this._handleOrigToggle(btn, btn.dataset.id); return; }
+          return;
+        }
+
+        // Click on tweet body → toggle inline reply box below it
+        const li = e.target.closest('li.mtk-twitter__tweet');
+        if (!li || !li.dataset.id || e.target.closest('a,textarea,input')) return;
+        const replyBox = body.querySelector(`#mtk-panel-reply-${li.dataset.id}`);
+        if (!replyBox) return;
+
+        // Close all other open reply boxes
+        body.querySelectorAll('.mtk-twitter__panel-reply-box').forEach(box => {
+          if (box !== replyBox) {
+            box.style.display = 'none';
+            box.querySelector('textarea')?.value && (box.querySelector('textarea').value = '');
+          }
+        });
+
+        const isOpen = replyBox.style.display !== 'none';
+        replyBox.style.display = isOpen ? 'none' : '';
+        if (!isOpen) {
+          const ta = replyBox.querySelector('textarea');
+          ta?.focus();
+          // Scroll reply box into view
+          replyBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+
+      // Bind textarea input for char count + enable button
+      sorted.forEach(t => {
+        const ta  = body.querySelector(`#mtk-panel-reply-ta-${t.id}`);
+        const btn = body.querySelector(`#mtk-panel-reply-btn-${t.id}`);
+        const cc  = body.querySelector(`#mtk-panel-reply-cc-${t.id}`);
+        if (!ta || !btn) return;
+        ta.addEventListener('input', () => {
+          const rem = 280 - ta.value.length;
+          if (cc) cc.textContent = rem;
+          btn.disabled = !ta.value.trim();
+          btn.style.opacity = ta.value.trim() ? '1' : '0.5';
+        });
+      });
+    }
 
     // Translate visible tweets in panel
     const savedTweets = this._state.tweets;
@@ -998,6 +1081,43 @@ class MTKTwitter {
     }, 100);
 
     body.scrollTop = 0;
+  }
+
+  async _handlePanelReply(tweetId, ta, btn, panelTweets) {
+    const text = ta.value.trim();
+    if (!text) return;
+    btn.disabled = true;
+    btn.textContent = 'Posting…';
+
+    try {
+      const lang  = this._state.user?.lang || 'en';
+      const reply = await this._api('POST', `/tweets/${tweetId}/replies`, { text, lang });
+
+      // Update reply count in feed state
+      const feedTweet = this._state.tweets.find(t => String(t.id) === String(tweetId));
+      if (feedTweet) {
+        feedTweet.replies_count = (feedTweet.replies_count || 0) + 1;
+        const feedBtn = this._root.querySelector(`li[data-id="${tweetId}"] .reply-btn`);
+        if (feedBtn) {
+          feedBtn.innerHTML = `<span class="material-icons-round" aria-hidden="true">chat_bubble_outline</span> ${feedTweet.replies_count}`;
+          this._markTweetHasReplies(tweetId);
+        }
+      }
+
+      ta.value = '';
+      btn.textContent = 'Reply';
+      btn.style.opacity = '0.5';
+
+      // Close the reply box
+      const replyBox = ta.closest('.mtk-twitter__panel-reply-box');
+      if (replyBox) replyBox.style.display = 'none';
+
+      this._toast('Reply posted!', 'check_circle', 'success');
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Reply';
+      this._toast('Could not post reply: ' + err.message, 'error_outline');
+    }
   }
 
   async _openThread(id) {
