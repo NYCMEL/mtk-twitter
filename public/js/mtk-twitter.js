@@ -1723,7 +1723,7 @@ class MTKTwitter {
   }
 
   _uiLabel(key) {
-    const labels = this._cfg.uiLabels?.[key];
+    const labels = this._cfg?.uiLabels?.[key];
     return (labels && (labels[this._state.userLang] || labels['en'])) || key;
   }
 
@@ -1745,14 +1745,8 @@ class MTKTwitter {
       if (icon) postBtn.prepend(icon);
     }
 
-    // Theme label in sidebar
-    const isDark = this._state.theme === 'dark';
-    const themeLabel = this._root.querySelector('#mtk-sidebar-theme-label');
-    if (themeLabel) themeLabel.textContent = this._uiLabel(isDark ? 'lightMode' : 'darkMode');
-    const splashLabel = this._root.querySelector('#mtk-splash-theme-label');
-    if (splashLabel) splashLabel.textContent = this._uiLabel(isDark ? 'lightMode' : 'darkMode');
-    const menuLabel = this._root.querySelector('#mtk-menu-theme-label');
-    if (menuLabel) menuLabel.textContent = this._uiLabel(isDark ? 'lightMode' : 'darkMode');
+    // Theme labels — delegate to _updateThemeUI which now uses _uiLabel
+    this._updateThemeUI();
   }
 
   _onComposeInput(e) {
@@ -2317,7 +2311,7 @@ class MTKTwitter {
   _updateThemeUI() {
     const isDark = this._state.theme === 'dark';
     const icon   = isDark ? 'light_mode' : 'dark_mode';
-    const label  = isDark ? 'Light mode' : 'Dark mode';
+    const label  = this._uiLabel(isDark ? 'lightMode' : 'darkMode');
 
     // All theme icon/label elements
     [
@@ -2360,8 +2354,12 @@ class MTKTwitter {
     const handleEl = this._root.querySelector('#mtk-sidebar-handle');
     if (handleEl) handleEl.textContent = '@' + (u.username || '');
 
-    // Topbar title stays as "Melify - Twitter" always
-    // feed h2 updates per nav section
+    // Topbar title stays as "Mwitter" always
+    // feed h2 shows user display_name on home
+    const feedH2 = this._root.querySelector('#mtk-feed-h2');
+    if (feedH2 && this._state.activeNav === 'home') {
+      feedH2.textContent = u.display_name || u.username || 'Home';
+    }
     const flagEl = this._root.querySelector('#mtk-lang-flag');
     if (flagEl && lang) flagEl.textContent = lang.flag;
     const feedText = this._root.querySelector('#mtk-feed-lang-text');
