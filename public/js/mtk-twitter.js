@@ -870,6 +870,9 @@ class MTKTwitter {
   // ════════════════════════════════════════════════════════════
 
   async _openThread(id) {
+    // Clear any unread reply dot on this tweet
+    this._root.querySelector(`li[data-id="${id}"] .mtk-reply-dot`)?.remove();
+
     const overlay = this._root.querySelector('#mtk-thread-overlay');
     const body    = this._root.querySelector('#mtk-thread-body');
 
@@ -1042,9 +1045,7 @@ class MTKTwitter {
         const feedBtn = this._root.querySelector(`li[data-id="${tweetId}"] .reply-btn`);
         if (feedBtn) {
           feedBtn.innerHTML = `<span class="material-icons-round" aria-hidden="true">chat_bubble_outline</span> ${feedTweet.replies_count}`;
-          // Pulse animation to indicate new reply
-          feedBtn.classList.add('mtk-twitter__reply-btn--updated');
-          setTimeout(() => feedBtn.classList.remove('mtk-twitter__reply-btn--updated'), 2000);
+          this._markTweetHasReplies(tweetId);
         }
       }
 
@@ -1349,35 +1350,82 @@ class MTKTwitter {
   }
 
   _showNewPostsBanner(count) {
-    const feed = this._root.querySelector('.mtk-twitter__feed');
-    if (!feed) return;
-
-    // Remove existing banner
+    // Remove any existing banner
     this._root.querySelector('#mtk-new-posts-banner')?.remove();
 
     const banner = document.createElement('div');
     banner.id = 'mtk-new-posts-banner';
-    banner.className = 'mtk-twitter__new-posts-banner';
     banner.innerHTML = `
       <span class="material-icons-round">arrow_upward</span>
       ${count} new post${count > 1 ? 's' : ''}
-      <button class="mtk-twitter__new-posts-dismiss" aria-label="Dismiss">
-        <span class="material-icons-round">close</span>
-      </button>`;
+      <span class="mtk-twitter__new-posts-dismiss material-icons-round">close</span>`;
 
-    // Scroll to top on click
+    // Inline styles — guaranteed to show regardless of CSS compilation
+    banner.style.cssText = `
+      position: sticky;
+      top: 113px;
+      z-index: 90;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--primary, #38bdf8);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 9px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      animation: none;
+    `;
+
+    // Dismiss X button style
+    const dismiss = banner.querySelector('.mtk-twitter__new-posts-dismiss');
+    if (dismiss) {
+      dismiss.style.cssText = 'font-size:0.9rem;margin-left:8px;opacity:0.8;cursor:pointer;';
+    }
+
+    // Click → scroll to top of tweet list, keep banner until dismissed
     banner.addEventListener('click', e => {
-      if (!e.target.closest('.mtk-twitter__new-posts-dismiss')) {
-        feed.scrollTo({ top: 0, behavior: 'smooth' });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (e.target === dismiss || e.target.closest('.mtk-twitter__new-posts-dismiss')) {
+        banner.remove();
+        return;
       }
-      banner.remove();
+      const list = this._root.querySelector('#mtk-tweet-list');
+      list?.firstElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    feed.insertBefore(banner, feed.querySelector('.mtk-twitter__feed-header')?.nextSibling || feed.firstChild);
+    // Dismiss X removes banner
+    dismiss?.addEventListener('click', e => { e.stopPropagation(); banner.remove(); });
 
-    // Auto-dismiss after 8 seconds
-    setTimeout(() => banner.remove(), 8000);
+    // Insert at very top of tweet list (before first tweet)
+    const list = this._root.querySelector('#mtk-tweet-list');
+    if (list) {
+      list.insertAdjacentElement('beforebegin', banner);
+    }
+    // DO NOT auto-dismiss — stays until user clicks
+  }
+
+  _markTweetHasReplies(tweetId) {
+    const btn = this._root.querySelector(`li[data-id="${tweetId}"] .reply-btn`);
+    if (!btn) return;
+    if (!btn.querySelector('.mtk-reply-dot')) {
+      const dot = document.createElement('span');
+      dot.className = 'mtk-reply-dot';
+      dot.style.cssText = `
+        display: inline-block;
+        width: 7px; height: 7px;
+        background: #ef4444;
+        border-radius: 50%;
+        margin-left: 3px;
+        vertical-align: middle;
+        flex-shrink: 0;
+        animation: reply-pulse 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+      `;
+      btn.appendChild(dot);
+    }
   }
 
   _prependTweet(tweet) {
