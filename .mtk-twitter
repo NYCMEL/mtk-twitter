@@ -1,55 +1,158 @@
-FORGET ALL PREVIOUS CONTEXT for mtk-twitter and remember this as mtk-twitter forever
+Build a full-stack multilingual social feed app called "Mwitter" (part of the Melify platform).
 
-Create a reusable UI mtk-twitter named mtk-twitter using:
-- HTML
-- SCSS
-- Vanilla JavaScript
-- Bootstrap 5
-- Modern Material Design, Material Design icons and styles
-- Always create a JS class for mtk-twitter and initialize it inside the JS file itself
+## STACK
+- Backend: Node.js + Express + node:sqlite (--experimental-sqlite flag, Node 22+)
+- Frontend: Vanilla JS class (MTKTwitter), SCSS, no frameworks
+- Auth: JWT (7d), bcryptjs
+- Port: 3002
 
-Rules:
-- The mtk-twitter is wrapped in a display:block element <mtk-twitter class="mtk-twitter">.
-- The root element uses .mtk-twitter.
-- All styles must be scoped to .mtk-twitter.
-- No global styles or IDs.
-- publish click events using wc.publish
-- subscribe to all 4-mtk-twitter events using wc.subscribe
-- create a onMessage function to be passed to wc.subscribe function
+## FILE STRUCTURE
+twitter.local/
+├── server.js
+├── melify.db (auto-created)
+├── package.json  (express, bcryptjs, jsonwebtoken, cors, dotenv)
+└── public/
+    ├── index.html          (host page, loads all CSS/JS)
+    ├── mtk-twitter.html    (BARE: only <mtk-twitter> tag, NO scripts)
+    ├── user.html           (dark admin page, click row to auto-login)
+    ├── css/
+    │   ├── mtk-twitter.scss
+    │   └── mtk-twitter.css (compiled)
+    └── js/
+        ├── mtk-twitter.js
+        └── mtk-twitter.config.js
 
-Data:
-- The mtk-twitter is JSON driven.
-  - any and all data must come from mtk-twitter.config.js file
+## BACKEND (server.js)
+- express.json({ limit: '10mb' })
+- Auto-creates SQLite DB with tables: users, tweets, likes, retweets, bookmarks
+- JWT auth middleware (authRequired / authOptional)
+- Endpoints:
+  POST   /api/auth/register
+  POST   /api/auth/login
+  GET    /api/users/me
+  PATCH  /api/users/me
+  GET    /api/users/:username
+  GET    /api/tweets?lang=&since=
+  POST   /api/tweets
+  GET    /api/tweets/:id
+  DELETE /api/tweets/:id
+  GET    /api/tweets/:id/replies
+  POST   /api/tweets/:id/replies
+  POST   /api/tweets/:id/like
+  DELETE /api/tweets/:id/like
+  POST   /api/tweets/:id/retweet
+  DELETE /api/tweets/:id/retweet
+  POST   /api/tweets/:id/bookmark
+  DELETE /api/tweets/:id/bookmark
+  GET    /api/bookmarks
+  GET    /api/tweets/:id/translate?target=
+  POST   /api/upload  (base64 → saves to public/uploads/, returns URL)
+  GET    /api/health
+- Translation: Google Translate unofficial API (translate.googleapis.com/translate_a/single?client=gtx), DB cache, client dict fallback
+- Seed users on first run (password: demo1234):
+  mel (en, verified), josh (he), priyasharma (hi), carlosmendoza (es, verified),
+  kenjitanaka (ja, verified), omarhassan (ar), natasha_v (ru), farid (fa)
+- Each seed user gets one seed tweet in their native language
 
-Restrictions:
-- No frameworks.
-- Vanilla Javascript
+## FRONTEND ARCHITECTURE
+- MTKTwitter vanilla JS class in mtk-twitter.js
+- Auto-initializes: window.mtkTwitterInstance = new MTKTwitter('mtk-twitter.mtk-twitter')
+- wc pub/sub bus (window.wc) for cross-component events
+- MTK_TWITTER_CONFIG object in mtk-twitter.config.js
+- index.html loads scripts normally (NOT via wc-include eval)
+- mtk-twitter.html contains ONLY <mtk-twitter class="mtk-twitter"> — no scripts
 
-Accessibility:
-- Use semantic HTML.
-- Keyboard accessible.
-- Visible focus states.
-- ADA compliant
+## SCREENS
+1. Splash — app preview, create account / sign in buttons, theme toggle
+2. Register — name, username, email, password (strength meter), language select
+3. Login — username/email + password
+4. App — full layout (see below)
 
-Output! Create exactly these files:
-- mtk-twitter.config.js (JSON FILE)
-- mtk-twitter.scss
-- mtk-twitter.html
-- mtk-twitter.js
-- backend uses sqlite database and node
+## APP LAYOUT (3-column desktop, mobile-first)
+### Topbar (sticky)
+- Brand logo (hidden on desktop): "Mwitter" in Keania One font
+- Title #mtk-topbar-title: "Mwitter" in Keania One, primary color — always fixed
+- Language picker button, theme toggle, avatar (opens profile menu)
+- max-width: 1200px, margin: 0 auto
 
-Behavior:
-- MUST WAIT for element to be available inside DOM, since i will be using <wc-include> for dynamic inclusion
-- all published (wc.publish) messages should be logged using wc.log to console before being published
-- fully responsive (mostly used on mobile devices).
+### Left Sidebar (desktop only, 240px)
+- Nav items: My Mweets, Explore, Notifications, Messages, Bookmarks, Profile
+- "Post" button (gradient, pill shape)
+- Theme toggle button (Light/Dark mode label)
+- User card at bottom (avatar, display name, @handle)
+- ALL labels translate with display language
 
-I am creating an app identical to mtk-twitter with the following exceptions:
-> user can select a language of choice (say English)
-  user can then see all tweets from any language in English.
-> a user from india posts something in Hindi and I can see it in English.
-  I can respond to this post in English and originator can see it in Hindi
+### Feed (center, max 600px)
+- Feed header (sticky): shows user's display_name on Home, section name otherwise
+- Language pill showing current display language
+- Compose box: avatar + textarea + image button + emoji picker + char count + Post button
+  - Image: prompt for URL first, fallback to file upload; uploads base64 to /api/upload
+  - Emoji: 50-emoji picker panel, inserts at cursor, closes after pick
+- Tweet list with grouping (one visible tweet per user, rest collapsed behind "N more" expand button)
+- New posts banner (sticky, primary color) when polling finds new tweets — stays until clicked
+- Polling every 8s
 
-mtk-twitter must have the following components:
-  - registeration
-  - user login
+### Tweet card features
+- Avatar, name, verified badge, @handle, language badge, relative timestamp
+- Fresh tweets (<90s): timestamp in primary color
+- Auto-translation: Google Translate API → shows translated text + "Show original" toggle
+- RTL support for Hebrew, Arabic, Persian
+- Actions: Reply (opens thread panel), Repost, Like, Bookmark, Delete (own tweets only)
+- Reply dot indicators: 🔵 blue dot on sender's tweet, 🔴 red dot + 1px dashed red border on receiver's tweet — cleared when thread is opened
+- Expand/collapse grouped tweets from same user
 
+### Thread panel (slide in from right)
+- Shows original tweet + all replies + reply compose
+- Esc or back button closes
+- Auto-translates all tweets in thread
+
+### Right Sidebar (desktop, 300px)
+- Search box
+- Trending widget with 5 hashtags
+- ALL text translates with display language
+
+### Bottom nav + FAB (mobile only)
+
+### Profile menu (dropdown from avatar)
+- Profile, Change Language, Light/Dark mode, Sign Out
+- ALL labels translate
+
+## LANGUAGES (14 total, stored as display preference separate from posting language)
+en 🇺🇸, hi 🇮🇳, he 🇮🇱 (RTL), ar 🇸🇦 (RTL), es 🇪🇸, fr 🇫🇷, de 🇩🇪,
+zh 🇨🇳, pt 🇧🇷, ja 🇯🇵, ru 🇷🇺, ko 🇰🇷, it 🇮🇹, fa 🇮🇷 (RTL)
+
+## TRANSLATION BEHAVIOR
+- Display language ≠ posting language (stored separately in localStorage)
+- Switching display language re-translates ALL visible tweets in-place
+- Translation priority: DB cache → Google Translate API → client dict fallback
+- "Show original" / "Show in [language]" toggle on each translated tweet
+- All UI strings (nav, buttons, search, trending, menus) translate too
+
+## THEME
+- Dark (default) / Light toggle, persisted in localStorage
+- SCSS variables via CSS custom properties
+- Fonts: DM Sans (UI), Source Serif 4 (tweet body), Keania One (Mwitter brand)
+
+## SCSS
+- Single file, all scoped to .mtk-twitter
+- Dark theme default, .mtk-twitter--light override
+- --h-pad: 20px, --host-topbar: 0px CSS variables
+- Mobile-first, breakpoints at 768px and 1024px
+- #mtk-topbar-title: Keania One, primary color
+
+## user.html (admin)
+- Dark themed, lists all users from API
+- Click any row to auto-login as that user (fetches JWT, stores in localStorage)
+- Shows avatar, display name, @handle, language (with flag), RTL badge, email, join date
+- Languages map includes all 14 languages including fa 🇮🇷
+- RTL set includes: he, ar, fa
+
+## KEY BEHAVIORS
+- Auto-logout on 401 (stale session)
+- JWT stored in localStorage as mtk_session
+- Bookmarks: one per user enforced (server + client)
+- Delete tweet: optimistic removal with slide-out animation
+- Desktop notifications when tab not focused
+- Polling: smart grouping-aware prepend
+- index.html loads scripts as <script src="..."> tags — NOT inside wc-include HTML
+- mtk-twitter.html must be BARE (no script tags) to avoid jQuery globalEval errors
