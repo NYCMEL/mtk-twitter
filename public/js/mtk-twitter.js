@@ -870,8 +870,9 @@ class MTKTwitter {
   // ════════════════════════════════════════════════════════════
 
   async _openThread(id) {
-    // Clear any unread reply dot on this tweet
-    this._root.querySelector(`li[data-id="${id}"] .mtk-reply-dot`)?.remove();
+    // Clear reply dots on ALL instances of this tweet (visible + hidden group copies)
+    this._root.querySelectorAll(`li[data-id="${id}"] .mtk-reply-dot`)
+      .forEach(dot => dot.remove());
 
     const overlay = this._root.querySelector('#mtk-thread-overlay');
     const body    = this._root.querySelector('#mtk-thread-body');
@@ -1045,7 +1046,8 @@ class MTKTwitter {
         const feedBtn = this._root.querySelector(`li[data-id="${tweetId}"] .reply-btn`);
         if (feedBtn) {
           feedBtn.innerHTML = `<span class="material-icons-round" aria-hidden="true">chat_bubble_outline</span> ${feedTweet.replies_count}`;
-          this._markTweetHasReplies(tweetId);
+          // Re-add dot after innerHTML reset — blue for sender
+          this._markTweetHasReplies(tweetId, '#38bdf8');
         }
       }
 
@@ -1341,7 +1343,8 @@ class MTKTwitter {
           const replyBtn = this._root.querySelector(`li[data-id="${id}"] .reply-btn`);
           if (replyBtn) {
             replyBtn.innerHTML = `<span class="material-icons-round" aria-hidden="true">chat_bubble_outline</span> ${freshCount}`;
-            this._markTweetHasReplies(id);
+            // Re-add dot after innerHTML reset — red for receiver
+            this._markTweetHasReplies(id, '#ef4444');
           }
         }
       } catch (_) { /* silent */ }
@@ -1407,24 +1410,23 @@ class MTKTwitter {
     // DO NOT auto-dismiss — stays until user clicks
   }
 
-  _markTweetHasReplies(tweetId) {
+  _markTweetHasReplies(tweetId, color = '#ef4444') {
     const btn = this._root.querySelector(`li[data-id="${tweetId}"] .reply-btn`);
     if (!btn) return;
-    if (!btn.querySelector('.mtk-reply-dot')) {
-      const dot = document.createElement('span');
-      dot.className = 'mtk-reply-dot';
-      dot.style.cssText = `
-        display: inline-block;
-        width: 7px; height: 7px;
-        background: #ef4444;
-        border-radius: 50%;
-        margin-left: 3px;
-        vertical-align: middle;
-        flex-shrink: 0;
-        animation: reply-pulse 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
-      `;
-      btn.appendChild(dot);
-    }
+    btn.querySelector('.mtk-reply-dot')?.remove();
+    const dot = document.createElement('span');
+    dot.className = 'mtk-reply-dot';
+    dot.style.cssText = `
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: ${color};
+      border-radius: 50%;
+      margin-left: 4px;
+      vertical-align: middle;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 2px ${color}44;
+    `;
+    btn.appendChild(dot);
   }
 
   _prependTweet(tweet) {
