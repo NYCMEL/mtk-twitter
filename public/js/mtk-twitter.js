@@ -547,7 +547,7 @@ class MTKTwitter {
           <div class="mtk-twitter__widget" role="region" aria-label="Trending topics">
             <div class="mtk-twitter__widget-title" id="mtk-trending-title">Trending</div>
             ${trendingTopics.map((t, i) => `
-              <div class="mtk-twitter__trend-item" tabindex="0" role="button" data-trend-index="${i}"
+              <div class="mtk-twitter__trend-item" tabindex="0" role="button" data-trend-index="${i}" data-tag="${t.tag}"
                    aria-label="Trending: ${t.tag}, ${t.posts} posts">
                 <span class="tr-meta" data-trend-meta>${this._uiLabel('trendingMeta')} · ${i+1}</span>
                 <span class="tr-tag">${t.tag}</span>
@@ -869,6 +869,12 @@ class MTKTwitter {
     // Nav
     this._root.querySelectorAll('[data-nav]').forEach(btn => {
       btn.addEventListener('click', () => this._setActiveNav(btn.dataset.nav));
+    });
+
+    // Trending topics
+    this._root.querySelectorAll('.mtk-twitter__trend-item[data-tag]').forEach(el => {
+      el.addEventListener('click', () => this._loadTrending(el.dataset.tag, el.querySelector('.tr-posts')?.textContent));
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') this._loadTrending(el.dataset.tag, el.querySelector('.tr-posts')?.textContent); });
     });
 
     // Escape closes menus/modals
@@ -2674,6 +2680,59 @@ class MTKTwitter {
     } else if (id === 'profile') {
       this._loadProfile();
     }
+  }
+
+  _loadTrending(tag, postsLabel) {
+    // Switch to explore nav visually
+    this._root.querySelectorAll('[data-nav]').forEach(btn => {
+      const active = btn.dataset.nav === 'explore';
+      btn.classList.toggle('mtk-twitter__nav-item--active', active);
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-current', active ? 'page' : 'false');
+    });
+    this._state.activeNav = 'explore';
+
+    // Update header
+    const titleEl = this._root.querySelector('#mtk-topbar-title');
+    const feedH2  = this._root.querySelector('.mtk-twitter__feed-header h2');
+    if (titleEl) titleEl.textContent = 'Mwitter';
+    if (feedH2)  feedH2.textContent  = tag;
+
+    // Hide compose
+    const compose = this._root.querySelector('.mtk-twitter__compose');
+    if (compose) compose.style.display = 'none';
+
+    const list = this._root.querySelector('#mtk-tweet-list');
+    if (!list) return;
+
+    // Highlight the active trend item
+    this._root.querySelectorAll('.mtk-twitter__trend-item').forEach(el => {
+      el.style.background = el.dataset.tag === tag ? 'var(--primary-glow)' : '';
+    });
+
+    list.innerHTML = `
+      <li style="list-style:none;">
+        <div style="
+          display:flex;flex-direction:column;align-items:center;justify-content:center;
+          padding:60px 32px 32px;text-align:center;gap:16px;
+        ">
+          <span style="font-size:2.5rem;">🔥</span>
+          <div style="font-family:'DM Sans',sans-serif;font-size:1.4rem;font-weight:800;color:var(--text-1);">${this._esc(tag)}</div>
+          <div style="
+            font-size:0.78rem;font-weight:700;color:var(--primary);
+            background:var(--primary-glow);padding:4px 14px;border-radius:999px;
+          ">${postsLabel || ''}</div>
+          <div style="font-size:0.88rem;color:var(--text-2);max-width:300px;line-height:1.6;margin-top:8px;">
+            Posts matching this topic will appear here.<br>Full hashtag search coming soon.
+          </div>
+          <button onclick="window.mtkTwitterInstance._setActiveNav('home')"
+            style="margin-top:16px;padding:10px 24px;background:linear-gradient(135deg,var(--primary-dim),var(--primary));
+            color:#fff;border:none;border-radius:999px;font-weight:700;font-size:0.85rem;
+            font-family:'DM Sans',sans-serif;cursor:pointer;">
+            ← Back to feed
+          </button>
+        </div>
+      </li>`;
   }
 
   _loadPlaceholder(type) {
