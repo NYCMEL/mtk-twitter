@@ -1661,19 +1661,13 @@ class MTKTwitter {
       dismiss.style.cssText = 'font-size:0.9rem;margin-left:8px;opacity:0.8;cursor:pointer;';
     }
 
-    // Click → scroll to top of tweet list, keep banner until dismissed
-    banner.addEventListener('click', e => {
-      if (e.target === dismiss || e.target.closest('.mtk-twitter__new-posts-dismiss')) {
-        banner.remove();
-        return;
-      }
+    // Any click → scroll to top AND remove banner
+    banner.addEventListener('click', () => {
+      banner.remove();
       const list = this._root.querySelector('#mtk-tweet-list');
       list?.firstElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-
-    // Dismiss X removes banner
-    dismiss?.addEventListener('click', e => { e.stopPropagation(); banner.remove(); });
 
     // Insert at very top of tweet list (before first tweet)
     const list = this._root.querySelector('#mtk-tweet-list');
