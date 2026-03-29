@@ -415,7 +415,7 @@ class MTKTwitter {
              style="font-family:'DM Serif Display',serif;font-style:italic;font-weight:400;">
           Mwitter
         </div>
-        <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">Melify - Twitter</div>
+        <div class="mtk-twitter__topbar-title" id="mtk-topbar-title">Mwitter</div>
         <button class="mtk-twitter__topbar-lang" id="mtk-lang-btn"
                 aria-label="Change display language" aria-haspopup="dialog">
           <span class="material-icons-round" aria-hidden="true">language</span>
@@ -441,7 +441,7 @@ class MTKTwitter {
                       aria-current="${n.id === 'home' ? 'page' : 'false'}"
                       aria-label="${n.label}">
                 <span class="material-icons-round" aria-hidden="true">${n.icon}</span>
-                ${n.id === 'home' ? 'My Tweeter' : n.label}
+                ${this._navLabel(n.id)}
               </button>`).join('')}
           </div>
           <button class="mtk-twitter__sidebar-post-btn" id="mtk-sidebar-post-btn"
@@ -470,7 +470,7 @@ class MTKTwitter {
         <!-- Feed -->
         <main class="mtk-twitter__feed" aria-label="Post feed">
           <div class="mtk-twitter__feed-header" style="padding-left:var(--h-pad,20px);padding-right:var(--h-pad,20px);">
-            <h2 id="mtk-feed-h2" style="text-align:left!important;margin:0;font-weight:800;">Home</h2>
+            <h2 id="mtk-feed-h2" style="text-align:left!important;margin:0;font-weight:800;">${user?.display_name || 'Home'}</h2>
             <div class="mtk-twitter__feed-header-lang" id="mtk-feed-lang-pill">
               <span class="material-icons-round" aria-hidden="true">language</span>
               <span id="mtk-feed-lang-text">English</span>
@@ -558,10 +558,10 @@ class MTKTwitter {
       <nav class="mtk-twitter__bottom-nav" aria-label="Mobile navigation">
         ${this._cfg.navItems.map(n => `
           <button data-nav="${n.id}" class="${n.id==='home'?'active':''}"
-                  aria-label="${n.id==='home'?(user?.display_name||n.label):n.label}"
+                  aria-label="${this._navLabel(n.id)}"
                   aria-current="${n.id==='home'?'page':'false'}">
             <span class="material-icons-round" aria-hidden="true">${n.icon}</span>
-            ${n.id==='home'?(user?.display_name||n.label):n.label}
+            ${this._navLabel(n.id)}
           </button>`).join('')}
       </nav>
 
@@ -903,9 +903,14 @@ class MTKTwitter {
   // ════════════════════════════════════════════════════════════
 
   async _openThread(id) {
-    // Clear reply dots on ALL instances of this tweet (visible + hidden group copies)
-    this._root.querySelectorAll(`li[data-id="${id}"] .mtk-reply-dot`)
+    // Clear reply dots and red border on ALL instances of this tweet
+    this._root.querySelectorAll('li[data-id="' + id + '"] .mtk-reply-dot')
       .forEach(dot => dot.remove());
+    this._root.querySelectorAll('li[data-id="' + id + '"]').forEach(li => {
+      li.style.outline = '';
+      li.style.outlineOffset = '';
+      delete li.dataset.hasReplyAlert;
+    });
 
     const overlay = this._root.querySelector('#mtk-thread-overlay');
     const body    = this._root.querySelector('#mtk-thread-body');
@@ -1449,17 +1454,27 @@ class MTKTwitter {
     btn.querySelector('.mtk-reply-dot')?.remove();
     const dot = document.createElement('span');
     dot.className = 'mtk-reply-dot';
-    dot.style.cssText = `
-      display: inline-block;
-      width: 8px; height: 8px;
-      background: ${color};
-      border-radius: 50%;
-      margin-left: 4px;
-      vertical-align: middle;
-      flex-shrink: 0;
-      box-shadow: 0 0 0 2px ${color}44;
-    `;
+    dot.style.cssText = [
+      'display:inline-block',
+      'width:8px',
+      'height:8px',
+      'background:' + color,
+      'border-radius:50%',
+      'margin-left:4px',
+      'vertical-align:middle',
+      'flex-shrink:0',
+    ].join(';');
     btn.appendChild(dot);
+
+    // Add red dashed border on receiver's tweet (red dot only)
+    if (color === '#ef4444') {
+      const li = this._root.querySelector('li[data-id="' + tweetId + '"]');
+      if (li) {
+        li.style.outline = '1px dashed #ef4444';
+        li.style.outlineOffset = '-1px';
+        li.dataset.hasReplyAlert = '1';
+      }
+    }
   }
 
   _prependTweet(tweet) {
@@ -1702,6 +1717,44 @@ class MTKTwitter {
     if (picker) picker.style.display = 'none';
   }
 
+  _navLabel(id) {
+    const labels = this._cfg.navLabels?.[id];
+    return (labels && (labels[this._state.userLang] || labels['en'])) || id;
+  }
+
+  _uiLabel(key) {
+    const labels = this._cfg.uiLabels?.[key];
+    return (labels && (labels[this._state.userLang] || labels['en'])) || key;
+  }
+
+  _updateNavLabels() {
+    // Sidebar + bottom nav items
+    this._root.querySelectorAll('[data-nav]').forEach(btn => {
+      const id = btn.dataset.nav;
+      const label = this._navLabel(id);
+      const icon = btn.querySelector('.material-icons-round');
+      btn.textContent = label;
+      if (icon) btn.prepend(icon);
+    });
+
+    // "Post" sidebar button
+    const postBtn = this._root.querySelector('#mtk-sidebar-post-btn');
+    if (postBtn) {
+      const icon = postBtn.querySelector('.material-icons-round');
+      postBtn.textContent = this._uiLabel('post');
+      if (icon) postBtn.prepend(icon);
+    }
+
+    // Theme label in sidebar
+    const isDark = this._state.theme === 'dark';
+    const themeLabel = this._root.querySelector('#mtk-sidebar-theme-label');
+    if (themeLabel) themeLabel.textContent = this._uiLabel(isDark ? 'lightMode' : 'darkMode');
+    const splashLabel = this._root.querySelector('#mtk-splash-theme-label');
+    if (splashLabel) splashLabel.textContent = this._uiLabel(isDark ? 'lightMode' : 'darkMode');
+    const menuLabel = this._root.querySelector('#mtk-menu-theme-label');
+    if (menuLabel) menuLabel.textContent = this._uiLabel(isDark ? 'lightMode' : 'darkMode');
+  }
+
   _onComposeInput(e) {
     const v   = e.target.value;
     const rem = 280 - v.length;
@@ -1719,12 +1772,26 @@ class MTKTwitter {
     const text = ta?.value.trim();
     if (!text || !this._state.user) return;
 
-    // Append image URL to text if one is attached
-    const imageUrl  = ta?.dataset.imageUrl;
-    const fullText  = imageUrl ? `${text}\n${imageUrl}` : text;
-
     const btn = this._root.querySelector('#mtk-post-btn');
     if (btn) btn.disabled = true;
+
+    // Handle image — upload base64 to server first to get a real URL
+    let imageUrl = ta?.dataset.imageUrl || '';
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      try {
+        const mimeMatch = imageUrl.match(/^data:(image\/\w+);base64,/);
+        const mimeType  = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+        this._toast('Uploading image…', 'upload');
+        const uploaded = await this._api('POST', '/upload', { data: imageUrl, mimeType });
+        imageUrl = location.origin + uploaded.url;
+      } catch (err) {
+        this._toast('Image upload failed: ' + err.message, 'error_outline');
+        if (btn) btn.disabled = false;
+        return;
+      }
+    }
+
+    const fullText = imageUrl ? `${text}\n${imageUrl}` : text;
 
     // Always post in the user's PROFILE language, not the display language
     const lang = this._state.user.lang || 'en';
@@ -2131,6 +2198,9 @@ class MTKTwitter {
 
     this._toast(`Language: ${lang ? lang.flag + ' ' + lang.label : code}`, 'language');
 
+    // Update nav labels to new language
+    this._updateNavLabels();
+
     // Re-translate all visible tweets in-place (don't re-render the whole list)
     this._autoTranslateFeed();
   }
@@ -2322,10 +2392,11 @@ class MTKTwitter {
     // Update feed header title — topbar stays fixed, only feed h2 changes per section
     const titleEl = this._root.querySelector('#mtk-topbar-title');
     const feedH2  = this._root.querySelector('.mtk-twitter__feed-header h2');
-    const titles  = { home: 'Home', explore: 'Explore', notifications: 'Notifications', messages: 'Messages', bookmarks: 'Bookmarks', profile: 'Profile' };
-    const title   = titles[id] || 'Home';
+    const feedTitle = id === 'home'
+      ? (this._state.user?.display_name || 'Home')
+      : (this._navLabel(id) || id);
     if (titleEl)  titleEl.textContent = 'Mwitter';  // always fixed
-    if (feedH2)   feedH2.textContent  = title;                // changes per section
+    if (feedH2)   feedH2.textContent  = feedTitle;  // changes per section
 
     // Show/hide compose box — only on Home
     const compose = this._root.querySelector('.mtk-twitter__compose');

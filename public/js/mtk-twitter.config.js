@@ -167,6 +167,23 @@ const MTK_TWITTER_CONFIG = {
     { icon: 'person',        label: 'Profile',       id: 'profile',       active: false },
   ],
 
+  // UI string translations
+  uiLabels: {
+    post:      { en:'Post',      he:'פרסם',    ar:'نشر',      hi:'पोस्ट',    es:'Publicar', fr:'Publier',  de:'Posten',    zh:'发布',  pt:'Publicar', ja:'投稿',     ru:'Опубликовать', ko:'게시',   it:'Pubblica' },
+    darkMode:  { en:'Dark mode', he:'מצב כהה', ar:'الوضع الداكن', hi:'डार्क मोड', es:'Modo oscuro', fr:'Mode sombre', de:'Dunkelmodus', zh:'深色模式', pt:'Modo escuro', ja:'ダークモード', ru:'Тёмная тема', ko:'다크 모드', it:'Modalità scura' },
+    lightMode: { en:'Light mode',he:'מצב בהיר',ar:'الوضع الفاتح', hi:'लाइट मोड', es:'Modo claro', fr:'Mode clair', de:'Hellmodus', zh:'浅色模式', pt:'Modo claro', ja:'ライトモード', ru:'Светлая тема', ko:'라이트 모드', it:'Modalità chiara' },
+  },
+
+  // Nav label translations per language code
+  navLabels: {
+    home:          { en:'My Mweets',     he:'המוויטים שלי',       ar:'مويطاتي',            hi:'मेरे मवीट्स',   es:'Mis Mweets',      fr:'Mes Mweets',      de:'Meine Mweets',         zh:'我的帖子',   pt:'Meus Mweets',  ja:'自分の投稿',   ru:'Мои Мвиты',      ko:'내 게시물', it:'I Miei Mweet' },
+    explore:       { en:'Explore',       he:'גלה',                ar:'استكشف',              hi:'खोजें',         es:'Explorar',        fr:'Explorer',        de:'Entdecken',            zh:'探索',       pt:'Explorar',     ja:'探索',         ru:'Обзор',          ko:'탐색',      it:'Esplora'      },
+    notifications: { en:'Notifications', he:'התראות',             ar:'الإشعارات',           hi:'सूचनाएं',       es:'Notificaciones',  fr:'Notifications',   de:'Benachrichtigungen',   zh:'通知',       pt:'Notificações', ja:'通知',         ru:'Уведомления',    ko:'알림',      it:'Notifiche'    },
+    messages:      { en:'Messages',      he:'הודעות',             ar:'الرسائل',             hi:'संदेश',         es:'Mensajes',        fr:'Messages',        de:'Nachrichten',          zh:'消息',       pt:'Mensagens',    ja:'メッセージ',   ru:'Сообщения',      ko:'메시지',    it:'Messaggi'     },
+    bookmarks:     { en:'Bookmarks',     he:'סימניות',            ar:'المفضلة',             hi:'बुकमार्क',      es:'Guardados',       fr:'Favoris',         de:'Lesezeichen',          zh:'书签',       pt:'Favoritos',    ja:'ブックマーク', ru:'Закладки',       ko:'북마크',    it:'Segnalibri'   },
+    profile:       { en:'Profile',       he:'פרופיל',             ar:'الملف الشخصي',        hi:'प्रोफ़ाइल',     es:'Perfil',          fr:'Profil',          de:'Profil',               zh:'个人资料',   pt:'Perfil',       ja:'プロフィール', ru:'Профиль',        ko:'프로필',    it:'Profilo'      },
+  },
+
   // All wc.publish / wc.subscribe event names
   events: {
     TWEET_POSTED:     'mtk-twitter:tweet-posted',
