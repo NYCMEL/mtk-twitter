@@ -131,6 +131,12 @@ console.log('[DB] Ready:', DB_PATH);
     ['mel',           'mel@melify.com',   'Mel',             hash,'en',av+'11',1],
     ['josh',          'josh@melify.com',  'Josh',            hash,'he',av+'33',0],
     ['farid',         'farid@demo.com',   'Farid',           hash,'fa',av+'68',0],
+    ['sophie_m',      'sophie@demo.com',  'Sophie Martin',   hash,'fr',av+'25',0],
+    ['klausberg',     'Klaus@demo.com',   'Klaus Berg',      hash,'de',av+'12',0],
+    ['wei_zhang',     'wei@demo.com',     'Wei Zhang',       hash,'zh',av+'35',1],
+    ['ana_silva',     'ana@demo.com',     'Ana Silva',       hash,'pt',av+'48',0],
+    ['jiwon_k',       'jiwon@demo.com',   'Jiwon Kim',       hash,'ko',av+'62',0],
+    ['giulia_r',      'giulia@demo.com',  'Giulia Russo',    hash,'it',av+'15',0],
   ].forEach(u => insUser.run(...u));
 
   const insTweet = db.prepare('INSERT INTO tweets (user_id,text,original_lang) VALUES (?,?,?)');
@@ -142,12 +148,18 @@ console.log('[DB] Ready:', DB_PATH);
     ['natasha_v',     'Технологии меняют мир к лучшему каждый день.',          'ru'],
     ['josh',          'שלום לכולם! הטכנולוגיה מחברת בין עמים.',               'he'],
     ['farid',         'سلام! این فناوری شگفت\u200cانگیز است. زبان دیگر مانع ارتباط نیست.', 'fa'],
+    ['sophie_m',      'Bonjour le monde ! La technologie efface les frontières linguistiques.', 'fr'],
+    ['klausberg',     'Hallo zusammen! Technologie verbindet Menschen über Sprachgrenzen hinweg.', 'de'],
+    ['wei_zhang',     '大家好！科技让语言不再是障碍，我们可以自由交流。', 'zh'],
+    ['ana_silva',     'Olá a todos! A tecnologia nos aproxima, independentemente do idioma.', 'pt'],
+    ['jiwon_k',       '안녕하세요! 기술 덕분에 언어 장벽이 사라지고 있어요.', 'ko'],
+    ['giulia_r',      'Ciao a tutti! La tecnologia abbatte le barriere linguistiche nel mondo.', 'it'],
   ].forEach(([uname, text, lang]) => {
     const u = db.prepare('SELECT id FROM users WHERE username=?').get(uname);
     if (u) insTweet.run(u.id, text, lang);
   });
 
-  console.log('[DB] Seeded 8 users and 7 tweets');
+  console.log('[DB] Seeded 14 users and 13 tweets');
 })();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

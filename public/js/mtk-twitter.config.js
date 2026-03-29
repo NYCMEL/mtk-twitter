@@ -149,6 +149,48 @@ const MTK_TWITTER_CONFIG = {
       originalLang: 'ar', timestamp: '2h ago',
       likes: 67, retweets: 22, replies: 9,  liked: false, retweeted: false, bookmarked: false,
     },
+    {
+      user: { name: 'Sophie Martin', handle: 'sophie_m', avatar: 'https://i.pravatar.cc/80?img=25', verified: false },
+      text: 'Bonjour le monde ! La technologie efface les frontières linguistiques.',
+      originalLang: 'fr', timestamp: '3h ago',
+      likes: 41, retweets: 10, replies: 5, liked: false, retweeted: false, bookmarked: false,
+    },
+    {
+      user: { name: 'Klaus Berg', handle: 'klausberg', avatar: 'https://i.pravatar.cc/80?img=12', verified: false },
+      text: 'Hallo zusammen! Technologie verbindet Menschen über Sprachgrenzen hinweg.',
+      originalLang: 'de', timestamp: '4h ago',
+      likes: 38, retweets: 8, replies: 4, liked: false, retweeted: false, bookmarked: false,
+    },
+    {
+      user: { name: 'Wei Zhang', handle: 'wei_zhang', avatar: 'https://i.pravatar.cc/80?img=35', verified: true },
+      text: '大家好！科技让语言不再是障碍，我们可以自由交流。',
+      originalLang: 'zh', timestamp: '5h ago',
+      likes: 89, retweets: 31, replies: 14, liked: false, retweeted: false, bookmarked: false,
+    },
+    {
+      user: { name: 'Ana Silva', handle: 'ana_silva', avatar: 'https://i.pravatar.cc/80?img=48', verified: false },
+      text: 'Olá a todos! A tecnologia nos aproxima, independentemente do idioma.',
+      originalLang: 'pt', timestamp: '6h ago',
+      likes: 52, retweets: 17, replies: 7, liked: false, retweeted: false, bookmarked: false,
+    },
+    {
+      user: { name: 'Jiwon Kim', handle: 'jiwon_k', avatar: 'https://i.pravatar.cc/80?img=62', verified: false },
+      text: '안녕하세요! 기술 덕분에 언어 장벽이 사라지고 있어요.',
+      originalLang: 'ko', timestamp: '7h ago',
+      likes: 63, retweets: 19, replies: 8, liked: false, retweeted: false, bookmarked: false,
+    },
+    {
+      user: { name: 'Giulia Russo', handle: 'giulia_r', avatar: 'https://i.pravatar.cc/80?img=15', verified: false },
+      text: 'Ciao a tutti! La tecnologia abbatte le barriere linguistiche nel mondo.',
+      originalLang: 'it', timestamp: '8h ago',
+      likes: 44, retweets: 12, replies: 6, liked: false, retweeted: false, bookmarked: false,
+    },
+    {
+      user: { name: 'Farid', handle: 'farid', avatar: 'https://i.pravatar.cc/80?img=68', verified: false },
+      text: 'سلام! این فناوری شگفت‌انگیز است. زبان دیگر مانع ارتباط نیست.',
+      originalLang: 'fa', timestamp: '9h ago',
+      likes: 57, retweets: 15, replies: 6, liked: false, retweeted: false, bookmarked: false,
+    },
   ],
 
   trendingTopics: [

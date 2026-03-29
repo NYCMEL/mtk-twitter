@@ -317,8 +317,9 @@
       ar:'🇸🇦 Arabic',  es:'🇪🇸 Spanish', fr:'🇫🇷 Français',
       de:'🇩🇪 Deutsch', zh:'🇨🇳 中文', pt:'🇧🇷 Português',
       ja:'🇯🇵 日本語',  ru:'🇷🇺 Русский', ko:'🇰🇷 한국어', it:'🇮🇹 Italiano',
+      fa:'🇮🇷 فارسی',
     };
-    const RTL    = new Set(['he','ar']);
+    const RTL    = new Set(['he','ar','fa']);
     const PASS   = 'demo1234';
 
     const tbody  = document.getElementById('user-tbody');
@@ -347,7 +348,7 @@
         // Hit health to get count, then fetch each user via a known list
         // Since there's no GET /api/users endpoint, we try known usernames
         // + fall back to health endpoint for confirmation
-        const known = ['mel','josh','priyasharma','carlosmendoza','kenjitanaka','omarhassan','natasha_v','farid'];
+        const known = ['mel','josh','priyasharma','carlosmendoza','kenjitanaka','omarhassan','natasha_v','farid','sophie_m','klausberg','wei_zhang','ana_silva','jiwon_k','giulia_r'];
         const users = [];
 
         for (const uname of known) {
