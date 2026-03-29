@@ -207,6 +207,7 @@ const MTK_TWITTER_CONFIG = {
     { icon: 'notifications', label: 'Notifications', id: 'notifications', active: false },
     { icon: 'mail',          label: 'Messages',      id: 'messages',      active: false },
     { icon: 'bookmark',      label: 'Bookmarks',     id: 'bookmarks',     active: false },
+    { icon: 'favorite',      label: 'Likes',         id: 'likes',         active: false },
     { icon: 'person',        label: 'Profile',       id: 'profile',       active: false },
   ],
 
@@ -225,6 +226,7 @@ const MTK_TWITTER_CONFIG = {
     reply:         { en:'Reply',           fa:'پاسخ',           he:'השב',            ar:'رد',                hi:'जवाब दें',    es:'Responder',      fr:'Répondre',       de:'Antworten',           zh:'回复',      pt:'Responder',     ja:'返信',         ru:'Ответить',       ko:'답글',      it:'Rispondi'       },
     signOut:       { en:'Sign Out',        fa:'خروج',        he:'התנתק',          ar:'تسجيل الخروج',      hi:'साइन आउट',    es:'Cerrar sesión',  fr:'Se déconnecter', de:'Abmelden',            zh:'退出',      pt:'Sair',          ja:'サインアウト', ru:'Выйти',          ko:'로그아웃',  it:'Esci'           },
     changeLanguage:{ en:'Change Language', fa:'تغییر زبان', he:'שנה שפה',        ar:'تغيير اللغة',       hi:'भाषा बदलें',  es:'Cambiar idioma', fr:'Changer de langue', de:'Sprache ändern',   zh:'更改语言',  pt:'Mudar idioma',  ja:'言語を変更', ru:'Изменить язык',  ko:'언어 변경', it:'Cambia lingua'  },
+    likes:         { en:'Likes',         fa:'پسندیده‌ها',  he:'אהובים',           ar:'الإعجابات',          hi:'पसंद',          es:'Me gusta',       fr:'J\'aime',        de:'Gefällt mir',         zh:'喜欢',      pt:'Curtidas',     ja:'いいね',       ru:'Понравилось',    ko:'좋아요',    it:'Mi piace'     },
     profile:       { en:'Profile',        fa:'پروفایل',  he:'פרופיל',          ar:'الملف الشخصي',      hi:'प्रोफ़ाइल',   es:'Perfil',         fr:'Profil',         de:'Profil',              zh:'个人资料',  pt:'Perfil',        ja:'プロフィール', ru:'Профиль',        ko:'프로필',    it:'Profilo'        },
     writeReply:    { en:'Write a reply…',  fa:'پاسخ بنویس…',  he:'כתוב תגובה…',   ar:'اكتب رداً…',        hi:'जवाब लिखें…', es:'Escribe una respuesta…', fr:'Rédigez une réponse…', de:'Antwort schreiben…', zh:'写回复…', pt:'Escreva uma resposta…', ja:'返信を書く…', ru:'Напишите ответ…', ko:'답글 작성…', it:'Scrivi una risposta…' },
     noReplies:     { en:'No replies yet. Be the first!', fa:'هنوز پاسخی نیست.', he:'אין תגובות עדיין. היה הראשון!', ar:'لا ردود بعد. كن الأول!', hi:'अभी कोई जवाब नहीं।', es:'Sin respuestas aún.', fr:'Aucune réponse.', de:'Noch keine Antworten.', zh:'还没有回复。', pt:'Sem respostas ainda.', ja:'まだ返信がありません。', ru:'Нет ответов.', ko:'아직 답글이 없습니다.', it:'Ancora nessuna risposta.' },
@@ -237,6 +239,7 @@ const MTK_TWITTER_CONFIG = {
     notifications: { en:'Notifications', fa:'اعلان‌ها', he:'התראות',             ar:'الإشعارات',           hi:'सूचनाएं',       es:'Notificaciones',  fr:'Notifications',   de:'Benachrichtigungen',   zh:'通知',       pt:'Notificações', ja:'通知',         ru:'Уведомления',    ko:'알림',      it:'Notifiche'    },
     messages:      { en:'Messages',      fa:'پیام‌ها',      he:'הודעות',             ar:'الرسائل',             hi:'संदेश',         es:'Mensajes',        fr:'Messages',        de:'Nachrichten',          zh:'消息',       pt:'Mensagens',    ja:'メッセージ',   ru:'Сообщения',      ko:'메시지',    it:'Messaggi'     },
     bookmarks:     { en:'Bookmarks',     fa:'نشانک‌ها',     he:'סימניות',            ar:'المفضلة',             hi:'बुकमार्क',      es:'Guardados',       fr:'Favoris',         de:'Lesezeichen',          zh:'书签',       pt:'Favoritos',    ja:'ブックマーク', ru:'Закладки',       ko:'북마크',    it:'Segnalibri'   },
+    likes:         { en:'Likes',         fa:'پسندیده‌ها',  he:'אהובים',           ar:'الإعجابات',          hi:'पसंद',          es:'Me gusta',       fr:'J\'aime',        de:'Gefällt mir',         zh:'喜欢',      pt:'Curtidas',     ja:'いいね',       ru:'Понравилось',    ko:'좋아요',    it:'Mi piace'     },
     profile:       { en:'Profile',       fa:'پروفایل',  he:'פרופיל',             ar:'الملف الشخصي',        hi:'प्रोफ़ाइल',     es:'Perfil',          fr:'Profil',          de:'Profil',               zh:'个人资料',   pt:'Perfil',       ja:'プロフィール', ru:'Профиль',        ko:'프로필',    it:'Profilo'      },
   },
 

@@ -868,6 +868,11 @@ app.get('/api/bookmarks', authRequired, (req, res) => {
   res.json(rows.map(r => fmt(r, req.user.id)));
 });
 
+app.get('/api/likes', authRequired, (req, res) => {
+  const rows = db.prepare(tweetSQL(req.user.id) + ' JOIN likes l ON l.tweet_id=t.id AND l.user_id=? ORDER BY l.created_at DESC').all(req.user.id);
+  res.json(rows.map(r => fmt(r, req.user.id)));
+});
+
 // ════════════════════════════════════════════════════════════════════════════════
 // TRANSLATION
 // ════════════════════════════════════════════════════════════════════════════════

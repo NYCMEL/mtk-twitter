@@ -2652,6 +2652,12 @@ class MTKTwitter {
 
   _setActiveNav(id) {
     this._state.activeNav = id;
+
+    // Restore home feed tweets if leaving bookmarks view
+    if (this._state.bookmarkTweets && id !== 'bookmarks') {
+      this._state.tweets = this._state.bookmarkTweets;
+      this._state.bookmarkTweets = null;
+    }
     this._root.querySelectorAll('[data-nav]').forEach(btn => {
       const active = btn.dataset.nav === id;
       btn.classList.toggle('mtk-twitter__nav-item--active', active);
@@ -2683,6 +2689,8 @@ class MTKTwitter {
       this._loadPlaceholder('notifications');
     } else if (id === 'messages') {
       this._loadPlaceholder('messages');
+    } else if (id === 'likes') {
+      this._loadLikes();
     } else if (id === 'profile') {
       this._loadProfile();
     }
@@ -2889,6 +2897,48 @@ class MTKTwitter {
       </li>`;
   }
 
+  async _loadLikes() {
+    const list = this._root.querySelector('#mtk-tweet-list');
+    if (list) list.innerHTML = this._tplSkeletons(3);
+
+    try {
+      const liked = await this._api('GET', '/likes');
+
+      if (!liked.length) {
+        if (list) list.innerHTML = `
+          <li><div class="mtk-twitter__empty">
+            <span class="material-icons-round">favorite_border</span>
+            <p>No liked posts yet. Tap the ♥ on any post.</p>
+          </div></li>`;
+        return;
+      }
+
+      let html = '';
+      liked.forEach(t => { html += this._tplTweet({ ...t }); });
+
+      if (!list) return;
+      list.innerHTML = html;
+
+      list.querySelectorAll('[data-reply-post]').forEach(btn => {
+        const id = btn.dataset.replyPost;
+        const ta = list.querySelector(`[data-for="${id}"]`);
+        if (ta) ta.addEventListener('input', () => { btn.disabled = !ta.value.trim(); });
+      });
+
+      // Keep liked tweets in state for translation
+      this._state.bookmarkTweets = this._state.tweets;
+      this._state.tweets = liked;
+      this._autoTranslateFeed();
+
+    } catch (err) {
+      if (list) list.innerHTML = `
+        <li><div class="mtk-twitter__empty">
+          <span class="material-icons-round">error_outline</span>
+          <p>Could not load likes: ${err.message}</p>
+        </div></li>`;
+    }
+  }
+
   async _loadBookmarks() {
     const list = this._root.querySelector('#mtk-tweet-list');
     if (list) list.innerHTML = this._tplSkeletons(3);
@@ -2956,11 +3006,11 @@ class MTKTwitter {
         if (ta) ta.addEventListener('input', () => { btn.disabled = !ta.value.trim(); });
       });
 
-      // Translate
-      const saved = this._state.tweets;
+      // Keep bookmarked tweets in _state for translation (IntersectionObserver needs them)
+      // They'll be restored when user navigates away (handled in _setActiveNav)
+      this._state.bookmarkTweets = this._state.tweets; // save home feed
       this._state.tweets = bookmarked;
       this._autoTranslateFeed();
-      this._state.tweets = saved;
 
     } catch (err) {
       if (list) list.innerHTML = `
