@@ -897,7 +897,7 @@ class MTKTwitter {
       if (btn.classList.contains('bk-btn'))           return this._handleBookmark(btn, id);
       if (btn.classList.contains('del-btn'))          return this._handleDelete(btn, id);
       if (btn.classList.contains('mtk-twitter__tweet-orig-btn'))   return this._handleOrigToggle(btn, btn.dataset.id);
-      if (btn.classList.contains('mtk-twitter__tweet-expand-btn')) return this._openUserTweetsPanel(btn.dataset.group);
+      if (btn.classList.contains('mtk-twitter__tweet-expand-btn')) return this._expandUserTweets(btn.dataset.group, btn);
       const rp = btn.dataset.replyPost;
       if (rp) return this._handleReplySubmit(rp);
       return; // other buttons — do nothing
@@ -1735,7 +1735,7 @@ class MTKTwitter {
     }
   }
 
-  _expandUserTweets(handle, btn) {
+  async _expandUserTweets(handle, btn) {
     const list  = this._root.querySelector('#mtk-tweet-list');
     const group = list?.querySelector(`.mtk-twitter__tweet-group-hidden[data-group="${CSS.escape(handle)}"]`);
 
@@ -1752,56 +1752,58 @@ class MTKTwitter {
       group.style.display    = 'none';
       group.dataset.expanded = '0';
       btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_more</span> ${count} more`;
-      btn.setAttribute('aria-label', `Show ${count} more posts from this user`);
-    } else {
-      // Expand — if in bookmarks view, rebuild hidden group from home feed tweets
-      const isBookmarks = this._state.activeNav === 'bookmarks';
+      btn.setAttribute('aria-label', `Show ${count} more posts`);
+      return;
+    }
 
-      if (isBookmarks) {
-        // Get the visible tweet's id to exclude it
-        const visibleLi = list.querySelector(`li.mtk-twitter__tweet:not(.mtk-twitter__tweet-group-hidden *)[data-id]`);
-        const visibleIds = new Set(
-          [...list.querySelectorAll('li.mtk-twitter__tweet:not(.mtk-twitter__tweet-group-hidden *)')]
-            .map(li => li.dataset.id)
-        );
+    // Expand — fetch ALL tweets from this user via API
+    btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">hourglass_empty</span> Loading…`;
+    btn.disabled = true;
 
-        // Get all home feed tweets from this user, excluding the visible one
-        const homeTweets = this._state.tweets.filter(t => {
-          const h = t.user?.handle || t.user?.username;
-          return h === handle && !visibleIds.has(String(t.id));
-        });
+    try {
+      const allTweets = await this._api('GET', `/users/${encodeURIComponent(handle)}/tweets`);
 
-        if (homeTweets.length > 0) {
-          const inner = group.querySelector('.mtk-twitter__tweet-group-inner');
-          if (inner) {
-            inner.innerHTML = homeTweets.map(t => this._tplTweet({ ...t, _inGroup: true })).join('');
-          }
-        }
+      // Find the visible tweet's id so we can exclude it
+      const visibleLi = list.querySelector(`li.mtk-twitter__tweet:not(.mtk-twitter__tweet-group-hidden *)[data-id]`);
+      const visibleId = visibleLi?.dataset.id;
+
+      // All tweets except the visible one, sorted oldest→newest
+      const hidden = allTweets
+        .filter(t => String(t.id) !== String(visibleId))
+        .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+      const inner = group.querySelector('.mtk-twitter__tweet-group-inner');
+      if (inner) {
+        inner.innerHTML = hidden.map(t => this._tplTweet({ ...t, _inGroup: true })).join('');
       }
+
+      // Add to state for translation lookups
+      hidden.forEach(t => {
+        if (!this._state.tweets.find(s => String(s.id) === String(t.id))) {
+          this._state.tweets.push(t);
+        }
+      });
 
       group.style.display    = '';
       group.dataset.expanded = '1';
+      group.dataset.count    = hidden.length;
 
       group.querySelectorAll('.mtk-twitter__tweet').forEach((li, i) => {
-        li.style.animationDelay = (i * 60) + 'ms';
+        li.style.animationDelay = (i * 40) + 'ms';
         li.classList.add('mtk-twitter__tweet--new');
       });
 
-      // Bind reply textareas
-      group.querySelectorAll('[data-reply-post]').forEach(b => {
-        const id = b.dataset.replyPost;
-        const ta = group.querySelector(`[data-for="${id}"]`);
-        if (ta) ta.addEventListener('input', () => { b.disabled = !ta.value.trim(); });
-      });
-
       // Auto-translate newly visible tweets
-      const ids = [...group.querySelectorAll('.mtk-twitter__tweet-group-inner > li[data-id]')]
-        .map(el => el.dataset.id).filter(Boolean);
+      const ids = hidden.map(t => String(t.id));
       setTimeout(() => ids.forEach(id => this._autoTranslateTweet(id)), 100);
 
-      btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_less</span> Hide`;
-      btn.setAttribute('aria-label', 'Hide older posts from this user');
+    } catch (err) {
+      this._toast('Could not load tweets: ' + err.message, 'error_outline');
     }
+
+    btn.disabled = false;
+    btn.innerHTML = `<span class="material-icons-round" aria-hidden="true">expand_less</span> Hide`;
+    btn.setAttribute('aria-label', 'Hide older posts from this user');
   }
 
   // ── Compose: Image ───────────────────────────────────────────
