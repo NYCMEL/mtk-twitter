@@ -950,20 +950,17 @@ class MTKTwitter {
     const header = overlay.querySelector('.mtk-twitter__thread-header h2');
     if (header) header.textContent = `@${handle}`;
 
-    // Get all tweets from this user — fetch from API for completeness
-    let userTweets = this._state.tweets.filter(t =>
-      (t.user?.handle || t.user?.username) === handle
-    );
-
-    // Also fetch from API to get tweets not in current feed state
+    // Fetch ALL tweets from this user via API
+    let userTweets = [];
     try {
-      const apiTweets = await this._api('GET', `/users/${handle}/tweets`).catch(() => []);
-      if (apiTweets?.length) {
-        // Merge with state tweets, deduplicate by id
-        const existingIds = new Set(userTweets.map(t => String(t.id)));
-        apiTweets.forEach(t => { if (!existingIds.has(String(t.id))) userTweets.push(t); });
-      }
-    } catch (_) { /* use state tweets only */ }
+      userTweets = await this._api('GET', `/users/${encodeURIComponent(handle)}/tweets`);
+      if (!Array.isArray(userTweets)) userTweets = [];
+    } catch (err) {
+      // Fallback to state tweets
+      userTweets = this._state.tweets.filter(t =>
+        (t.user?.handle || t.user?.username) === handle
+      );
+    }
 
     if (!userTweets.length) {
       body.innerHTML = `<div class="mtk-twitter__thread-empty">
