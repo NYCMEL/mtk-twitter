@@ -34,7 +34,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px 20px 60px;
+      padding: 0 20px 60px;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -43,9 +43,10 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 32px;
+      margin-bottom: 20px;
       width: 100%;
       max-width: 860px;
+      padding-top: 20px;
     }
 
     .header-logo {
@@ -346,7 +347,7 @@
         // Hit health to get count, then fetch each user via a known list
         // Since there's no GET /api/users endpoint, we try known usernames
         // + fall back to health endpoint for confirmation
-        const known = ['mel','josh','priyasharma','carlosmendoza','kenjitanaka','omarhassan','natasha_v'];
+        const known = ['mel','josh','priyasharma','carlosmendoza','kenjitanaka','omarhassan','natasha_v','farid'];
         const users = [];
 
         for (const uname of known) {
