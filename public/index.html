@@ -1,69 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-	<meta charset="UTF-8">
-	<title>Melify</title>
-	<link rel="icon" href="img/cropped-favicon-32x32.png" sizes="32x32">
-	<link rel="icon" href="img/cropped-favicon-192x192.png" sizes="192x192">
-	<link rel="apple-touch-icon" href="img/cropped-favicon-180x180.png">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+  <meta charset="UTF-8">
+  <title>Mwitter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080c12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-	<!-- W3C LOGGING -->
-	<script>
-	 wcENV="dev"; // prod || dev
-	 wcAPP="TWEETER";
-	 wcURL="";
-	</script>
+  <!-- W3C LOGGING -->
+  <script>
+    wcENV="dev";
+    wcAPP="TWEETER";
+    wcURL="";
+  </script>
 
-	<!-- GLOBAL STYLES -->
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-	<link href="https://unpkg.com/material-twitters-web@latest/dist/material-twitters-web.min.css" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- GLOBAL STYLES -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link href="https://unpkg.com/material-twitters-web@latest/dist/material-twitters-web.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-	<!-- APPLICATION SPECIFIC STYLES -->
-	<link href="css/fonts/fonts.css" rel="stylesheet">
-	<link href="css/mtk-twitter.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Source+Serif+4:wght@300;400;600&family=Keania+One&display=swap">
 
-	<!-- Reset Bootstrap interference on mtk-twitter -->
-	<style>
-	  html, body {
-	    margin: 0;
-	    padding: 0;
-	    background: #0d1117;
-	    overscroll-behavior-y: contain;
-	  }
-	  /* Neutralise Bootstrap heading resets inside the component */
-	  .mtk-twitter h1,
-	  .mtk-twitter h2,
-	  .mtk-twitter h3,
-	  .mtk-twitter h4,
-	  .mtk-twitter h5,
-	  .mtk-twitter h6 {
-	    margin: 0;
-	    padding: 0;
-	    text-align: left !important;
-	    font-weight: inherit;
-	    font-size: inherit;
-	    line-height: inherit;
-	    color: inherit;
-	  }
-	  /* Remove Bootstrap container/row padding bleed */
-	  .mtk-twitter * {
-	    box-sizing: border-box;
-	  }
-	</style>
+  <!-- APPLICATION STYLES -->
+  <link href="css/fonts/fonts.css" rel="stylesheet">
+  <link href="css/mtk-twitter.css" rel="stylesheet">
 
-	<script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: #080c12;
+      overscroll-behavior-y: contain;
+    }
+    mtk-twitter.mtk-twitter {
+      display: block;
+      margin: 0; padding: 0;
+      width: 100%;
+      min-height: 100vh;
+    }
+    /* Neutralise Bootstrap/material heading resets inside component */
+    .mtk-twitter h1,
+    .mtk-twitter h2,
+    .mtk-twitter h3,
+    .mtk-twitter h4,
+    .mtk-twitter h5,
+    .mtk-twitter h6 {
+      margin: 0;
+      padding: 0;
+      text-align: left !important;
+      font-weight: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      color: inherit;
+    }
+  </style>
 
-	<!-- COMMON JAVASCRIPTS -->
-	<script src="js/_wc.js"></script>
-    </head>
-    <body id="wc">
-	<!-- TWITTER -->
-	<wc-include href="mtk-twitter.html" />
-	<script src="js/mtk-twitter.config.js"></script>
-	<script src="js/mtk-twitter.js"></script>
-    </body>
+  <!-- JAVASCRIPTS -->
+  <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+  <script src="js/_wc.js"></script>
+</head>
+<body id="wc">
+
+  <!-- wc-include loads only the bare <mtk-twitter> tag — no scripts inside -->
+  <wc-include href="mtk-twitter.html" />
+
+  <!-- Config must load before the component class -->
+  <script src="js/mtk-twitter.config.js"></script>
+  <!-- Component class -->
+  <script src="js/mtk-twitter.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof MTK_TWITTER_CONFIG === 'undefined' || typeof wc === 'undefined') return;
+      const { events } = MTK_TWITTER_CONFIG;
+
+      wc.subscribe(events.USER_REGISTERED, payload => {
+        console.log('[Host] Registered:', payload.data.user.username);
+      });
+      wc.subscribe(events.USER_LOGGED_IN, payload => {
+        console.log('[Host] Login:', payload.data.user.display_name);
+      });
+      wc.subscribe(events.USER_LOGGED_OUT, () => {
+        console.log('[Host] Logout');
+      });
+      wc.subscribe(events.TWEET_POSTED, payload => {
+        console.log('[Host] Posted:', payload.data.tweet.text?.substring(0, 40));
+      });
+      wc.subscribe(events.TWEET_TRANSLATED, payload => {
+        console.log('[Host] Translated:', payload.data.from, '→', payload.data.to);
+      });
+      wc.subscribe(events.LANGUAGE_CHANGED, payload => {
+        console.log('[Host] Language:', payload.data.label);
+      });
+      wc.subscribe(events.AUTH_ERROR, payload => {
+        console.warn('[Host] Auth error:', payload.data.error);
+      });
+    });
+  </script>
+
+</body>
 </html>

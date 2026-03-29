@@ -1583,7 +1583,50 @@ $t-slow:         0.35s;
     &:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
   }
 
-  &__feed-spacer { height: 80px; @media (min-width: 768px) { display: none; } }
+  &__new-posts-banner {
+    position: sticky;
+    top: calc(56px + var(--host-topbar) + 57px); // below feed-header
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--primary);
+    color: #fff;
+    font-family: $font-ui;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 8px 16px;
+    cursor: pointer;
+    animation: slide-down 0.25s $ease-out both;
+    border-bottom: 1px solid var(--primary-dim);
+
+    .material-icons-round { font-size: 1rem; }
+
+    &:hover { opacity: 0.92; }
+
+    .mtk-twitter__new-posts-dismiss {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.8);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      margin-left: 8px;
+      padding: 0;
+      .material-icons-round { font-size: 0.9rem; }
+      &:hover { color: #fff; }
+    }
+  }
+
+  // Reply button pulse when new reply arrives
+  .reply-btn.mtk-twitter__reply-btn--updated {
+    color: var(--primary) !important;
+    animation: reply-pulse 0.4s $ease-spring both;
+  }
+
+  @keyframes slide-down { from { opacity:0; transform:translateY(-100%); } to { opacity:1; transform:translateY(0); } }
+  @keyframes reply-pulse { 0% { transform:scale(1); } 50% { transform:scale(1.3); } 100% { transform:scale(1); } }
 
   &__toasts {
     position: fixed;

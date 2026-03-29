@@ -1040,7 +1040,12 @@ class MTKTwitter {
       if (feedTweet) {
         feedTweet.replies_count = (feedTweet.replies_count || 0) + 1;
         const feedBtn = this._root.querySelector(`li[data-id="${tweetId}"] .reply-btn`);
-        if (feedBtn) feedBtn.innerHTML = `<span class="material-icons-round" aria-hidden="true">chat_bubble_outline</span> ${feedTweet.replies_count}`;
+        if (feedBtn) {
+          feedBtn.innerHTML = `<span class="material-icons-round" aria-hidden="true">chat_bubble_outline</span> ${feedTweet.replies_count}`;
+          // Pulse animation to indicate new reply
+          feedBtn.classList.add('mtk-twitter__reply-btn--updated');
+          setTimeout(() => feedBtn.classList.remove('mtk-twitter__reply-btn--updated'), 2000);
+        }
       }
 
       ta.value = '';
@@ -1283,6 +1288,10 @@ class MTKTwitter {
 
     try {
       const tweets = await this._api('GET', `/tweets?since=${newest.id}`);
+
+      // Poll reply counts on visible tweets (server excludes replies from feed)
+      this._pollReplyCounts();
+
       if (!tweets || !tweets.length) return;
 
       // Only add tweets we don't already have
@@ -1297,14 +1306,78 @@ class MTKTwitter {
         this._notify(t);
       });
 
-      // Translate all new tweets AFTER they are all in the DOM
-      // Use a small delay to ensure DOM is fully updated
+      // Show "N new posts" banner
+      if (newTweets.length > 0) {
+        this._showNewPostsBanner(newTweets.length);
+      }
+
+      // Translate all new tweets AFTER they are in the DOM
       setTimeout(() => {
         newTweets.forEach(t => {
           this._autoTranslateTweet(String(t.id));
         });
       }, 100);
     } catch (_) { /* silent */ }
+  }
+
+  async _pollReplyCounts() {
+    // Re-fetch reply counts for the first 10 visible tweets
+    const visibleIds = [...this._root.querySelectorAll(
+      'li.mtk-twitter__tweet:not(.mtk-twitter__tweet-group-hidden *)[data-id]'
+    )].slice(0, 10).map(li => li.dataset.id).filter(Boolean);
+
+    for (const id of visibleIds) {
+      try {
+        const fresh = await this._api('GET', `/tweets/${id}`);
+        const stale = this._state.tweets.find(t => String(t.id) === String(id));
+        if (!stale || !fresh) continue;
+
+        const freshCount = fresh.replies_count ?? 0;
+        const staleCount = stale.replies_count ?? 0;
+
+        if (freshCount > staleCount) {
+          stale.replies_count = freshCount;
+          const replyBtn = this._root.querySelector(`li[data-id="${id}"] .reply-btn`);
+          if (replyBtn) {
+            replyBtn.innerHTML = `<span class="material-icons-round" aria-hidden="true">chat_bubble_outline</span> ${freshCount}`;
+            replyBtn.classList.add('mtk-twitter__reply-btn--updated');
+            setTimeout(() => replyBtn.classList.remove('mtk-twitter__reply-btn--updated'), 2000);
+          }
+        }
+      } catch (_) { /* silent */ }
+    }
+  }
+
+  _showNewPostsBanner(count) {
+    const feed = this._root.querySelector('.mtk-twitter__feed');
+    if (!feed) return;
+
+    // Remove existing banner
+    this._root.querySelector('#mtk-new-posts-banner')?.remove();
+
+    const banner = document.createElement('div');
+    banner.id = 'mtk-new-posts-banner';
+    banner.className = 'mtk-twitter__new-posts-banner';
+    banner.innerHTML = `
+      <span class="material-icons-round">arrow_upward</span>
+      ${count} new post${count > 1 ? 's' : ''}
+      <button class="mtk-twitter__new-posts-dismiss" aria-label="Dismiss">
+        <span class="material-icons-round">close</span>
+      </button>`;
+
+    // Scroll to top on click
+    banner.addEventListener('click', e => {
+      if (!e.target.closest('.mtk-twitter__new-posts-dismiss')) {
+        feed.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      banner.remove();
+    });
+
+    feed.insertBefore(banner, feed.querySelector('.mtk-twitter__feed-header')?.nextSibling || feed.firstChild);
+
+    // Auto-dismiss after 8 seconds
+    setTimeout(() => banner.remove(), 8000);
   }
 
   _prependTweet(tweet) {
