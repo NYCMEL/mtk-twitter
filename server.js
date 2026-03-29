@@ -139,7 +139,7 @@ console.log('[DB] Ready:', DB_PATH);
     ['giulia_r',      'giulia@demo.com',  'Giulia Russo',    hash,'it',av+'15',0],
   ].forEach(u => insUser.run(...u));
 
-  const insTweet = db.prepare('INSERT INTO tweets (user_id,text,original_lang) VALUES (?,?,?)');
+  const insTweet = db.prepare('INSERT INTO tweets (user_id,text,original_lang,created_at) VALUES (?,?,?,?)');
 
   // Each user has a pool of tweets — 2 to pool-size are randomly seeded
   const userTweets = {
@@ -242,7 +242,15 @@ console.log('[DB] Ready:', DB_PATH);
     // Pick between 2 and all available tweets
     const count = Math.floor(Math.random() * (tweets.length - 1)) + 2;
     const shuffled = [...tweets].sort(() => Math.random() - 0.5).slice(0, count);
-    shuffled.forEach(text => { insTweet.run(u.id, text, lang); tweetCount++; });
+    // Stagger timestamps — oldest tweet furthest back, newest most recent
+    shuffled.forEach((text, i) => {
+      // Space tweets 10–60 minutes apart going backwards from now
+      const minsAgo = (shuffled.length - i) * Math.floor(Math.random() * 50 + 10);
+      const ts = new Date(Date.now() - minsAgo * 60 * 1000)
+        .toISOString().replace('T',' ').replace(/\.\d+Z$/,'');
+      insTweet.run(u.id, text, lang, ts);
+      tweetCount++;
+    });
   }
 
   console.log(`[DB] Seeded 14 users and ${tweetCount} tweets`);
