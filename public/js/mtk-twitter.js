@@ -897,6 +897,7 @@ class MTKTwitter {
       if (btn.classList.contains('bk-btn'))           return this._handleBookmark(btn, id);
       if (btn.classList.contains('del-btn'))          return this._handleDelete(btn, id);
       if (btn.classList.contains('mtk-twitter__tweet-orig-btn'))   return this._handleOrigToggle(btn, btn.dataset.id);
+      if (btn.classList.contains('mtk-twitter__tweet-expand-btn')) return this._openUserTweetsPanel(btn.dataset.group);
       const rp = btn.dataset.replyPost;
       if (rp) return this._handleReplySubmit(rp);
       return; // other buttons — do nothing
@@ -906,8 +907,10 @@ class MTKTwitter {
     const li = e.target.closest('li.mtk-twitter__tweet');
     if (li && li.dataset.id) {
       if (e.target.closest('a, textarea, input')) return;
-      const tweet = this._state.tweets.find(t => String(t.id) === String(li.dataset.id));
-      const handle = tweet?.user?.handle || tweet?.user?.username;
+      // Get handle from DOM directly (handle attr on the li's tweet-handle span)
+      const handleEl = li.querySelector('.mtk-twitter__tweet-handle');
+      const handle = handleEl?.textContent?.replace('@','').trim()
+        || this._state.tweets.find(t => String(t.id) === String(li.dataset.id))?.user?.handle;
       if (handle) this._openUserTweetsPanel(handle);
     }
   }
