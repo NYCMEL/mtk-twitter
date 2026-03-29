@@ -1341,8 +1341,7 @@ class MTKTwitter {
           const replyBtn = this._root.querySelector(`li[data-id="${id}"] .reply-btn`);
           if (replyBtn) {
             replyBtn.innerHTML = `<span class="material-icons-round" aria-hidden="true">chat_bubble_outline</span> ${freshCount}`;
-            replyBtn.classList.add('mtk-twitter__reply-btn--updated');
-            setTimeout(() => replyBtn.classList.remove('mtk-twitter__reply-btn--updated'), 2000);
+            this._markTweetHasReplies(id);
           }
         }
       } catch (_) { /* silent */ }
