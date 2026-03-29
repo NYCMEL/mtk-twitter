@@ -665,6 +665,19 @@ app.get('/api/users/:username', (req, res) => {
   res.json(publicUser(u));
 });
 
+app.get('/api/users/:username/tweets', authOptional, (req, res) => {
+  const u = db.prepare('SELECT * FROM users WHERE username=? COLLATE NOCASE').get(req.params.username);
+  if (!u) return res.status(404).json({ error: 'User not found' });
+  const uid = req.user?.id || 0;
+  const rows = db.prepare(`
+    ${tweetSQL(uid)}
+    WHERE t.user_id = ? AND t.parent_id IS NULL
+    ORDER BY t.created_at DESC
+    LIMIT 50
+  `).all(u.id);
+  res.json(rows.map(r => fmt(r, uid)));
+});
+
 // ════════════════════════════════════════════════════════════════════════════════
 // TWEETS
 // ════════════════════════════════════════════════════════════════════════════════

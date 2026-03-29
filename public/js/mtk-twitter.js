@@ -888,22 +888,117 @@ class MTKTwitter {
   // ── Delegation ──────────────────────────────────────────────
   _delegateTweetClick(e) {
     const btn = e.target.closest('button');
-    if (!btn) return;
-    const id = btn.dataset.id;
-    if (btn.classList.contains('like-btn'))         return this._handleLike(btn, id);
-    if (btn.classList.contains('rt-btn'))           return this._handleRetweet(btn, id);
-    if (btn.classList.contains('reply-btn'))        return this._openThread(id);
-    if (btn.classList.contains('bk-btn'))           return this._handleBookmark(btn, id);
-    if (btn.classList.contains('del-btn'))          return this._handleDelete(btn, id);
-    if (btn.classList.contains('mtk-twitter__tweet-orig-btn'))  return this._handleOrigToggle(btn, btn.dataset.id);
-    if (btn.classList.contains('mtk-twitter__tweet-expand-btn')) return this._expandUserTweets(btn.dataset.group, btn);
-    const rp = btn.dataset.replyPost;
-    if (rp) return this._handleReplySubmit(rp);
+
+    // Button clicks — handle specifically
+    if (btn) {
+      const id = btn.dataset.id;
+      if (btn.classList.contains('like-btn'))         return this._handleLike(btn, id);
+      if (btn.classList.contains('rt-btn'))           return this._handleRetweet(btn, id);
+      if (btn.classList.contains('reply-btn'))        return this._openThread(id);
+      if (btn.classList.contains('bk-btn'))           return this._handleBookmark(btn, id);
+      if (btn.classList.contains('del-btn'))          return this._handleDelete(btn, id);
+      if (btn.classList.contains('mtk-twitter__tweet-orig-btn'))   return this._handleOrigToggle(btn, btn.dataset.id);
+      if (btn.classList.contains('mtk-twitter__tweet-expand-btn')) return this._openUserTweetsPanel(btn.dataset.group);
+      const rp = btn.dataset.replyPost;
+      if (rp) return this._handleReplySubmit(rp);
+      return; // other buttons — do nothing
+    }
+
+    // Click on tweet body (not a button) → open user tweets panel
+    const li = e.target.closest('li.mtk-twitter__tweet');
+    if (li && li.dataset.id) {
+      if (e.target.closest('a, textarea, input')) return;
+      const tweet = this._state.tweets.find(t => String(t.id) === String(li.dataset.id));
+      const handle = tweet?.user?.handle || tweet?.user?.username;
+      if (handle) this._openUserTweetsPanel(handle);
+    }
   }
 
   // ════════════════════════════════════════════════════════════
   // THREAD VIEW
   // ════════════════════════════════════════════════════════════
+
+  async _openUserTweetsPanel(handle) {
+    const overlay = this._root.querySelector('#mtk-thread-overlay');
+    const body    = this._root.querySelector('#mtk-thread-body');
+    if (!overlay || !body) return;
+
+    // Show panel
+    overlay.setAttribute('aria-hidden', 'false');
+    overlay.classList.add('mtk-twitter__thread-overlay--open');
+    overlay.style.cssText = `
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-end;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(0,0,0,0.5);
+    `;
+    const panel = overlay.querySelector('#mtk-thread-panel');
+    if (panel) panel.style.cssText = `
+      background: var(--surface, #fff);
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: -4px 0 32px rgba(0,0,0,0.2);
+    `;
+    body.style.cssText = 'flex:1; overflow-y:auto;';
+    body.innerHTML = this._tplSkeletons(4);
+
+    // Update panel header
+    const header = overlay.querySelector('.mtk-twitter__thread-header h2');
+    if (header) header.textContent = `@${handle}`;
+
+    // Get all tweets from this user — fetch from API for completeness
+    let userTweets = this._state.tweets.filter(t =>
+      (t.user?.handle || t.user?.username) === handle
+    );
+
+    // Also fetch from API to get tweets not in current feed state
+    try {
+      const apiTweets = await this._api('GET', `/users/${handle}/tweets`).catch(() => []);
+      if (apiTweets?.length) {
+        // Merge with state tweets, deduplicate by id
+        const existingIds = new Set(userTweets.map(t => String(t.id)));
+        apiTweets.forEach(t => { if (!existingIds.has(String(t.id))) userTweets.push(t); });
+      }
+    } catch (_) { /* use state tweets only */ }
+
+    if (!userTweets.length) {
+      body.innerHTML = `<div class="mtk-twitter__thread-empty">
+        <span class="material-icons-round">person_search</span>
+        <p>No posts found from @${handle}</p>
+      </div>`;
+      return;
+    }
+
+    // Sort oldest to newest for a natural reading order
+    const sorted = [...userTweets].sort((a, b) =>
+      new Date(a.created_at || 0) - new Date(b.created_at || 0)
+    );
+
+    body.innerHTML = `
+      <div class="mtk-twitter__thread-replies-header">
+        <span class="material-icons-round">person</span>
+        ${sorted.length} post${sorted.length !== 1 ? 's' : ''} from @${handle}
+      </div>
+      <ul class="mtk-twitter__thread-tweet-list">
+        ${sorted.map(t => this._tplTweet({ ...t, _inThread: true, _inGroup: true })).join('')}
+      </ul>`;
+
+    // Translate visible tweets in panel
+    const savedTweets = this._state.tweets;
+    this._state.tweets = sorted;
+    setTimeout(() => {
+      sorted.forEach(t => this._autoTranslateTweet(String(t.id)));
+      this._state.tweets = savedTweets;
+    }, 100);
+
+    body.scrollTop = 0;
+  }
 
   async _openThread(id) {
     // Clear reply dots and red border on ALL instances of this tweet
