@@ -2665,8 +2665,93 @@ class MTKTwitter {
       this._loadBookmarks();
     } else if (id === 'home') {
       this._loadFeed();
+    } else if (id === 'explore') {
+      this._loadPlaceholder('explore');
+    } else if (id === 'notifications') {
+      this._loadPlaceholder('notifications');
+    } else if (id === 'messages') {
+      this._loadPlaceholder('messages');
+    } else if (id === 'profile') {
+      this._loadProfile();
     }
-    // other nav items (explore, notifications, etc.) can be wired up later
+  }
+
+  _loadPlaceholder(type) {
+    const list = this._root.querySelector('#mtk-tweet-list');
+    if (!list) return;
+
+    const config = {
+      explore: {
+        icon: 'explore',
+        title: 'Explore',
+        subtitle: 'Discover trending topics and posts from around the world.',
+        color: '#6366f1',
+      },
+      notifications: {
+        icon: 'notifications_none',
+        title: 'Notifications',
+        subtitle: 'You\'ll see likes, replies and mentions here.',
+        color: '#f59e0b',
+      },
+      messages: {
+        icon: 'mail_outline',
+        title: 'Messages',
+        subtitle: 'Private conversations — coming soon.',
+        color: '#10b981',
+      },
+    };
+
+    const { icon, title, subtitle, color } = config[type] || config.explore;
+
+    list.innerHTML = `
+      <li style="list-style:none;">
+        <div style="
+          display:flex;flex-direction:column;align-items:center;justify-content:center;
+          padding:80px 32px;text-align:center;gap:16px;
+        ">
+          <span class="material-icons-round" style="font-size:4rem;color:${color};opacity:0.8;">${icon}</span>
+          <div style="font-family:'DM Sans',sans-serif;font-size:1.3rem;font-weight:800;color:var(--text-1);">${title}</div>
+          <div style="font-size:0.9rem;color:var(--text-2);max-width:280px;line-height:1.6;">${subtitle}</div>
+          <div style="
+            margin-top:8px;padding:8px 20px;border-radius:999px;
+            background:${color}22;color:${color};
+            font-size:0.78rem;font-weight:700;font-family:'DM Sans',sans-serif;
+          ">Coming soon</div>
+        </div>
+      </li>`;
+  }
+
+  _loadProfile() {
+    const list = this._root.querySelector('#mtk-tweet-list');
+    if (!list) return;
+    const u = this._state.user;
+    if (!u) return;
+
+    const lang = this._cfg.languages.find(l => l.code === (u.lang || 'en'));
+
+    list.innerHTML = `
+      <li style="list-style:none;">
+        <div style="padding:32px 24px;display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <img src="${u.avatar_url || this._cfg.app.avatarBaseUrl + '?img=11'}"
+                 style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);"
+                 alt="${u.display_name}" />
+            <div>
+              <div style="font-size:1.2rem;font-weight:800;color:var(--text-1);font-family:'DM Sans',sans-serif;">
+                ${this._esc(u.display_name || u.username)}
+              </div>
+              <div style="font-size:0.85rem;color:var(--text-3);">@${u.username}</div>
+              ${lang ? `<div style="font-size:0.75rem;color:var(--primary);margin-top:4px;">${lang.flag} ${lang.label}</div>` : ''}
+            </div>
+          </div>
+          <div style="padding:16px;background:var(--surface-2);border-radius:12px;border:1px solid var(--border);">
+            <div style="font-size:0.78rem;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:8px;">Account</div>
+            <div style="font-size:0.88rem;color:var(--text-2);">📧 ${this._esc(u.email || '—')}</div>
+            <div style="font-size:0.88rem;color:var(--text-2);margin-top:6px;">🌐 Posting in ${lang ? lang.flag + ' ' + lang.label : '—'}</div>
+          </div>
+          <div style="font-size:0.8rem;color:var(--text-3);text-align:center;">Full profile editing coming soon.</div>
+        </div>
+      </li>`;
   }
 
   async _loadBookmarks() {
