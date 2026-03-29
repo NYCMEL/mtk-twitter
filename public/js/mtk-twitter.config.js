@@ -186,10 +186,6 @@ const MTK_TWITTER_CONFIG = {
     writeReply:    { en:'Write a reply…',  he:'כתוב תגובה…',   ar:'اكتب رداً…',        hi:'जवाब लिखें…', es:'Escribe una respuesta…', fr:'Rédigez une réponse…', de:'Antwort schreiben…', zh:'写回复…', pt:'Escreva uma resposta…', ja:'返信を書く…', ru:'Напишите ответ…', ko:'답글 작성…', it:'Scrivi una risposta…' },
     noReplies:     { en:'No replies yet. Be the first!', he:'אין תגובות עדיין. היה הראשון!', ar:'لا ردود بعد. كن الأول!', hi:'अभी कोई जवाब नहीं।', es:'Sin respuestas aún.', fr:'Aucune réponse.', de:'Noch keine Antworten.', zh:'还没有回复。', pt:'Sem respostas ainda.', ja:'まだ返信がありません。', ru:'Нет ответов.', ko:'아직 답글이 없습니다.', it:'Ancora nessuna risposta.' },
   },
-    post:      { en:'Post',      he:'פרסם',    ar:'نشر',      hi:'पोस्ट',    es:'Publicar', fr:'Publier',  de:'Posten',    zh:'发布',  pt:'Publicar', ja:'投稿',     ru:'Опубликовать', ko:'게시',   it:'Pubblica' },
-    darkMode:  { en:'Dark mode', he:'מצב כהה', ar:'الوضع الداكن', hi:'डार्क मोड', es:'Modo oscuro', fr:'Mode sombre', de:'Dunkelmodus', zh:'深色模式', pt:'Modo escuro', ja:'ダークモード', ru:'Тёмная тема', ko:'다크 모드', it:'Modalità scura' },
-    lightMode: { en:'Light mode',he:'מצב בהיר',ar:'الوضع الفاتح', hi:'लाइट मोड', es:'Modo claro', fr:'Mode clair', de:'Hellmodus', zh:'浅色模式', pt:'Modo claro', ja:'ライトモード', ru:'Светлая тема', ko:'라이트 모드', it:'Modalità chiara' },
-  },
 
   // Nav label translations per language code
   navLabels: {
