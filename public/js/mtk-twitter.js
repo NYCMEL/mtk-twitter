@@ -1490,11 +1490,14 @@ class MTKTwitter {
     const newest = this._state.tweets[0];
     if (!newest || !newest.id || typeof newest.id !== 'number') return;
 
+    // Always poll reply counts regardless of active nav
+    this._pollReplyCounts();
+
+    // Don't add new tweets to DOM if not on home feed
+    if (this._state.activeNav !== 'home') return;
+
     try {
       const tweets = await this._api('GET', `/tweets?since=${newest.id}`);
-
-      // Poll reply counts on visible tweets (server excludes replies from feed)
-      this._pollReplyCounts();
 
       if (!tweets || !tweets.length) return;
 
