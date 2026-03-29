@@ -5,7 +5,8 @@
   <title>Mwitter</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080c12" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <!-- W3C LOGGING -->
@@ -82,25 +83,25 @@
       const { events } = MTK_TWITTER_CONFIG;
 
       wc.subscribe(events.USER_REGISTERED, payload => {
-        console.log('[Host] Registered:', payload.data.user.username);
+        if (payload?.data?.user) console.log('[Host] Registered:', payload.data.user.username);
       });
       wc.subscribe(events.USER_LOGGED_IN, payload => {
-        console.log('[Host] Login:', payload.data.user.display_name);
+        if (payload?.data?.user) console.log('[Host] Login:', payload.data.user.display_name);
       });
       wc.subscribe(events.USER_LOGGED_OUT, () => {
         console.log('[Host] Logout');
       });
       wc.subscribe(events.TWEET_POSTED, payload => {
-        console.log('[Host] Posted:', payload.data.tweet.text?.substring(0, 40));
+        if (payload?.data?.tweet) console.log('[Host] Posted:', payload.data.tweet.text?.substring(0, 40));
       });
       wc.subscribe(events.TWEET_TRANSLATED, payload => {
-        console.log('[Host] Translated:', payload.data.from, '→', payload.data.to);
+        if (payload?.data) console.log('[Host] Translated:', payload.data.from, '→', payload.data.to);
       });
       wc.subscribe(events.LANGUAGE_CHANGED, payload => {
-        console.log('[Host] Language:', payload.data.label);
+        if (payload?.data) console.log('[Host] Language:', payload.data.label);
       });
       wc.subscribe(events.AUTH_ERROR, payload => {
-        console.warn('[Host] Auth error:', payload.data.error);
+        if (payload?.data) console.warn('[Host] Auth error:', payload.data.error);
       });
     });
   </script>
