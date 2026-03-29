@@ -490,12 +490,32 @@ class MTKTwitter {
               <textarea id="mtk-compose-ta" placeholder="What's happening worldwide?"
                         maxlength="280" aria-label="Compose post" rows="3"
                         dir="${(() => { const pl = this._cfg.languages.find(l => l.code === (user?.lang || 'en')); return pl?.rtl ? 'rtl' : 'ltr'; })()}"></textarea>
+
+              <!-- Image preview -->
+              <div id="mtk-compose-img-preview" style="display:none;margin:6px 0;position:relative;">
+                <img id="mtk-compose-img-el" style="max-width:100%;max-height:200px;border-radius:12px;border:1px solid var(--border);" alt="Preview" />
+                <button id="mtk-compose-img-remove" aria-label="Remove image"
+                        style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);border:none;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;">
+                  <span class="material-icons-round" style="font-size:0.9rem;">close</span>
+                </button>
+              </div>
+
+              <!-- Emoji picker panel -->
+              <div id="mtk-emoji-picker" style="display:none;flex-wrap:wrap;gap:4px;padding:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;margin-bottom:6px;max-height:160px;overflow-y:auto;">
+                ${['😀','😂','😍','🥰','😎','🤔','😢','😡','👍','👎','❤️','🔥','🎉','✨','💯','🙏','👏','😱','🤯','😴','🤗','😏','🥳','💪','🌍','🌎','🌏','✈️','🍕','☕','🎵','📸','💬','🚀','⭐','🌟','💡','📱','💻','🔑','🎯','💰','🏆','🌈','❄️','🌸','🦋','🐶','🐱','🌺','🍀'].map(e =>
+                  `<button class="mtk-emoji-btn" data-emoji="${e}" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:3px;border-radius:6px;line-height:1;" title="${e}">${e}</button>`
+                ).join('')}
+              </div>
+
+              <!-- Hidden file input -->
+              <input type="file" id="mtk-compose-file" accept="image/*" style="display:none;" />
+
               <div class="mtk-twitter__compose-footer">
                 <div class="mtk-twitter__compose-tools" role="group" aria-label="Compose tools">
-                  <button aria-label="Add image" title="Add image">
+                  <button id="mtk-compose-img-btn" aria-label="Add image" title="Add image (URL or upload)">
                     <span class="material-icons-round" aria-hidden="true">image</span>
                   </button>
-                  <button aria-label="Add emoji" title="Add emoji">
+                  <button id="mtk-compose-emoji-btn" aria-label="Add emoji" title="Add emoji">
                     <span class="material-icons-round" aria-hidden="true">emoji_emotions</span>
                   </button>
                 </div>
@@ -791,6 +811,19 @@ class MTKTwitter {
     // Compose
     this._on('#mtk-compose-ta', 'input', e => this._onComposeInput(e));
     this._on('#mtk-post-btn',   'click', () => this._handlePost());
+    this._on('#mtk-compose-img-btn',   'click', () => this._handleComposeImage());
+    this._on('#mtk-compose-emoji-btn', 'click', () => this._toggleEmojiPicker());
+    this._on('#mtk-compose-img-remove','click', () => this._removeComposeImage());
+    this._on('#mtk-compose-file', 'change', e => this._handleImageFile(e));
+
+    // Emoji button clicks (delegated)
+    const composeSection = this._root.querySelector('.mtk-twitter__compose');
+    if (composeSection) {
+      composeSection.addEventListener('click', e => {
+        const btn = e.target.closest('.mtk-emoji-btn');
+        if (btn) this._insertEmoji(btn.dataset.emoji);
+      });
+    }
     this._on('#mtk-fab',        'click', () => {
       this._root.querySelector('#mtk-compose-ta')?.focus();
       this._root.querySelector('.mtk-twitter__compose')?.scrollIntoView({behavior:'smooth'});
@@ -1599,6 +1632,76 @@ class MTKTwitter {
     }
   }
 
+  // ── Compose: Image ───────────────────────────────────────────
+  _handleComposeImage() {
+    // Try URL first — prompt user
+    const url = prompt('Enter image URL (or cancel to upload from device):');
+    if (url === null) {
+      // Cancelled — fall back to file upload
+      this._root.querySelector('#mtk-compose-file')?.click();
+      return;
+    }
+    if (url.trim()) {
+      this._setComposeImagePreview(url.trim());
+    } else {
+      this._root.querySelector('#mtk-compose-file')?.click();
+    }
+  }
+
+  _handleImageFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => this._setComposeImagePreview(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  _setComposeImagePreview(src) {
+    const preview = this._root.querySelector('#mtk-compose-img-preview');
+    const img     = this._root.querySelector('#mtk-compose-img-el');
+    if (!preview || !img) return;
+    img.src = src;
+    preview.style.display = 'block';
+    // Store on textarea as data attr so _handlePost can access it
+    const ta = this._root.querySelector('#mtk-compose-ta');
+    if (ta) ta.dataset.imageUrl = src;
+  }
+
+  _removeComposeImage() {
+    const preview = this._root.querySelector('#mtk-compose-img-preview');
+    const img     = this._root.querySelector('#mtk-compose-img-el');
+    const file    = this._root.querySelector('#mtk-compose-file');
+    const ta      = this._root.querySelector('#mtk-compose-ta');
+    if (preview) preview.style.display = 'none';
+    if (img)     img.src = '';
+    if (file)    file.value = '';
+    if (ta)      delete ta.dataset.imageUrl;
+  }
+
+  // ── Compose: Emoji ───────────────────────────────────────────
+  _toggleEmojiPicker() {
+    const picker = this._root.querySelector('#mtk-emoji-picker');
+    if (!picker) return;
+    const isOpen = picker.style.display === 'flex';
+    picker.style.display = isOpen ? 'none' : 'flex';
+  }
+
+  _insertEmoji(emoji) {
+    const ta = this._root.querySelector('#mtk-compose-ta');
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end   = ta.selectionEnd;
+    const val   = ta.value;
+    ta.value = val.slice(0, start) + emoji + val.slice(end);
+    ta.selectionStart = ta.selectionEnd = start + emoji.length;
+    ta.focus();
+    // Trigger input event to update char count
+    ta.dispatchEvent(new Event('input'));
+    // Close picker after inserting
+    const picker = this._root.querySelector('#mtk-emoji-picker');
+    if (picker) picker.style.display = 'none';
+  }
+
   _onComposeInput(e) {
     const v   = e.target.value;
     const rem = 280 - v.length;
@@ -1616,6 +1719,10 @@ class MTKTwitter {
     const text = ta?.value.trim();
     if (!text || !this._state.user) return;
 
+    // Append image URL to text if one is attached
+    const imageUrl  = ta?.dataset.imageUrl;
+    const fullText  = imageUrl ? `${text}\n${imageUrl}` : text;
+
     const btn = this._root.querySelector('#mtk-post-btn');
     if (btn) btn.disabled = true;
 
@@ -1623,7 +1730,7 @@ class MTKTwitter {
     const lang = this._state.user.lang || 'en';
 
     try {
-      const tweet = await this._api('POST', '/tweets', { text, lang });
+      const tweet = await this._api('POST', '/tweets', { text: fullText, lang });
       tweet._new  = true;
       this._state.tweets.unshift(tweet);
       this._prependTweet(tweet);
@@ -1632,6 +1739,7 @@ class MTKTwitter {
       setTimeout(() => this._autoTranslateTweet(String(tweet.id)), 100);
 
       ta.value = '';
+      this._removeComposeImage();
       if (this._root.querySelector('#mtk-char-count')) {
         this._root.querySelector('#mtk-char-count').textContent = '280';
         this._root.querySelector('#mtk-char-count').className = 'char-count';
