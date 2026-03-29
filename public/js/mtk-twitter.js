@@ -539,16 +539,16 @@ class MTKTwitter {
         <aside class="mtk-twitter__sidebar-right" aria-label="Sidebar">
           <div class="mtk-twitter__search-box" role="search">
             <span class="material-icons-round" aria-hidden="true">search</span>
-            <input type="search" placeholder="Search Melify" aria-label="Search" />
+            <input type="search" id="mtk-search-input" placeholder="Search Melify" aria-label="Search" />
           </div>
           <div class="mtk-twitter__widget" role="region" aria-label="Trending topics">
-            <div class="mtk-twitter__widget-title">Trending</div>
+            <div class="mtk-twitter__widget-title" id="mtk-trending-title">Trending</div>
             ${trendingTopics.map((t, i) => `
-              <div class="mtk-twitter__trend-item" tabindex="0" role="button"
+              <div class="mtk-twitter__trend-item" tabindex="0" role="button" data-trend-index="${i}"
                    aria-label="Trending: ${t.tag}, ${t.posts} posts">
-                <span class="tr-meta">Trending · ${i+1}</span>
+                <span class="tr-meta" data-trend-meta>${this._uiLabel('trendingMeta')} · ${i+1}</span>
                 <span class="tr-tag">${t.tag}</span>
-                <span class="tr-posts">${t.posts} posts</span>
+                <span class="tr-posts" data-trend-posts>${t.posts} ${this._uiLabel('posts')}</span>
               </div>`).join('')}
           </div>
         </aside>
@@ -620,10 +620,10 @@ class MTKTwitter {
     return `
     <div class="mtk-twitter__profile-menu" id="mtk-profile-menu" role="menu" aria-label="Profile menu">
       <button class="mtk-twitter__profile-menu-item" id="mtk-menu-profile" role="menuitem">
-        <span class="material-icons-round" aria-hidden="true">person</span> Profile
+        <span class="material-icons-round" aria-hidden="true">person</span> <span class="mtk-menu-label-profile">Profile</span>
       </button>
       <button class="mtk-twitter__profile-menu-item" id="mtk-menu-lang" role="menuitem">
-        <span class="material-icons-round" aria-hidden="true">language</span> Change Language
+        <span class="material-icons-round" aria-hidden="true">language</span> <span class="mtk-menu-label-lang">Change Language</span>
       </button>
       <button class="mtk-twitter__profile-menu-item" id="mtk-menu-theme" role="menuitem">
         <span class="material-icons-round" id="mtk-menu-theme-icon" aria-hidden="true">light_mode</span>
@@ -631,7 +631,7 @@ class MTKTwitter {
       </button>
       <button class="mtk-twitter__profile-menu-item mtk-twitter__profile-menu-item--danger"
               id="mtk-menu-logout" role="menuitem">
-        <span class="material-icons-round" aria-hidden="true">logout</span> Sign Out
+        <span class="material-icons-round" aria-hidden="true">logout</span> <span class="mtk-menu-label-signout">Sign Out</span>
       </button>
     </div>`;
   }
@@ -1745,7 +1745,32 @@ class MTKTwitter {
       if (icon) postBtn.prepend(icon);
     }
 
-    // Theme labels — delegate to _updateThemeUI which now uses _uiLabel
+    // Search placeholder
+    const searchInput = this._root.querySelector('#mtk-search-input');
+    if (searchInput) searchInput.placeholder = this._uiLabel('search');
+
+    // Trending title
+    const trendTitle = this._root.querySelector('#mtk-trending-title');
+    if (trendTitle) trendTitle.textContent = this._uiLabel('trending');
+
+    // Trending items meta + posts count
+    this._root.querySelectorAll('[data-trend-meta]').forEach((el, i) => {
+      el.textContent = `${this._uiLabel('trendingMeta')} · ${i + 1}`;
+    });
+    this._root.querySelectorAll('[data-trend-posts]').forEach(el => {
+      const num = el.textContent.split(' ')[0];
+      el.textContent = `${num} ${this._uiLabel('posts')}`;
+    });
+
+    // Profile menu labels
+    const profileLabel = this._root.querySelector('.mtk-menu-label-profile');
+    if (profileLabel) profileLabel.textContent = this._uiLabel('profile');
+    const langLabel = this._root.querySelector('.mtk-menu-label-lang');
+    if (langLabel) langLabel.textContent = this._uiLabel('changeLanguage');
+    const signoutLabel = this._root.querySelector('.mtk-menu-label-signout');
+    if (signoutLabel) signoutLabel.textContent = this._uiLabel('signOut');
+
+    // Theme labels — delegate to _updateThemeUI which uses _uiLabel
     this._updateThemeUI();
   }
 
