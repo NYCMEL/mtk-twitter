@@ -1014,50 +1014,60 @@ class MTKTwitter {
       list.addEventListener('click', e => {
         const btn = e.target.closest('button');
 
-        // Reply submit button
+        // ── Reply SUBMIT button (has data-tweet-id) ──
         if (btn?.dataset.tweetId) {
           const tid = btn.dataset.tweetId;
           const ta  = body.querySelector(`#mtk-panel-reply-ta-${tid}`);
-          if (ta?.value.trim()) this._handlePanelReply(tid, ta, btn, sorted);
+          if (ta && ta.value.trim()) this._handlePanelReply(tid, ta, btn, sorted);
           return;
         }
 
-        // Like/RT/bookmark/delete buttons inside panel — handle normally
+        // ── Action buttons inside tweet card ──
         if (btn) {
           const id = btn.dataset.id;
           if (btn.classList.contains('like-btn'))  { this._handleLike(btn, id); return; }
           if (btn.classList.contains('rt-btn'))    { this._handleRetweet(btn, id); return; }
           if (btn.classList.contains('bk-btn'))    { this._handleBookmark(btn, id); return; }
           if (btn.classList.contains('del-btn'))   { this._handleDelete(btn, id); return; }
+          if (btn.classList.contains('reply-btn')) {
+            // Toggle the inline reply box for this tweet
+            const replyBox = body.querySelector(`#mtk-panel-reply-${id}`);
+            if (replyBox) {
+              body.querySelectorAll('.mtk-twitter__panel-reply-box').forEach(box => {
+                if (box !== replyBox) { box.style.display = 'none'; }
+              });
+              const isOpen = replyBox.style.display !== 'none';
+              replyBox.style.display = isOpen ? 'none' : '';
+              if (!isOpen) {
+                const ta = replyBox.querySelector('textarea');
+                if (ta) { ta.focus(); }
+                replyBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }
+            }
+            return;
+          }
           if (btn.classList.contains('mtk-twitter__tweet-orig-btn')) { this._handleOrigToggle(btn, btn.dataset.id); return; }
           return;
         }
 
-        // Click on tweet body → toggle inline reply box below it
+        // ── Click on tweet body → also toggle reply box ──
         const li = e.target.closest('li.mtk-twitter__tweet');
         if (!li || !li.dataset.id || e.target.closest('a,textarea,input')) return;
         const replyBox = body.querySelector(`#mtk-panel-reply-${li.dataset.id}`);
         if (!replyBox) return;
-
-        // Close all other open reply boxes
         body.querySelectorAll('.mtk-twitter__panel-reply-box').forEach(box => {
-          if (box !== replyBox) {
-            box.style.display = 'none';
-            box.querySelector('textarea')?.value && (box.querySelector('textarea').value = '');
-          }
+          if (box !== replyBox) box.style.display = 'none';
         });
-
         const isOpen = replyBox.style.display !== 'none';
         replyBox.style.display = isOpen ? 'none' : '';
         if (!isOpen) {
           const ta = replyBox.querySelector('textarea');
-          ta?.focus();
-          // Scroll reply box into view
+          if (ta) { ta.focus(); }
           replyBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       });
 
-      // Bind textarea input for char count + enable button
+      // Bind textarea → enable/disable reply button + char count
       sorted.forEach(t => {
         const ta  = body.querySelector(`#mtk-panel-reply-ta-${t.id}`);
         const btn = body.querySelector(`#mtk-panel-reply-btn-${t.id}`);
@@ -1066,8 +1076,15 @@ class MTKTwitter {
         ta.addEventListener('input', () => {
           const rem = 280 - ta.value.length;
           if (cc) cc.textContent = rem;
-          btn.disabled = !ta.value.trim();
-          btn.style.opacity = ta.value.trim() ? '1' : '0.5';
+          const hasText = !!ta.value.trim();
+          btn.disabled = !hasText;
+          btn.style.opacity = hasText ? '1' : '0.5';
+        });
+        // Enter key (Ctrl+Enter) submits
+        ta.addEventListener('keydown', e => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && ta.value.trim()) {
+            this._handlePanelReply(String(t.id), ta, btn, sorted);
+          }
         });
       });
     }
