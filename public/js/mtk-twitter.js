@@ -2710,29 +2710,98 @@ class MTKTwitter {
       el.style.background = el.dataset.tag === tag ? 'var(--primary-glow)' : '';
     });
 
+    const fakeTweets = this._generateFakeTweets(tag, 5 + Math.floor(Math.random() * 16));
+
     list.innerHTML = `
-      <li style="list-style:none;">
-        <div style="
-          display:flex;flex-direction:column;align-items:center;justify-content:center;
-          padding:60px 32px 32px;text-align:center;gap:16px;
-        ">
-          <span style="font-size:2.5rem;">🔥</span>
-          <div style="font-family:'DM Sans',sans-serif;font-size:1.4rem;font-weight:800;color:var(--text-1);">${this._esc(tag)}</div>
-          <div style="
-            font-size:0.78rem;font-weight:700;color:var(--primary);
-            background:var(--primary-glow);padding:4px 14px;border-radius:999px;
-          ">${postsLabel || ''}</div>
-          <div style="font-size:0.88rem;color:var(--text-2);max-width:300px;line-height:1.6;margin-top:8px;">
-            Posts matching this topic will appear here.<br>Full hashtag search coming soon.
-          </div>
-          <button onclick="window.mtkTwitterInstance._setActiveNav('home')"
-            style="margin-top:16px;padding:10px 24px;background:linear-gradient(135deg,var(--primary-dim),var(--primary));
-            color:#fff;border:none;border-radius:999px;font-weight:700;font-size:0.85rem;
-            font-family:'DM Sans',sans-serif;cursor:pointer;">
-            ← Back to feed
-          </button>
+      <li style="list-style:none;border-bottom:1px solid var(--border);">
+        <div style="display:flex;flex-direction:column;align-items:center;padding:28px 24px 20px;text-align:center;gap:10px;">
+          <span style="font-size:2rem;">🔥</span>
+          <div style="font-family:'DM Sans',sans-serif;font-size:1.2rem;font-weight:800;color:var(--text-1);">${this._esc(tag)}</div>
+          <div style="font-size:0.75rem;font-weight:700;color:var(--primary);background:var(--primary-glow);padding:3px 12px;border-radius:999px;">${postsLabel || ''}</div>
         </div>
-      </li>`;
+      </li>
+      ${fakeTweets.map(t => this._tplTweet(t)).join('')}`;
+
+    // Back to feed button binding
+    list.querySelector('[data-back-feed]')?.addEventListener('click', () => this._setActiveNav('home'));
+  }
+
+  _generateFakeTweets(tag, count) {
+    const users  = this._cfg.seedTweets.map(t => t.user);
+    const times  = ['just now','1m','3m','7m','12m','18m','25m','34m','42m','51m','1h','2h','3h','5h','8h','12h','1d'];
+    const templatesByTag = {
+      '#MelifyTranslates': [
+        'Just used Mwitter to chat with my friend in Japan — no translator needed! {tag} 🎉',
+        'The future is here. Talking to people worldwide in my own language. {tag}',
+        'I posted in Arabic and got replies in Spanish, French and Hindi. {tag} is real!',
+        '{tag} is changing how we connect across borders.',
+        'My grandmother can finally talk to people worldwide. Thank you {tag}!',
+        'Breaking language barriers one post at a time. {tag} 🌍',
+        'Just discovered {tag} — this is the most impressive tech I\'ve seen this year.',
+        'Real-time translation that actually works. {tag} is a game changer.',
+      ],
+      '#LanguageBarriers': [
+        'Language should never stop us from connecting. {tag}',
+        'Growing up bilingual taught me how important {tag} solutions are.',
+        'Technology is finally solving {tag} for good.',
+        'No more awkward Google Translate screenshots. {tag} is history now.',
+        '{tag} used to mean loneliness for immigrants. Not anymore.',
+        'The world is too beautiful to be siloed by {tag}.',
+      ],
+      '#GlobalChat': [
+        'Had a {tag} moment today — spoke with 8 different nationalities in one thread!',
+        'This is what {tag} looks like in 2026. Amazing.',
+        '{tag} is my favorite part of Mwitter. Everyone in one place.',
+        'From Tokyo to Cairo to São Paulo — one {tag}. 🌐',
+        'Finally a platform where {tag} is the point, not the obstacle.',
+      ],
+      '#TechForGood': [
+        'Multilingual social media is the definition of {tag}.',
+        'When {tag} meets language AI — magic happens.',
+        '{tag} should be the standard for every tech company.',
+        'Proud to be part of a platform that embodies {tag}.',
+        'Language translation + social media = {tag} at its finest.',
+        'This is what happens when engineers build for humans first. {tag}',
+      ],
+      '#PeopleHelpingPeople': [
+        'Mwitter is {tag} in action — breaking down language walls.',
+        '{tag} — that\'s what this community is all about.',
+        'Replying to someone halfway around the world. {tag} 💙',
+        'Translation tech that truly serves {tag}.',
+        'When you help someone be understood, that\'s {tag}.',
+      ],
+    };
+
+    const templates = templatesByTag[tag] || [
+      `Just discovered ${tag} and I\'m amazed! 🌍`,
+      `${tag} is trending for a reason. This is huge.`,
+      `Can\'t stop talking about ${tag} today.`,
+      `${tag} — follow this if you haven\'t already!`,
+      `Sharing my thoughts on ${tag} with the world.`,
+      `${tag} changed my perspective completely.`,
+    ];
+
+    const shuffledUsers = [...users].sort(() => Math.random() - 0.5);
+    const result = [];
+    for (let i = 0; i < count; i++) {
+      const user    = shuffledUsers[i % shuffledUsers.length];
+      const tpl     = templates[Math.floor(Math.random() * templates.length)];
+      const text    = tpl.replace(/\{tag\}/g, tag);
+      const time    = times[Math.floor(Math.random() * times.length)];
+      result.push({
+        id:            `fake_${tag}_${i}_${Date.now()}`,
+        text,
+        original_lang: 'en',
+        timestamp:     time,
+        likes_count:   Math.floor(Math.random() * 200),
+        retweets_count:Math.floor(Math.random() * 80),
+        replies_count: Math.floor(Math.random() * 40),
+        liked:         false, retweeted: false, bookmarked: false,
+        _inGroup:      true,
+        user,
+      });
+    }
+    return result;
   }
 
   _loadPlaceholder(type) {
@@ -2762,22 +2831,23 @@ class MTKTwitter {
 
     const { icon, title, subtitle, color } = config[type] || config.explore;
 
+    const fakeTags = { explore: '#GlobalChat', notifications: '#MelifyTranslates', messages: '#PeopleHelpingPeople' };
+    const fakeTag  = fakeTags[type] || '#GlobalChat';
+    const fakeTweets = this._generateFakeTweets(fakeTag, 5 + Math.floor(Math.random() * 11));
+
     list.innerHTML = `
-      <li style="list-style:none;">
+      <li style="list-style:none;border-bottom:1px solid var(--border);">
         <div style="
           display:flex;flex-direction:column;align-items:center;justify-content:center;
-          padding:80px 32px;text-align:center;gap:16px;
+          padding:40px 32px 24px;text-align:center;gap:12px;
         ">
-          <span class="material-icons-round" style="font-size:4rem;color:${color};opacity:0.8;">${icon}</span>
-          <div style="font-family:'DM Sans',sans-serif;font-size:1.3rem;font-weight:800;color:var(--text-1);">${title}</div>
-          <div style="font-size:0.9rem;color:var(--text-2);max-width:280px;line-height:1.6;">${subtitle}</div>
-          <div style="
-            margin-top:8px;padding:8px 20px;border-radius:999px;
-            background:${color}22;color:${color};
-            font-size:0.78rem;font-weight:700;font-family:'DM Sans',sans-serif;
-          ">Coming soon</div>
+          <span class="material-icons-round" style="font-size:3rem;color:${color};opacity:0.85;">${icon}</span>
+          <div style="font-family:'DM Sans',sans-serif;font-size:1.2rem;font-weight:800;color:var(--text-1);">${title}</div>
+          <div style="font-size:0.85rem;color:var(--text-2);max-width:280px;line-height:1.5;">${subtitle}</div>
+          <div style="padding:5px 16px;border-radius:999px;background:${color}22;color:${color};font-size:0.75rem;font-weight:700;">Coming soon</div>
         </div>
-      </li>`;
+      </li>
+      ${fakeTweets.map(t => this._tplTweet(t)).join('')}`;
   }
 
   _loadProfile() {
