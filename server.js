@@ -130,6 +130,7 @@ console.log('[DB] Ready:', DB_PATH);
     ['natasha_v',     'natasha@demo.com', 'Natasha Volkova', hash,'ru',av+'45',0],
     ['mel',           'mel@melify.com',   'Mel',             hash,'en',av+'11',1],
     ['josh',          'josh@melify.com',  'Josh',            hash,'he',av+'33',0],
+    ['farid',         'farid@demo.com',   'Farid',           hash,'fa',av+'68',0],
   ].forEach(u => insUser.run(...u));
 
   const insTweet = db.prepare('INSERT INTO tweets (user_id,text,original_lang) VALUES (?,?,?)');
@@ -140,12 +141,13 @@ console.log('[DB] Ready:', DB_PATH);
     ['omarhassan',    'مرحبا بالجميع! نحن نبني جسور التواصل بين الشعوب.',    'ar'],
     ['natasha_v',     'Технологии меняют мир к лучшему каждый день.',          'ru'],
     ['josh',          'שלום לכולם! הטכנולוגיה מחברת בין עמים.',               'he'],
+    ['farid',         'سلام! این فناوری شگفت\u200cانگیز است. زبان دیگر مانع ارتباط نیست.', 'fa'],
   ].forEach(([uname, text, lang]) => {
     const u = db.prepare('SELECT id FROM users WHERE username=?').get(uname);
     if (u) insTweet.run(u.id, text, lang);
   });
 
-  console.log('[DB] Seeded 5 users and 5 tweets');
+  console.log('[DB] Seeded 8 users and 7 tweets');
 })();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -336,15 +338,47 @@ const app = express();
 
 app.use(cors({ origin:'*', methods:['GET','POST','PUT','PATCH','DELETE','OPTIONS'], allowedHeaders:['Content-Type','Authorization'] }));
 app.options('*', cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 const publicDir = path.join(__dirname, 'public');
 if (fs.existsSync(publicDir)) app.use(express.static(publicDir));
 
+// ── Upload dir ────────────────────────────────────────────────────────────────
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
 app.use((req, _res, next) => {
   process.stdout.write(`[${new Date().toISOString()}] ${req.method} ${req.path}\n`);
   next();
+});
+
+// ── Upload image ──────────────────────────────────────────────────────────────
+app.post('/api/upload', authRequired, (req, res) => {
+  try {
+    const { data, mimeType = 'image/jpeg' } = req.body;
+    if (!data) return res.status(400).json({ error: 'No image data provided' });
+
+    // Strip data URL prefix if present
+    const base64 = data.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64, 'base64');
+
+    // Limit to 5MB
+    if (buffer.length > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: 'Image too large (max 5MB)' });
+    }
+
+    const ext      = mimeType.split('/')[1]?.replace('jpeg','jpg') || 'jpg';
+    const filename = `img_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const filepath = path.join(uploadsDir, filename);
+
+    fs.writeFileSync(filepath, buffer);
+
+    const url = `/uploads/${filename}`;
+    res.json({ url });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── Health ────────────────────────────────────────────────────────────────────
@@ -470,8 +504,8 @@ app.get('/api/tweets', authOptional, (req, res) => {
 app.post('/api/tweets', authRequired, (req, res) => {
   try {
     const text = (req.body.text || '').trim();
-    if (!text)           return res.status(400).json({ error: 'Text is required' });
-    if (text.length>280) return res.status(400).json({ error: 'Max 280 characters' });
+    if (!text)            return res.status(400).json({ error: 'Text is required' });
+    if (text.length>1000) return res.status(400).json({ error: 'Max 1000 characters' });
 
     const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.user.id);
     if (!user) return res.status(401).json({ error: 'User not found — please log out and log in again' });
