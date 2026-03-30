@@ -826,21 +826,23 @@ class MTKTwitter {
         if (btn) this._insertEmoji(btn.dataset.emoji);
       });
     }
-    this._on('#mtk-fab',        'click', () => {
-      this._root.querySelector('#mtk-compose-ta')?.focus();
-      this._root.querySelector('.mtk-twitter__compose')?.scrollIntoView({behavior:'smooth'});
+    this._on('#mtk-fab', 'click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this._root.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => this._root.querySelector('#mtk-compose-ta')?.focus(), 150);
     });
     this._on('#mtk-sidebar-post-btn', 'click', () => {
-      // If not on home, go there first then focus compose
       if (this._state.activeNav !== 'home') {
         this._setActiveNav('home');
         setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          this._root.scrollTo({ top: 0, behavior: 'smooth' });
           this._root.querySelector('#mtk-compose-ta')?.focus();
-          this._root.querySelector('.mtk-twitter__compose')?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+        }, 150);
       } else {
-        this._root.querySelector('#mtk-compose-ta')?.focus();
-        this._root.querySelector('.mtk-twitter__compose')?.scrollIntoView({ behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this._root.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => this._root.querySelector('#mtk-compose-ta')?.focus(), 150);
       }
     });
 
