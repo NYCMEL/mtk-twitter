@@ -831,7 +831,17 @@ class MTKTwitter {
       this._root.querySelector('.mtk-twitter__compose')?.scrollIntoView({behavior:'smooth'});
     });
     this._on('#mtk-sidebar-post-btn', 'click', () => {
-      this._root.querySelector('#mtk-compose-ta')?.focus();
+      // If not on home, go there first then focus compose
+      if (this._state.activeNav !== 'home') {
+        this._setActiveNav('home');
+        setTimeout(() => {
+          this._root.querySelector('#mtk-compose-ta')?.focus();
+          this._root.querySelector('.mtk-twitter__compose')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        this._root.querySelector('#mtk-compose-ta')?.focus();
+        this._root.querySelector('.mtk-twitter__compose')?.scrollIntoView({ behavior: 'smooth' });
+      }
     });
 
     // Tweet list (delegation)
