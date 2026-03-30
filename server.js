@@ -986,4 +986,131 @@ app.listen(PORT, () => {
   console.log('  🔤  Translation: Google Translate (unofficial) + built-in dictionary');
   console.log('\n  Demo accounts  (password: demo1234)');
   console.log('  @mel  @priyasharma  @carlosmendoza  @kenjitanaka  @omarhassan  @natasha_v\n');
+
+  // ── Live tweet publisher ──────────────────────────────────────
+  // Every 1–3 minutes, post 1–4 tweets from random users
+  const liveTweets = [
+    { lang:'en', texts:[
+      'Just had an amazing conversation with someone across the globe! 🌍',
+      'Mwitter makes the world feel so much smaller. Love this platform!',
+      'Technology + language = connection. That\'s what Mwitter is all about.',
+      'Good morning world! Ready for another day of global conversations.',
+      'Just translated my first post. This is incredible! 🚀',
+      'Breaking: language barriers officially defeated. 😄',
+      'Can\'t believe I\'m chatting with people in 5 different languages right now.',
+      'This is what the future looks like. So proud to be part of it.',
+    ]},
+    { lang:'he', texts:[
+      'פשוט דיברתי עם מישהו מיפן! הטכנולוגיה הזאת מדהימה. 🌸',
+      'שלום לכולם! יום נפלא לשיחות בינלאומיות.',
+      'מרגש לראות כמה קל לתקשר בכל שפה שתרצה.',
+      'הפלטפורמה הזאת שינתה את הדרך שבה אני מתקשר עם העולם.',
+    ]},
+    { lang:'hi', texts:[
+      'आज मैंने 5 अलग-अलग देशों के लोगों से बात की! 🌏',
+      'मेलिफाई की वजह से दुनिया बहुत छोटी लग रही है।',
+      'भाषा अब बाधा नहीं है। यह जादू है! ✨',
+      'सभी को नमस्ते! आज का दिन बहुत अच्छा है।',
+    ]},
+    { lang:'es', texts:[
+      '¡Acabo de hablar con alguien de Corea en español! Increíble. 🎉',
+      'Buenos días a todos desde este rincón del mundo. ☀️',
+      'La tecnología de traducción ha cambiado mi vida completamente.',
+      '¡Mwitter es simplemente lo mejor que le ha pasado a las redes sociales!',
+    ]},
+    { lang:'ja', texts:[
+      '今日もMwitterで新しい友達ができました！🌟',
+      'こんにちは！今日は世界中の人と話せて嬉しいです。',
+      '翻訳技術って本当にすごいですね。もう言語は壁じゃない！',
+      'みんなと繋がれることに感謝しています。ありがとう！',
+    ]},
+    { lang:'ar', texts:[
+      'أهلاً بالجميع! يوم رائع للتواصل مع العالم. 🌍',
+      'تحدثت اليوم مع شخص من البرازيل باللغة العربية. رائع!',
+      'التكنولوجيا تجعل العالم مكاناً أفضل للجميع.',
+      'سعيد بأن أكون جزءاً من هذا المجتمع العالمي الرائع.',
+    ]},
+    { lang:'ru', texts:[
+      'Привет всем! Сегодня замечательный день для общения. ☀️',
+      'Только что пообщался с кем-то из Японии. Невероятно!',
+      'Мовиттер — лучшее, что случилось с социальными сетями.',
+      'Технологии сближают людей. Это просто магия! ✨',
+    ]},
+    { lang:'fa', texts:[
+      'سلام به همه! امروز با افراد از سراسر جهان صحبت کردم. 🌏',
+      'فناوری ترجمه واقعاً شگفت‌انگیز است. دیوار زبان دیگر وجود ندارد!',
+      'مووتر بهترین چیزی است که در شبکه‌های اجتماعی دیده‌ام.',
+      'خوشحالم که بخشی از این جامعه جهانی هستم.',
+    ]},
+    { lang:'fr', texts:[
+      'Bonjour tout le monde ! Belle journée pour échanger avec le monde entier. ☀️',
+      'Je viens de parler avec quelqu\'un au Japon. La technologie est magique !',
+      'Mwitter a révolutionné ma façon de communiquer avec le monde.',
+      'Incroyable de pouvoir parler dans sa langue et être compris partout.',
+    ]},
+    { lang:'de', texts:[
+      'Guten Morgen allerseits! Heute ist ein großartiger Tag für globale Gespräche.',
+      'Gerade mit jemandem aus Brasilien auf Deutsch gechattet. Faszinierend!',
+      'Mwitter macht die Welt ein Stück kleiner. Tolle Plattform!',
+      'Sprachbarrieren gehören der Vergangenheit an. Danke, Mwitter! 🚀',
+    ]},
+    { lang:'zh', texts:[
+      '大家好！今天又认识了来自世界各地的新朋友。🌍',
+      '刚刚和一个巴西人用中文聊天，太神奇了！',
+      'Mwitter让语言不再是障碍。这就是未来！',
+      '感谢这个平台让我们可以自由交流。❤️',
+    ]},
+    { lang:'pt', texts:[
+      'Bom dia a todos! Mais um dia de conversas globais incríveis. ☀️',
+      'Acabei de falar com alguém no Japão em português. Que maravilha!',
+      'Mwitter mudou completamente a forma como me comunico.',
+      'A tecnologia de tradução é simplesmente mágica. Obrigado, Mwitter!',
+    ]},
+    { lang:'ko', texts:[
+      '안녕하세요! 오늘도 전 세계 친구들과 이야기 나눴어요. 🌏',
+      '방금 브라질 사람과 한국어로 채팅했어요. 정말 신기해요!',
+      'Mwitter 덕분에 언어 장벽이 완전히 사라졌어요. 최고! 🚀',
+      '이 플랫폼은 세상을 더 가깝게 만들어줘요. 감사합니다!',
+    ]},
+    { lang:'it', texts:[
+      'Buongiorno a tutti! Oggi ho parlato con persone da 6 paesi diversi. 🌍',
+      'Appena chattato con qualcuno in Giappone in italiano. Incredibile!',
+      'Mwitter ha rivoluzionato il modo in cui comunico col mondo.',
+      'Le barriere linguistiche appartengono al passato. Grazie, Mwitter! 🚀',
+    ]},
+  ];
+
+  function scheduleLiveTweet() {
+    // Random interval 1–3 minutes
+    const delay = (60 + Math.floor(Math.random() * 120)) * 1000;
+    setTimeout(() => {
+      try {
+        // Pick 1–4 random tweets to publish
+        const count = 1 + Math.floor(Math.random() * 4);
+        const users = db.prepare('SELECT id, username, lang FROM users').all();
+        if (!users.length) return;
+
+        for (let i = 0; i < count; i++) {
+          // Pick a random user
+          const user = users[Math.floor(Math.random() * users.length)];
+          const u = Object.assign({}, user);
+
+          // Find tweet pool for this user's language
+          const pool = liveTweets.find(p => p.lang === u.lang) || liveTweets[0];
+          const text = pool.texts[Math.floor(Math.random() * pool.texts.length)];
+
+          db.prepare('INSERT INTO tweets (user_id, text, original_lang) VALUES (?, ?, ?)')
+            .run(u.id, text, u.lang);
+        }
+
+        process.stdout.write(`[live] Published ${count} auto-tweet${count > 1 ? 's' : ''}\n`);
+      } catch (err) {
+        console.error('[live] Error publishing tweet:', err.message);
+      }
+      scheduleLiveTweet(); // schedule next
+    }, delay);
+  }
+
+  scheduleLiveTweet();
+  console.log('  📡  Live tweet publisher active (every 1–3 min)\n');
 });

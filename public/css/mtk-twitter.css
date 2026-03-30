@@ -886,8 +886,8 @@
   position: sticky;
   top: calc(56px + var(--host-topbar));
   height: calc(100vh - 56px - var(--host-topbar));
-  overflow-y: auto;
-  padding: 16px 12px;
+  overflow-y: hidden;
+  padding: 16px 12px 0;
   border-right: 1px solid var(--border);
   flex-direction: column;
   gap: 4px; }
@@ -919,7 +919,14 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  flex: 1; }
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: 8px;
+  scrollbar-width: none; }
+
+.mtk-twitter__nav::-webkit-scrollbar {
+  display: none; }
 
 .mtk-twitter__nav-item {
   display: flex;
@@ -955,6 +962,7 @@
 
 .mtk-twitter__sidebar-post-btn {
   margin-top: 12px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -991,7 +999,9 @@
   padding: 10px 12px;
   border-radius: 14px;
   cursor: pointer;
-  margin-top: auto; }
+  margin-top: auto;
+  margin-bottom: 12px;
+  flex-shrink: 0; }
 
 .mtk-twitter__sidebar-user:hover {
   background: var(--surface-2); }
