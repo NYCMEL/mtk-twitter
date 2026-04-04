@@ -282,15 +282,26 @@
 
   <div class="status" id="status"></div>
 
+  <div style="max-width:860px;width:100%;margin:0 auto 12px;padding:0 0px;">
+    <div style="position:relative;">
+      <span class="material-icons-round" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8b949e;font-size:1rem;pointer-events:none;">search</span>
+      <input type="search" id="user-search" placeholder="Search by name, username or language…"
+        style="width:100%;background:#161b22;border:1.5px solid #30363d;border-radius:10px;
+               color:#e6edf3;font-family:'DM Sans',sans-serif;font-size:0.88rem;
+               padding:10px 14px 10px 38px;outline:none;box-sizing:border-box;"
+        aria-label="Search users" />
+    </div>
+  </div>
+
   <div class="card">
     <table id="user-table" aria-label="All users">
       <thead>
         <tr>
           <th style="width:40px">#</th>
-          <th>User</th>
-          <th>Language</th>
-          <th>Email</th>
-          <th>Joined</th>
+          <th data-col="name" style="cursor:pointer;user-select:none;">User <span class="sort-icon">↕</span></th>
+          <th data-col="lang" style="cursor:pointer;user-select:none;">Language <span class="sort-icon">↕</span></th>
+          <th data-col="email" style="cursor:pointer;user-select:none;">Email <span class="sort-icon">↕</span></th>
+          <th data-col="joined" style="cursor:pointer;user-select:none;">Joined <span class="sort-icon">↕</span></th>
           <th></th>
         </tr>
       </thead>
@@ -348,7 +359,7 @@
         // Hit health to get count, then fetch each user via a known list
         // Since there's no GET /api/users endpoint, we try known usernames
         // + fall back to health endpoint for confirmation
-        const known = ['mel','josh','priyasharma','carlosmendoza','kenjitanaka','omarhassan','natasha_v','farid','sophie_m','klausberg','wei_zhang','ana_silva','jiwon_k','giulia_r'];
+        const known = ['mel','josh','moshebanai','priyasharma','carlosmendoza','kenjitanaka','omarhassan','natasha_v','farid','sophie_m','klausberg','wei_zhang','ana_silva','jiwon_k','giulia_r'];
         const users = [];
 
         for (const uname of known) {
@@ -393,7 +404,12 @@
         const av      = u.avatar_url || `https://i.pravatar.cc/80?u=${u.username}`;
 
         return `
-        <tr data-username="${u.username}" tabindex="0" role="button"
+        <tr data-username="${u.username}"
+            data-name="${(u.display_name||'').toLowerCase()}"
+            data-lang="${langStr.toLowerCase()}"
+            data-email="${(u.email||'').toLowerCase()}"
+            data-joined="${u.created_at||''}"
+            tabindex="0" role="button"
             aria-label="Login as ${u.display_name}" title="Click to login as ${u.display_name}">
           <td class="cell-id">${u.id}</td>
           <td>
@@ -479,6 +495,86 @@
 
     // ── Boot ──────────────────────────────────────────────────────
     loadUsers();
+
+    // ── Search — filters loaded rows OR queries API for unknown users ──
+    let searchTimer;
+    document.getElementById('user-search').addEventListener('input', function() {
+      const q = this.value.toLowerCase().trim();
+      const rows = document.querySelectorAll('#user-tbody tr[data-username]');
+
+      // First filter existing rows
+      let anyVisible = false;
+      rows.forEach(row => {
+        const match = !q || row.textContent.toLowerCase().includes(q);
+        row.style.display = match ? '' : 'none';
+        if (match) anyVisible = true;
+      });
+
+      // If nothing visible and query looks like a username, try fetching from API
+      clearTimeout(searchTimer);
+      if (q && !anyVisible) {
+        searchTimer = setTimeout(async () => {
+          try {
+            const r = await fetch(`${API}/users/${encodeURIComponent(q)}`);
+            if (!r.ok) return;
+            const u = await r.json();
+            // Check it's not already rendered
+            if (document.querySelector(`tr[data-username="${u.username}"]`)) return;
+            const tbody = document.getElementById('user-tbody');
+            const langStr = LANGS[u.lang] || (u.lang||'').toUpperCase();
+            const isRtl   = RTL.has(u.lang);
+            const av      = u.avatar_url || `https://i.pravatar.cc/80?u=${u.username}`;
+            const tr = document.createElement('tr');
+            tr.dataset.username = u.username;
+            tr.dataset.name     = (u.display_name||'').toLowerCase();
+            tr.dataset.lang     = langStr.toLowerCase();
+            tr.dataset.email    = (u.email||'').toLowerCase();
+            tr.dataset.joined   = u.created_at||'';
+            tr.tabIndex = 0; tr.role = 'button';
+            tr.innerHTML = `
+              <td class="cell-id">${u.id}</td>
+              <td><div class="cell-user">
+                <img class="avatar" src="${av}" alt="${u.display_name}" loading="lazy"
+                     onerror="this.src='https://i.pravatar.cc/80?u=${u.username}'" />
+                <div class="user-info">
+                  <div class="user-name">${u.display_name}${u.verified?'<span class="material-icons-round verified">verified</span>':''}</div>
+                  <div class="user-handle">@${u.username}</div>
+                </div>
+              </div></td>
+              <td><div class="cell-lang"><span class="flag">${langStr.split(' ')[0]}</span><span>${langStr.split(' ').slice(1).join(' ')||u.lang}</span>${isRtl?'<span class="rtl-badge">RTL</span>':''}</div></td>
+              <td style="color:var(--text-2);font-size:0.82rem">${u.email||'—'}</td>
+              <td style="color:var(--text-2);font-size:0.82rem">${u.created_at?new Date(u.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}</td>
+              <td class="cell-action"><div class="hint"><span class="material-icons-round">login</span>Auto-login</div></td>`;
+            tr.addEventListener('click', () => loginAs(tr));
+            tr.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') loginAs(tr); });
+            tbody.appendChild(tr);
+          } catch(_) {}
+        }, 400);
+      }
+    });
+
+    // ── Column sorting ────────────────────────────────────────────
+    let sortCol = null, sortAsc = true;
+    document.querySelectorAll('th[data-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (sortCol === col) { sortAsc = !sortAsc; }
+        else { sortCol = col; sortAsc = true; }
+
+        // Update sort icons
+        document.querySelectorAll('th[data-col] .sort-icon').forEach(ic => ic.textContent = '↕');
+        th.querySelector('.sort-icon').textContent = sortAsc ? '↑' : '↓';
+
+        const tbody = document.getElementById('user-tbody');
+        const rows  = [...tbody.querySelectorAll('tr[data-username]')];
+        rows.sort((a, b) => {
+          const av = (a.dataset[col] || '').toLowerCase();
+          const bv = (b.dataset[col] || '').toLowerCase();
+          return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
   </script>
 
 </body>

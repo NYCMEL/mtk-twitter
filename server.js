@@ -137,6 +137,7 @@ console.log('[DB] Ready:', DB_PATH);
     ['ana_silva',     'ana@demo.com',     'Ana Silva',       hash,'pt',av+'48',0],
     ['jiwon_k',       'jiwon@demo.com',   'Jiwon Kim',       hash,'ko',av+'62',0],
     ['giulia_r',      'giulia@demo.com',  'Giulia Russo',    hash,'it',av+'15',0],
+    ['moshebanai',    'moshe@demo.com',   'Moshe Banai',     hash,'he',av+'57',1],
   ].forEach(u => insUser.run(...u));
 
   const insTweet = db.prepare('INSERT INTO tweets (user_id,text,original_lang,created_at) VALUES (?,?,?,?)');
@@ -154,6 +155,14 @@ console.log('[DB] Ready:', DB_PATH);
       'The more languages you understand, the bigger your world gets.',
       'Translation is not just words, it is culture and connection.',
       'Mwitter is proof that technology can bring us all together. 💙',
+    ]},
+    moshebanai:    { lang:'he', tweets:[
+      'שלום לכולם! שמח להיות חלק מהפלטפורמה הגלובלית הזאת.',
+      'טכנולוגיה שמחברת עמים — זה בדיוק מה שצריך היום.',
+      'הכרתי היום אנשים מ-5 מדינות שונות. מדהים! 🌍',
+      'עברית היא שפה עשירה ויפה. שמח לשתף אותה עם העולם.',
+      'Mwitter שינה את הדרך שבה אני מתקשר עם העולם.',
+      'בוקר טוב! יום חדש, שיחות חדשות, עולם אחד. ☀️',
     ]},
     josh:          { lang:'he', tweets:[
       'שלום לכולם! הטכנולוגיה מחברת בין עמים.',
