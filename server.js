@@ -112,17 +112,14 @@ console.log('[DB] Ready:', DB_PATH);
 
 // ── Seed demo data ────────────────────────────────────────────────────────────
 (function seed() {
-  const count = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
-  if (count > 0) { console.log('[DB] Found', count, 'users — skipping seed'); return; }
-
-  console.log('[DB] Seeding demo data…');
+  console.log('[DB] Checking seed users…');
   const hash = bcrypt.hashSync('demo1234', BCRYPT_ROUNDS);
   const av   = 'https://i.pravatar.cc/80?img=';
 
   const insUser = db.prepare(
     'INSERT OR IGNORE INTO users (username,email,display_name,password_hash,lang,avatar_url,verified) VALUES (?,?,?,?,?,?,?)'
   );
-  [
+  const seedUsers = [
     ['priyasharma',   'priya@demo.com',   'Priya Sharma',    hash,'hi',av+'47',0],
     ['carlosmendoza', 'carlos@demo.com',  'Carlos Mendoza',  hash,'es',av+'52',1],
     ['kenjitanaka',   'kenji@demo.com',   'Kenji Tanaka',    hash,'ja',av+'56',1],
@@ -138,9 +135,15 @@ console.log('[DB] Ready:', DB_PATH);
     ['jiwon_k',       'jiwon@demo.com',   'Jiwon Kim',       hash,'ko',av+'62',0],
     ['giulia_r',      'giulia@demo.com',  'Giulia Russo',    hash,'it',av+'15',0],
     ['moshebanai',    'moshe@demo.com',   'Moshe Banai',     hash,'he',av+'57',1],
-  ].forEach(u => insUser.run(...u));
+  ];
+  seedUsers.forEach(u => insUser.run(...u));
 
-  const insTweet = db.prepare('INSERT INTO tweets (user_id,text,original_lang,created_at) VALUES (?,?,?,?)');
+  // Only seed tweets if DB is fresh
+  const count = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
+  const tweetCount = db.prepare('SELECT COUNT(*) AS c FROM tweets').get().c;
+  if (tweetCount > 0) { console.log('[DB] Found', count, 'users,', tweetCount, 'tweets — skipping tweet seed'); return; }
+
+  console.log('[DB] Seeding demo tweets…');
 
   // Each user has a pool of tweets — 2 to pool-size are randomly seeded
   const userTweets = {
@@ -322,7 +325,8 @@ console.log('[DB] Ready:', DB_PATH);
     ]},
   };
 
-  let tweetCount = 0;
+  let seededTweets = 0;
+  const insTweet = db.prepare('INSERT INTO tweets (user_id,text,original_lang,created_at) VALUES (?,?,?,?)');
   for (const [uname, { lang, tweets }] of Object.entries(userTweets)) {
     const u = db.prepare('SELECT id FROM users WHERE username=?').get(uname);
     if (!u) continue;
@@ -336,11 +340,11 @@ console.log('[DB] Ready:', DB_PATH);
       const ts = new Date(Date.now() - minsAgo * 60 * 1000)
         .toISOString().replace('T',' ').replace(/\.\d+Z$/,'');
       insTweet.run(u.id, text, lang, ts);
-      tweetCount++;
+      seededTweets++;
     });
   }
 
-  console.log(`[DB] Seeded 14 users and ${tweetCount} tweets`);
+  console.log(`[DB] Seeded users and ${seededTweets} tweets`);
 })();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
